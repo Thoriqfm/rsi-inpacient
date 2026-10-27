@@ -1,15 +1,336 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// PostgreSQL adaptation of inpatient_kelompok5_v1_1.sql (15 tables).
+// Keep CHECK constraints and SQL comments in the reviewed migration SQL.
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Akun {
+  id_akun      Int       @id @default(autoincrement())
+  username     String    @db.VarChar(50)
+  /// Password hash (bcrypt)
+  password     String    @db.VarChar(255)
+  /// Petugas Administrasi / Petugas Bed Management
+  role         String    @db.VarChar(30)
+  nama_petugas String    @db.VarChar(100)
+  created_at   DateTime? @default(now()) @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+
+  rekam_alokasi_list         RekamAlokasi[]        @relation("RekamAlokasiAkun")
+  daftar_tunggu_list         DaftarTunggu[]        @relation("DaftarTungguAkun")
+  surat_rujukan_list         SuratRujukan[]        @relation("SuratRujukanAkun")
+  riwayat_status_pasien_list RiwayatStatusPasien[] @relation("RiwayatStatusPasienAkun")
+  rekap_tindakan_list        RekapTindakan[]       @relation("RekapTindakanAkun")
+  tagihan_list               Tagihan[]             @relation("TagihanAkun")
+  log_audit_list             LogAudit[]            @relation("LogAuditAkun")
+
+  @@unique([username], map: "uq_akun_username")
+  @@map("akun")
+}
+
+model Pasien {
+  id_pasien         Int       @id @default(autoincrement())
+  no_rm             String    @db.VarChar(20)
+  nama_pasien       String    @db.VarChar(100)
+  /// Laki-laki / Perempuan
+  jenis_kelamin     String?   @db.VarChar(10)
+  tanggal_lahir     DateTime? @db.Date
+  alamat            String?   @db.VarChar(255)
+  /// Tanggal mulai rawat inap
+  tanggal_masuk     DateTime? @db.Date
+  /// NULL selama pasien masih dirawat
+  tanggal_keluar    DateTime? @db.Date
+  /// Terdaftar / Menunggu / Dirujuk / Rawat Inap; sepakati dengan ESBN
+  status_penanganan String    @default("Terdaftar") @db.VarChar(50)
+  /// Stabil / Darurat
+  kondisi_pasien    String?   @db.VarChar(30)
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+
+  rekam_alokasi_list         RekamAlokasi[]        @relation("RekamAlokasiPasien")
+  daftar_tunggu_list         DaftarTunggu[]        @relation("DaftarTungguPasien")
+  surat_rujukan_list         SuratRujukan[]        @relation("SuratRujukanPasien")
+  riwayat_status_pasien_list RiwayatStatusPasien[] @relation("RiwayatStatusPasienPasien")
+  rme_dummy_list             RmeDummy[]            @relation("RmeDummyPasien")
+  rekap_tindakan_list        RekapTindakan[]       @relation("RekapTindakanPasien")
+  tagihan_list               Tagihan[]             @relation("TagihanPasien")
+
+  @@unique([no_rm], map: "uq_pasien_no_rm")
+  @@map("pasien")
+}
+
+model Bed {
+  id_bed          Int       @id @default(autoincrement())
+  no_bed          String    @db.VarChar(20)
+  nama_bangsal    String    @db.VarChar(100)
+  kelas_perawatan String    @db.VarChar(50)
+  /// Tersedia / Terisi / Pembersihan / Pemeliharaan
+  status          String    @default("Tersedia") @db.VarChar(30)
+  tipe_bed        String?   @db.VarChar(50)
+  created_at      DateTime? @db.Timestamp(0)
+  updated_at      DateTime? @db.Timestamp(0)
+
+  rekam_alokasi_list RekamAlokasi[] @relation("RekamAlokasiBed")
+
+  @@unique([no_bed], map: "uq_bed_no_bed")
+  @@map("bed")
+}
+
+model RekamAlokasi {
+  id_alokasi     Int       @id @default(autoincrement())
+  id_pasien      Int
+  id_bed         Int
+  /// Petugas yang melakukan alokasi
+  id_akun        Int
+  waktu_alokasi  DateTime  @db.Timestamp(0)
+  /// Kosong jika alokasi masih aktif
+  waktu_selesai  DateTime? @db.Timestamp(0)
+  /// Aktif / Selesai / Batal
+  status_alokasi String    @default("Aktif") @db.VarChar(30)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  pasien Pasien @relation("RekamAlokasiPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_pasien")
+  bed    Bed    @relation("RekamAlokasiBed", fields: [id_bed], references: [id_bed], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_bed")
+  akun   Akun   @relation("RekamAlokasiAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_akun")
+
+  @@index([id_pasien], map: "idx_rekam_alokasi_pasien")
+  @@index([id_bed, status_alokasi], map: "idx_rekam_alokasi_bed_status")
+  @@index([id_akun], map: "idx_rekam_alokasi_akun")
+  @@map("rekam_alokasi")
+}
+
+model DaftarTunggu {
+  id_antrean  Int       @id @default(autoincrement())
+  id_pasien   Int
+  /// Petugas pencatat antrean
+  id_akun     Int
+  waktu_masuk DateTime  @db.Timestamp(0)
+  no_antrean  Int
+  /// Menunggu / Dialokasikan / Batal
+  status      String    @default("Menunggu") @db.VarChar(30)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+
+  pasien Pasien @relation("DaftarTungguPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_pasien")
+  akun   Akun   @relation("DaftarTungguAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_akun")
+
+  @@unique([no_antrean], map: "uq_daftar_tunggu_no_antrean")
+  @@index([status, waktu_masuk, id_antrean], map: "idx_daftar_tunggu_fifo")
+  @@index([id_pasien], map: "idx_daftar_tunggu_pasien")
+  @@index([id_akun], map: "idx_daftar_tunggu_akun")
+  @@map("daftar_tunggu")
+}
+
+model RumahSakitRujukan {
+  id_rs               Int       @id @default(autoincrement())
+  nama_rs             String    @db.VarChar(100)
+  alamat              String?   @db.VarChar(255)
+  kontak              String?   @db.VarChar(20)
+  /// Tersedia / Tidak Tersedia
+  status_ketersediaan String    @db.VarChar(30)
+  terakhir_diperbarui DateTime? @db.Timestamp(0)
+  created_at          DateTime? @db.Timestamp(0)
+  updated_at          DateTime? @db.Timestamp(0)
+
+  surat_rujukan_list SuratRujukan[] @relation("SuratRujukanRumahSakitRujukan")
+
+  @@map("rumah_sakit_rujukan")
+}
+
+model SuratRujukan {
+  id_surat        Int       @id @default(autoincrement())
+  no_rujukan      String    @db.VarChar(30)
+  id_pasien       Int
+  id_rs           Int
+  /// Petugas penerbit surat
+  id_akun         Int
+  tanggal_rujukan DateTime  @db.Timestamp(0)
+  alasan_rujukan  String?   @db.Text
+  /// Dibuat / Dikirim / Diterima / Batal
+  status          String    @default("Dibuat") @db.VarChar(30)
+  created_at      DateTime? @db.Timestamp(0)
+  updated_at      DateTime? @db.Timestamp(0)
+
+  pasien              Pasien            @relation("SuratRujukanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_rujukan_pasien")
+  rumah_sakit_rujukan RumahSakitRujukan @relation("SuratRujukanRumahSakitRujukan", fields: [id_rs], references: [id_rs], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_rujukan_rs")
+  akun                Akun              @relation("SuratRujukanAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_rujukan_akun")
+
+  @@unique([no_rujukan], map: "uq_surat_rujukan_no_rujukan")
+  @@index([id_pasien], map: "idx_surat_rujukan_pasien")
+  @@index([id_rs], map: "idx_surat_rujukan_rs")
+  @@index([id_akun], map: "idx_surat_rujukan_akun")
+  @@map("surat_rujukan")
+}
+
+model RiwayatStatusPasien {
+  id_riwayat_status Int      @id @default(autoincrement())
+  id_pasien         Int
+  id_akun           Int
+  status_sebelumnya String?  @db.VarChar(50)
+  status_baru       String   @db.VarChar(50)
+  keterangan        String?  @db.Text
+  waktu_perubahan   DateTime @db.Timestamp(0)
+
+  pasien Pasien @relation("RiwayatStatusPasienPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_riwayat_status_pasien")
+  akun   Akun   @relation("RiwayatStatusPasienAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_riwayat_status_akun")
+
+  @@index([id_pasien], map: "idx_riwayat_status_pasien")
+  @@index([id_akun], map: "idx_riwayat_status_akun")
+  @@map("riwayat_status_pasien")
+}
+
+model RmeDummy {
+  id_riwayat       Int       @id @default(autoincrement())
+  id_pasien        Int
+  kode_tindakan    String    @db.VarChar(20)
+  nama_tindakan    String    @db.VarChar(100)
+  tanggal_tindakan DateTime  @db.Timestamp(0)
+  jumlah           Int       @default(1)
+  keterangan       String?   @db.Text
+  created_at       DateTime? @default(now()) @db.Timestamp(0)
+
+  pasien                     Pasien                @relation("RmeDummyPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rme_dummy_pasien")
+  detail_rekap_tindakan_list DetailRekapTindakan[] @relation("DetailRekapTindakanRmeDummy")
+
+  @@index([id_pasien], map: "idx_rme_dummy_pasien")
+  @@map("rme_dummy")
+}
+
+model RekapTindakan {
+  id_rekap           Int       @id @default(autoincrement())
+  /// Contoh: RKP-20261015-001
+  kode_rekap         String    @db.VarChar(30)
+  id_pasien          Int
+  /// Petugas pembuat rekap. Pembaruan dicatat di log_audit
+  id_akun            Int
+  /// Draft / Proses Verifikasi / Siap Billing
+  status             String    @default("Draft") @db.VarChar(30)
+  catatan            String?   @db.Text
+  keterangan         String?   @db.Text
+  tanggal_dibuat     DateTime  @default(now()) @db.Timestamp(0)
+  tanggal_diperbarui DateTime? @db.Timestamp(0)
+  /// Soft delete untuk menjaga histori
+  deleted_at         DateTime? @db.Timestamp(0)
+
+  pasien                     Pasien                @relation("RekapTindakanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_pasien")
+  akun                       Akun                  @relation("RekapTindakanAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_akun")
+  detail_rekap_tindakan_list DetailRekapTindakan[] @relation("DetailRekapTindakanRekapTindakan")
+  tagihan_list               Tagihan[]             @relation("TagihanRekapTindakan")
+
+  @@unique([kode_rekap], map: "uq_rekap_tindakan_kode_rekap")
+  @@index([id_pasien], map: "idx_rekap_tindakan_pasien")
+  @@index([status, deleted_at], map: "idx_rekap_tindakan_status_deleted")
+  @@index([id_akun], map: "idx_rekap_tindakan_akun")
+  @@map("rekap_tindakan")
+}
+
+model DetailRekapTindakan {
+  id_detail_rekap  Int      @id @default(autoincrement())
+  id_rekap         Int
+  /// Referensi sumber RME Dummy
+  id_riwayat       Int
+  kode_tindakan    String   @db.VarChar(20)
+  nama_tindakan    String   @db.VarChar(100)
+  tanggal_tindakan DateTime @db.Timestamp(0)
+  jumlah           Int      @default(1)
+
+  rekap_tindakan      RekapTindakan   @relation("DetailRekapTindakanRekapTindakan", fields: [id_rekap], references: [id_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_rekap_tindakan_rekap")
+  rme_dummy           RmeDummy        @relation("DetailRekapTindakanRmeDummy", fields: [id_riwayat], references: [id_riwayat], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_rekap_tindakan_riwayat")
+  detail_tagihan_list DetailTagihan[] @relation("DetailTagihanDetailRekapTindakan")
+
+  @@unique([id_rekap, id_riwayat], map: "uq_detail_rekap_tindakan_rekap_riwayat")
+  @@index([id_riwayat], map: "idx_detail_rekap_tindakan_riwayat")
+  @@map("detail_rekap_tindakan")
+}
+
+model Tarif {
+  id_tarif         Int       @id @default(autoincrement())
+  kode_tindakan    String    @db.VarChar(20)
+  nama_tindakan    String    @db.VarChar(100)
+  harga            Decimal   @db.Decimal(15, 2)
+  tanggal_berlaku  DateTime  @db.Date
+  tanggal_berakhir DateTime? @db.Date
+  status           String    @default("Aktif") @db.VarChar(20)
+  created_at       DateTime? @db.Timestamp(0)
+  updated_at       DateTime? @db.Timestamp(0)
+
+  detail_tagihan_list DetailTagihan[] @relation("DetailTagihanTarif")
+
+  @@unique([kode_tindakan, tanggal_berlaku], map: "uq_tarif_kode_tanggal_berlaku")
+  @@map("tarif")
+}
+
+model Tagihan {
+  id_tagihan          Int       @id @default(autoincrement())
+  id_pasien           Int
+  id_rekap            Int
+  /// Petugas pembuat tagihan
+  id_akun             Int
+  no_tagihan          String    @db.VarChar(30)
+  total_biaya         Decimal   @default(0) @db.Decimal(15, 2)
+  /// Draft / Siap Diserahkan / Belum Dibayar / Lunas / Batal
+  status              String    @default("Draft") @db.VarChar(30)
+  catatan_penyesuaian String?   @db.Text
+  alasan_pembatalan   String?   @db.Text
+  tanggal_dibuat      DateTime  @db.Timestamp(0)
+  tanggal_diperbarui  DateTime? @db.Timestamp(0)
+  tanggal_dibatalkan  DateTime? @db.Timestamp(0)
+
+  pasien              Pasien          @relation("TagihanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_pasien")
+  rekap_tindakan      RekapTindakan   @relation("TagihanRekapTindakan", fields: [id_rekap], references: [id_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_rekap")
+  akun                Akun            @relation("TagihanAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_akun")
+  detail_tagihan_list DetailTagihan[] @relation("DetailTagihanTagihan")
+
+  @@unique([no_tagihan], map: "uq_tagihan_no_tagihan")
+  @@index([id_pasien], map: "idx_tagihan_pasien")
+  @@index([id_rekap], map: "idx_tagihan_rekap")
+  @@index([id_akun], map: "idx_tagihan_akun")
+  @@map("tagihan")
+}
+
+model DetailTagihan {
+  id_detail_tagihan Int     @id @default(autoincrement())
+  id_tagihan        Int
+  id_detail_rekap   Int
+  id_tarif          Int
+  nama_tindakan     String  @db.VarChar(100)
+  jumlah            Int     @default(1)
+  harga_satuan      Decimal @db.Decimal(15, 2)
+  subtotal          Decimal @db.Decimal(15, 2)
+
+  tagihan               Tagihan             @relation("DetailTagihanTagihan", fields: [id_tagihan], references: [id_tagihan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tagihan")
+  detail_rekap_tindakan DetailRekapTindakan @relation("DetailTagihanDetailRekapTindakan", fields: [id_detail_rekap], references: [id_detail_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_detail_rekap")
+  tarif                 Tarif               @relation("DetailTagihanTarif", fields: [id_tarif], references: [id_tarif], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tarif")
+
+  @@index([id_tagihan], map: "idx_detail_tagihan_tagihan")
+  @@index([id_detail_rekap], map: "idx_detail_tagihan_detail_rekap")
+  @@index([id_tarif], map: "idx_detail_tagihan_tarif")
+  @@map("detail_tagihan")
+}
+
+model LogAudit {
+  id_log       Int      @id @default(autoincrement())
+  id_akun      Int
+  nama_tabel   String   @db.VarChar(100)
+  /// Referensi longgar ke id baris di nama_tabel, bukan FK
+  id_referensi Int
+  /// CREATE / UPDATE / DELETE / CANCEL / STATUS_CHANGE
+  aksi         String   @db.VarChar(30)
+  /// NULL pada aksi CREATE
+  data_sebelum String?  @db.Text
+  /// NULL pada aksi DELETE
+  data_sesudah String?  @db.Text
+  waktu_aksi   DateTime @default(now()) @db.Timestamp(0)
+
+  akun Akun @relation("LogAuditAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_log_audit_akun")
+
+  @@index([nama_tabel, id_referensi], map: "idx_log_audit_tabel_referensi")
+  @@index([id_akun], map: "idx_log_audit_akun")
+  @@map("log_audit")
 }

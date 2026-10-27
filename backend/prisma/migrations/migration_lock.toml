@@ -1,0 +1,2 @@
+# Do not edit manually; this migration history targets PostgreSQL.
+provider = "postgresql"
