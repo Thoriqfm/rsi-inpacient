@@ -6,3 +6,5 @@ dist/
 coverage/
 *.log
 backend/src/generated/
+docs/
+AGENTS.md
