@@ -1,172 +1,157 @@
-# Prisma 6.19.3 dan Supabase PostgreSQL
+# Setup MySQL lokal
 
-Adaptasi seluruh 15 tabel dari `inpatient_kelompok5_v1_1.sql` (MySQL).
-Migration awal disiapkan offline, belum diterapkan. Database tidak diakses selama
-konfigurasi ini. File `.env` yang sudah ada tidak diubah.
+Konfigurasi default sementara memakai MySQL lokal sesuai keputusan 30 Oktober
+2026. PostgreSQL/Supabase disimpan sebagai konfigurasi terpisah, tidak dihapus.
+Tidak ada data Supabase yang dipindahkan atau diubah.
 
-## Mengisi koneksi Supabase
+## 1. Jalankan server database
 
-1. Buka proyek Supabase yang akan digunakan, lalu pilih **Connect**.
-2. Untuk Express yang berjalan terus di jaringan IPv4, salin koneksi **Session
-   pooler**, port **5432**, ke `DATABASE_URL` dan `DIRECT_URL` dalam `backend/.env`.
-   Gunakan `backend/.env.example` sebagai acuan; pertahankan variabel lain yang ada.
-3. Ganti password dengan password database, bukan anon key atau service-role key.
-   Percent-encode karakter khusus password. Salin host dan username dari dashboard;
-   jangan menebak host pooler dari nama region.
-4. Tambahkan `sslmode=require&schema=public` pada parameter koneksi.
-   `sslmode=require` mengenkripsi koneksi; verifikasi sertifikat yang lebih ketat
-   dapat dikonfigurasi memakai sertifikat proyek sesuai lingkungan deployment.
-5. Jika jaringan mendukung IPv6, `DIRECT_URL` bisa memakai endpoint langsung
-   `db.<project-ref>.supabase.co:5432`, dengan username `postgres`.
-   Koneksi pooler memakai username `postgres.<project-ref>`.
-6. Jika kelak memakai deployment serverless, `DATABASE_URL` dapat menggunakan
-   **Transaction pooler**, port **6543**, dengan `pgbouncer=true`. Tetap gunakan
-   koneksi direct/session untuk `DIRECT_URL` dan migrasi.
+Gunakan MySQL 8.0.16 atau lebih baru agar CHECK jumlah > 0 ditegakkan. Layanan
+berlabel MySQL pada XAMPP biasanya MariaDB; cek SELECT VERSION() dan gunakan
+MariaDB 10.2.1 atau lebih baru. Migration belum diuji pada server hidup.
 
-URL di contoh hanyalah placeholder. Jangan memasukkan password database ke
-frontend atau commit `.env`. Tidak diperlukan Supabase JavaScript SDK maupun
-driver adapter tambahan untuk Prisma 6 dengan engine standar ini.
+Melalui MySQL Workbench, CLI, atau tab SQL phpMyAdmin, buat database lokal kosong:
 
-## Model dan hubungan
+```sql
+CREATE DATABASE inpatient_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
 
-Semua model menggunakan `@@map` ke tabel SQL. Kolom tetap memakai snake_case
-sehingga tidak memerlukan `@map`. Setiap FK diberi nama relation eksplisit dan
-`map` sesuai nama constraint SQL. Semua hubungan di bawah adalah banyak-ke-satu;
-model tujuan menyediakan daftar relasi balik.
+Jangan impor SQL lama secara terpisah; Prisma yang akan membuat tabel.
 
-| Model | Tabel | Referensi FK ke model |
-| --- | --- | --- |
-| Akun | akun | — |
-| Pasien | pasien | — |
-| Bed | bed | — |
-| RekamAlokasi | rekam_alokasi | Pasien, Bed, Akun |
-| DaftarTunggu | daftar_tunggu | Pasien, Akun |
-| RumahSakitRujukan | rumah_sakit_rujukan | — |
-| SuratRujukan | surat_rujukan | Pasien, RumahSakitRujukan, Akun |
-| RiwayatStatusPasien | riwayat_status_pasien | Pasien, Akun |
-| RmeDummy | rme_dummy | Pasien |
-| RekapTindakan | rekap_tindakan | Pasien, Akun |
-| DetailRekapTindakan | detail_rekap_tindakan | RekapTindakan, RmeDummy |
-| Tarif | tarif | — |
-| Tagihan | tagihan | Pasien, RekapTindakan, Akun |
-| DetailTagihan | detail_tagihan | Tagihan, DetailRekapTindakan, Tarif |
-| LogAudit | log_audit | Akun |
-
-`Tagihan.id_rekap` tidak unique: satu rekap dapat memiliki banyak tagihan menurut
-SQL asal. `LogAudit.id_referensi` tetap referensi longgar, bukan FK. Tidak ada FK
-dari `kode_tindakan` ke `Tarif` dalam SQL asal, sehingga tidak ditambahkan.
-
-## Perbedaan dan kompatibilitas
-
-| Aspek SQL MySQL | Adaptasi PostgreSQL / Prisma |
-| --- | --- |
-| Provider `mysql` | `postgresql` untuk Supabase |
-| `INT AUTO_INCREMENT` | `Int @default(autoincrement())`, migration menghasilkan `SERIAL` dan sequence |
-| PK bernama `PRIMARY` di setiap tabel | Nama PostgreSQL `<nama_tabel>_pkey`; kolom dan fungsi PK tetap sama |
-| `DATETIME` tanpa pecahan detik | `DateTime @db.Timestamp(0)`, timestamp tanpa zona waktu |
-| `DATE` | `DateTime @db.Date`; tetap tanggal tanpa waktu |
-| `DECIMAL(15,2)` | `Decimal @db.Decimal(15, 2)`; tetap presisi desimal, gunakan `Prisma.Decimal` untuk kalkulasi uang |
-| `VARCHAR(n)` | `String @db.VarChar(n)`; panjang dipertahankan |
-| `TEXT` | `String @db.Text`; PostgreSQL tidak memiliki batas 65.535 byte yang dimiliki MySQL TEXT |
-| Nullable, nilai default, 15 PK | Dipertahankan, termasuk timestamp nullable yang memiliki default |
-| Seluruh FK, unique dan index | Nama, kolom, urutan kolom, dan hubungan dipertahankan |
-| FK tanpa `ON DELETE` / `ON UPDATE` | `NoAction` eksplisit pada keduanya; tidak menambahkan cascade |
-| `CHECK (jumlah > 0)` | Dua constraint bernama asli ditambahkan manual ke migration SQL |
-| `COMMENT` kolom/tabel | `COMMENT ON COLUMN` / `COMMENT ON TABLE` dalam migration; bukan constraint validasi |
-| InnoDB, `CHARSET=utf8mb4`, backtick | Sintaks khusus MySQL dihapus; PostgreSQL memakai encoding database dan identifier berpetik ganda |
-| `utf8mb4_unicode_ci` | Tidak dipetakan otomatis. Collation PostgreSQL mengikuti database; perbandingan/unique teks dapat berbeda untuk kapitalisasi, aksen, dan spasi akhir |
-| `CURRENT_TIMESTAMP` | `@default(now())`; di PostgreSQL nilainya mengacu awal transaksi, dan timestamp tanpa zona mengikuti zona sesi saat konversi |
-| `CREATE DATABASE inpatient_db`, `USE` | Dihilangkan. Memakai database Supabase yang sudah ada, biasanya `postgres`, schema `public` |
-| `updated_at` / `tanggal_diperbarui` biasa | Tidak diberi `@updatedAt`; aplikasi harus mengisinya seperti desain asal |
-| Daftar nilai status dalam komentar | Tetap `String`, tidak diubah menjadi enum atau CHECK baru |
-
-Collation adalah perbedaan perilaku, bukan sekadar sintaks. Contohnya `Admin` dan
-`admin` dapat diterima sebagai dua username berbeda di PostgreSQL. Jika keunikan
-tanpa membedakan huruf/aksen merupakan kebutuhan, tentukan kebijakannya lalu
-buat migration khusus (misalnya collation ICU yang sesuai atau index ekspresi).
-`citext` saja tidak menyamakan seluruh perilaku `utf8mb4_unicode_ci`.
-
-Timestamp sengaja tidak diubah ke `timestamptz` karena SQL asal menyimpan waktu
-tanpa zona. Tetapkan konvensi zona waktu aplikasi/sesi sebelum mengisi data;
-jangan menganggap Supabase otomatis menyimpan waktu Asia/Jakarta.
-
-Aturan yang belum ada di SQL juga tidak ditambahkan: satu alokasi aktif per
-bed/pasien, larangan periode tarif tumpang tindih, kecocokan pasien antar tabel,
-rumus subtotal/total, dan larangan edit/hapus audit. Komentar audit tidak
-menegakkan izin; aturan tersebut perlu otorisasi backend atau SQL tambahan.
-
-`prisma.config.ts` diganti menjadi `prisma.config.js` (ESM) agar konfigurasi juga
-JavaScript. URL runtime dan `directUrl` tetap diletakkan di datasource schema,
-sesuai Prisma 6. Generator `prisma-client` diganti menjadi `prisma-client-js`,
-sehingga backend dapat mengimpor `@prisma/client` tanpa kompilasi TypeScript.
-CLI dan client yang terpasang sama-sama **6.19.3**. Range versi dalam package.json
-tetap seperti sebelumnya; gunakan lockfile saat instalasi agar hasil konsisten.
-
-## CHECK dan migration pertama
-
-File `migrations/20261027000000_init_postgresql/migration.sql` memuat seluruh DDL,
-dua CHECK, serta komentar SQL asal. Migration dibungkus transaksi. File tersebut
-dibuat dengan `migrate diff --from-empty --to-schema-datamodel`, tanpa mengakses
-database dan tanpa shadow database. Jangan menggantinya dengan output diff baru
-tanpa menyalin kembali CHECK dan komentar yang tidak disimpan oleh schema Prisma.
-
-Sebelum deploy ke Supabase, nonaktifkan Data API jika hanya Express yang akan
-mengakses database, atau aktifkan RLS dan atur grant/policy yang sesuai pada
-seluruh tabel di schema yang diekspos. Tabel yang dibuat lewat SQL/Prisma tidak
-otomatis dilindungi RLS. Migration ini mempertahankan SQL asal dan belum menambah
-RLS/policy. Kredensial owner database untuk pengembangan tidak boleh diberikan
-ke pengguna; sebelum produksi gunakan role backend dengan hak minimum.
-
-Sesudah mengisi `.env`, jalankan pemeriksaan dari folder backend:
+## 2. Instal dependency dari root repository
 
 ```powershell
-Set-Location D:\Coding\RSI\inpatient-system\backend
-npx prisma format
+npm ci
+```
+
+Instalasi sekali di root mencakup backend dan frontend. Prisma CLI dan Client
+terpasang versi 6.19.3; gunakan lockfile yang ada.
+
+## 3. Isi backend/.env
+
+Untuk clone baru saja, dari root:
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
+
+Jika file sudah ada, edit tanpa menimpanya. Contoh akun root lokal tanpa password:
+
+```dotenv
+PORT=3001
+NODE_ENV=development
+DATABASE_URL="mysql://root:@127.0.0.1:3306/inpatient_db"
+```
+
+Sesuaikan username, password, dan port. Untuk akun dengan password:
+
+```dotenv
+DATABASE_URL="mysql://USERNAME:ENCODED_PASSWORD@127.0.0.1:3306/inpatient_db"
+```
+
+Percent-encode karakter khusus password. DIRECT_URL tidak dipakai MySQL. Pastikan
+hanya satu DATABASE_URL aktif; simpan URL Supabase sebagai komentar. Jangan
+commit .env atau menaruh kredensial database di frontend.
+
+## 4. Buat tabel dan Prisma Client
+
+Dari root repository:
+
+```powershell
+cd backend
 npx prisma validate
+npx prisma migrate deploy
 npx prisma generate
+npx prisma migrate status
 ```
 
-Setelah meninjau migration dan memastikan tidak ada tabel aplikasi bernama sama
-pada target, jalankan sendiri perintah berikut. Perintah ini **mengubah database**:
+migrate deploy mengubah database lokal yang ditunjuk .env. Konfigurasi default
+prisma.config.js memakai prisma/schema.prisma dan prisma/mysql/migrations.
+Migration PostgreSQL tidak dijalankan. Hasil awal: 15 tabel aplikasi dan
+_prisma_migrations, tanpa seed data atau akun login.
+
+Jangan memakai db push: dua CHECK dan komentar SQL hanya ada dalam migration.
+Jangan reset database berisi data penting. DDL MySQL tidak sepenuhnya
+transaksional; jika gagal, periksa tabel parsial dan penyebab kegagalan sebelum
+mengulang. Jangan langsung menandai migration gagal sebagai berhasil.
+
+Untuk melihat tabel/data, dari backend:
 
 ```powershell
-npx prisma migrate deploy
+npx prisma studio
 ```
 
-`migrate deploy` menggunakan migration yang sudah disiapkan, tanpa membuat
-database/shadow database. Prisma akan membuat tabel metadata `_prisma_migrations`
-di samping 15 tabel aplikasi. Jangan menjalankan file SQL MySQL asli di Supabase
-atau menjalankan DDL ini secara terpisah sebelum Prisma Migrate.
+Pemeriksaan melalui klien SQL:
 
-## Penggunaan dalam backend JavaScript
-
-Instance bersama ada di `src/config/prisma.js`. Contoh dari file feature yang
-berada dua tingkat di bawah `src` (sesuaikan path import dengan lokasinya):
-
-```js
-import prisma from "../../config/prisma.js";
-
-const pasien = await prisma.pasien.findUnique({
-  where: { no_rm: "RM-001" },
-  include: { rekam_alokasi_list: true },
-});
+```sql
+SELECT VERSION();
+USE inpatient_db;
+SHOW TABLES;
+SHOW CREATE TABLE rme_dummy;
+SHOW CREATE TABLE detail_rekap_tindakan;
 ```
 
-Instance ini belum dipasang ke route/service yang masih berupa kerangka.
-Jangan membuat `PrismaClient` baru setiap request.
+Pastikan kedua tabel terakhir memiliki CHECK jumlah > 0.
 
-## Referensi resmi
+## 5. Jalankan aplikasi
 
-Pemeriksaan offline yang telah lulus: `prisma format`, `prisma validate`,
-`prisma generate` 6.19.3, import ESM instance bersama dan seluruh 15 delegate
-model. Pencocokan SQL sumber, metadata Prisma Client, dan migration juga lulus
-untuk 131 kolom (tipe, nullable, default), 15 PK, 22 FK, 9 unique index,
-24 index biasa, 2 CHECK, dan 33 komentar. Belum dilakukan uji koneksi atau
-eksekusi migration pada PostgreSQL. Generate memakai binary engine lokal yang
-sudah terpasang karena unduhan engine dibatasi oleh jaringan lingkungan ini.
+Dua terminal pada root repository:
 
-- [Prisma config dan dukungan JavaScript](https://www.prisma.io/docs/orm/v6/reference/prisma-config-reference)
-- [Koneksi Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres)
-- [Prisma 6 dengan Supabase](https://www.prisma.io/docs/orm/v6/overview/databases/supabase)
-- [Fitur SQL di luar Prisma Schema](https://www.prisma.io/docs/orm/v6/prisma-schema/data-model/unsupported-database-features)
-- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
+```powershell
+npm run dev --workspace=backend
+```
+
+```powershell
+npm run dev --workspace=frontend
+```
+
+Frontend: <http://localhost:3000>. Backend: <http://localhost:3001/api/health>.
+Health API hanya memeriksa Express, bukan koneksi database. Fitur masih kerangka.
+
+## Kembali ke PostgreSQL/Supabase
+
+1. Hentikan backend dan Prisma Studio.
+2. Comment URL MySQL di backend/.env, aktifkan DATABASE_URL PostgreSQL dan
+   DIRECT_URL lama. Jangan mendefinisikan dua DATABASE_URL aktif.
+3. Dari backend jalankan:
+
+```powershell
+npx prisma validate --config prisma.postgresql.config.js
+npx prisma generate --config prisma.postgresql.config.js
+npx prisma migrate status --config prisma.postgresql.config.js
+```
+
+4. Jalankan kembali backend. Prisma Client yang terakhir di-generate menentukan
+   provider runtime. Generate ulang dengan konfigurasi default sebelum kembali
+   memakai MySQL.
+
+Snapshot PostgreSQL: prisma/postgresql/schema.prisma. Migration asli tetap di
+prisma/migrations dan tidak diubah. Jika Supabase belum siap, tinjau target dan
+migration sebelum menjalankan:
+
+```powershell
+npx prisma migrate deploy --config prisma.postgresql.config.js
+```
+
+Ini pergantian provider, bukan sinkronisasi/pemindahan data. Perubahan model
+berikutnya perlu disesuaikan di kedua schema beserta migration masing-masing.
+Collation MySQL utf8mb4_unicode_ci bisa berbeda dari PostgreSQL untuk kapitalisasi,
+aksen, dan keunikan username. MySQL memakai DATETIME(0); PostgreSQL memakai
+TIMESTAMP(0) tanpa zona. Nilai uang tetap DECIMAL(15,2).
+
+Dokumentasi Supabase sebelumnya: [arsip PostgreSQL](postgresql/README.md).
+
+## Verifikasi perubahan
+
+Lulus tanpa mengakses database: prisma format, prisma validate (kedua konfigurasi),
+prisma generate 6.19.3 untuk MySQL, import instance ESM dengan 15 delegate, dan
+git diff --check. Pencocokan offline: 15 tabel, 15 PK, 22 FK, 9 unique index,
+24 index biasa, 2 CHECK, dan 33 komentar. Snapshot schema dan migration PostgreSQL
+dipastikan sama dengan versi sebelumnya. Koneksi, eksekusi migration, serta
+penegakan constraint pada server MySQL/MariaDB belum diuji.
+
+Referensi:
+- [MySQL: CHECK mulai ditegakkan pada 8.0.16](https://dev.mysql.com/doc/refman/8.0/en/alter-table.html)
+- [Prisma 6: fitur database dan batasan schema](https://www.prisma.io/docs/orm/v6/reference/database-features)

@@ -1,13 +1,12 @@
-// PostgreSQL adaptation of inpatient_kelompok5_v1_1.sql (15 tables).
+// Active local MySQL schema (15 tables). PostgreSQL snapshot: postgresql/schema.prisma.
 // Keep CHECK constraints and SQL comments in the reviewed migration SQL.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model Akun {
@@ -18,8 +17,8 @@ model Akun {
   /// Petugas Administrasi / Petugas Bed Management
   role         String    @db.VarChar(30)
   nama_petugas String    @db.VarChar(100)
-  created_at   DateTime? @default(now()) @db.Timestamp(0)
-  updated_at   DateTime? @db.Timestamp(0)
+  created_at   DateTime? @default(now()) @db.DateTime(0)
+  updated_at   DateTime? @db.DateTime(0)
 
   rekam_alokasi_list         RekamAlokasi[]        @relation("RekamAlokasiAkun")
   daftar_tunggu_list         DaftarTunggu[]        @relation("DaftarTungguAkun")
@@ -49,8 +48,8 @@ model Pasien {
   status_penanganan String    @default("Terdaftar") @db.VarChar(50)
   /// Stabil / Darurat
   kondisi_pasien    String?   @db.VarChar(30)
-  created_at        DateTime? @default(now()) @db.Timestamp(0)
-  updated_at        DateTime? @db.Timestamp(0)
+  created_at        DateTime? @default(now()) @db.DateTime(0)
+  updated_at        DateTime? @db.DateTime(0)
 
   rekam_alokasi_list         RekamAlokasi[]        @relation("RekamAlokasiPasien")
   daftar_tunggu_list         DaftarTunggu[]        @relation("DaftarTungguPasien")
@@ -72,8 +71,8 @@ model Bed {
   /// Tersedia / Terisi / Pembersihan / Pemeliharaan
   status          String    @default("Tersedia") @db.VarChar(30)
   tipe_bed        String?   @db.VarChar(50)
-  created_at      DateTime? @db.Timestamp(0)
-  updated_at      DateTime? @db.Timestamp(0)
+  created_at      DateTime? @db.DateTime(0)
+  updated_at      DateTime? @db.DateTime(0)
 
   rekam_alokasi_list RekamAlokasi[] @relation("RekamAlokasiBed")
 
@@ -87,13 +86,13 @@ model RekamAlokasi {
   id_bed         Int
   /// Petugas yang melakukan alokasi
   id_akun        Int
-  waktu_alokasi  DateTime  @db.Timestamp(0)
+  waktu_alokasi  DateTime  @db.DateTime(0)
   /// Kosong jika alokasi masih aktif
-  waktu_selesai  DateTime? @db.Timestamp(0)
+  waktu_selesai  DateTime? @db.DateTime(0)
   /// Aktif / Selesai / Batal
   status_alokasi String    @default("Aktif") @db.VarChar(30)
-  created_at     DateTime? @db.Timestamp(0)
-  updated_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.DateTime(0)
+  updated_at     DateTime? @db.DateTime(0)
 
   pasien Pasien @relation("RekamAlokasiPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_pasien")
   bed    Bed    @relation("RekamAlokasiBed", fields: [id_bed], references: [id_bed], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_bed")
@@ -110,12 +109,12 @@ model DaftarTunggu {
   id_pasien   Int
   /// Petugas pencatat antrean
   id_akun     Int
-  waktu_masuk DateTime  @db.Timestamp(0)
+  waktu_masuk DateTime  @db.DateTime(0)
   no_antrean  Int
   /// Menunggu / Dialokasikan / Batal
   status      String    @default("Menunggu") @db.VarChar(30)
-  created_at  DateTime? @db.Timestamp(0)
-  updated_at  DateTime? @db.Timestamp(0)
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
 
   pasien Pasien @relation("DaftarTungguPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_pasien")
   akun   Akun   @relation("DaftarTungguAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_akun")
@@ -134,9 +133,9 @@ model RumahSakitRujukan {
   kontak              String?   @db.VarChar(20)
   /// Tersedia / Tidak Tersedia
   status_ketersediaan String    @db.VarChar(30)
-  terakhir_diperbarui DateTime? @db.Timestamp(0)
-  created_at          DateTime? @db.Timestamp(0)
-  updated_at          DateTime? @db.Timestamp(0)
+  terakhir_diperbarui DateTime? @db.DateTime(0)
+  created_at          DateTime? @db.DateTime(0)
+  updated_at          DateTime? @db.DateTime(0)
 
   surat_rujukan_list SuratRujukan[] @relation("SuratRujukanRumahSakitRujukan")
 
@@ -150,12 +149,12 @@ model SuratRujukan {
   id_rs           Int
   /// Petugas penerbit surat
   id_akun         Int
-  tanggal_rujukan DateTime  @db.Timestamp(0)
+  tanggal_rujukan DateTime  @db.DateTime(0)
   alasan_rujukan  String?   @db.Text
   /// Dibuat / Dikirim / Diterima / Batal
   status          String    @default("Dibuat") @db.VarChar(30)
-  created_at      DateTime? @db.Timestamp(0)
-  updated_at      DateTime? @db.Timestamp(0)
+  created_at      DateTime? @db.DateTime(0)
+  updated_at      DateTime? @db.DateTime(0)
 
   pasien              Pasien            @relation("SuratRujukanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_rujukan_pasien")
   rumah_sakit_rujukan RumahSakitRujukan @relation("SuratRujukanRumahSakitRujukan", fields: [id_rs], references: [id_rs], onDelete: NoAction, onUpdate: NoAction, map: "fk_surat_rujukan_rs")
@@ -175,7 +174,7 @@ model RiwayatStatusPasien {
   status_sebelumnya String?  @db.VarChar(50)
   status_baru       String   @db.VarChar(50)
   keterangan        String?  @db.Text
-  waktu_perubahan   DateTime @db.Timestamp(0)
+  waktu_perubahan   DateTime @db.DateTime(0)
 
   pasien Pasien @relation("RiwayatStatusPasienPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_riwayat_status_pasien")
   akun   Akun   @relation("RiwayatStatusPasienAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_riwayat_status_akun")
@@ -190,10 +189,10 @@ model RmeDummy {
   id_pasien        Int
   kode_tindakan    String    @db.VarChar(20)
   nama_tindakan    String    @db.VarChar(100)
-  tanggal_tindakan DateTime  @db.Timestamp(0)
+  tanggal_tindakan DateTime  @db.DateTime(0)
   jumlah           Int       @default(1)
   keterangan       String?   @db.Text
-  created_at       DateTime? @default(now()) @db.Timestamp(0)
+  created_at       DateTime? @default(now()) @db.DateTime(0)
 
   pasien                     Pasien                @relation("RmeDummyPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rme_dummy_pasien")
   detail_rekap_tindakan_list DetailRekapTindakan[] @relation("DetailRekapTindakanRmeDummy")
@@ -213,10 +212,10 @@ model RekapTindakan {
   status             String    @default("Draft") @db.VarChar(30)
   catatan            String?   @db.Text
   keterangan         String?   @db.Text
-  tanggal_dibuat     DateTime  @default(now()) @db.Timestamp(0)
-  tanggal_diperbarui DateTime? @db.Timestamp(0)
+  tanggal_dibuat     DateTime  @default(now()) @db.DateTime(0)
+  tanggal_diperbarui DateTime? @db.DateTime(0)
   /// Soft delete untuk menjaga histori
-  deleted_at         DateTime? @db.Timestamp(0)
+  deleted_at         DateTime? @db.DateTime(0)
 
   pasien                     Pasien                @relation("RekapTindakanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_pasien")
   akun                       Akun                  @relation("RekapTindakanAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_akun")
@@ -237,7 +236,7 @@ model DetailRekapTindakan {
   id_riwayat       Int
   kode_tindakan    String   @db.VarChar(20)
   nama_tindakan    String   @db.VarChar(100)
-  tanggal_tindakan DateTime @db.Timestamp(0)
+  tanggal_tindakan DateTime @db.DateTime(0)
   jumlah           Int      @default(1)
 
   rekap_tindakan      RekapTindakan   @relation("DetailRekapTindakanRekapTindakan", fields: [id_rekap], references: [id_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_rekap_tindakan_rekap")
@@ -257,8 +256,8 @@ model Tarif {
   tanggal_berlaku  DateTime  @db.Date
   tanggal_berakhir DateTime? @db.Date
   status           String    @default("Aktif") @db.VarChar(20)
-  created_at       DateTime? @db.Timestamp(0)
-  updated_at       DateTime? @db.Timestamp(0)
+  created_at       DateTime? @db.DateTime(0)
+  updated_at       DateTime? @db.DateTime(0)
 
   detail_tagihan_list DetailTagihan[] @relation("DetailTagihanTarif")
 
@@ -278,9 +277,9 @@ model Tagihan {
   status              String    @default("Draft") @db.VarChar(30)
   catatan_penyesuaian String?   @db.Text
   alasan_pembatalan   String?   @db.Text
-  tanggal_dibuat      DateTime  @db.Timestamp(0)
-  tanggal_diperbarui  DateTime? @db.Timestamp(0)
-  tanggal_dibatalkan  DateTime? @db.Timestamp(0)
+  tanggal_dibuat      DateTime  @db.DateTime(0)
+  tanggal_diperbarui  DateTime? @db.DateTime(0)
+  tanggal_dibatalkan  DateTime? @db.DateTime(0)
 
   pasien              Pasien          @relation("TagihanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_pasien")
   rekap_tindakan      RekapTindakan   @relation("TagihanRekapTindakan", fields: [id_rekap], references: [id_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_rekap")
@@ -326,7 +325,7 @@ model LogAudit {
   data_sebelum String?  @db.Text
   /// NULL pada aksi DELETE
   data_sesudah String?  @db.Text
-  waktu_aksi   DateTime @default(now()) @db.Timestamp(0)
+  waktu_aksi   DateTime @default(now()) @db.DateTime(0)
 
   akun Akun @relation("LogAuditAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_log_audit_akun")
 
