@@ -73,6 +73,8 @@ model Bed {
   tipe_bed        String?   @db.VarChar(50)
   created_at      DateTime? @db.DateTime(0)
   updated_at      DateTime? @db.DateTime(0)
+  /// Soft delete; bed nonaktif tidak dihapus fisik
+  deleted_at      DateTime? @db.DateTime(0)
 
   rekam_alokasi_list RekamAlokasi[] @relation("RekamAlokasiBed")
 
@@ -91,12 +93,15 @@ model RekamAlokasi {
   waktu_selesai  DateTime? @db.DateTime(0)
   /// Aktif / Selesai / Batal
   status_alokasi String    @default("Aktif") @db.VarChar(30)
+  /// Asal antrean jika alokasi dibuat dari daftar tunggu
+  id_antrean     Int?      @unique(map: "uq_rekam_alokasi_antrean")
   created_at     DateTime? @db.DateTime(0)
   updated_at     DateTime? @db.DateTime(0)
 
-  pasien Pasien @relation("RekamAlokasiPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_pasien")
-  bed    Bed    @relation("RekamAlokasiBed", fields: [id_bed], references: [id_bed], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_bed")
-  akun   Akun   @relation("RekamAlokasiAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_akun")
+  pasien  Pasien        @relation("RekamAlokasiPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_pasien")
+  bed     Bed           @relation("RekamAlokasiBed", fields: [id_bed], references: [id_bed], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_bed")
+  akun    Akun          @relation("RekamAlokasiAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_akun")
+  antrean DaftarTunggu? @relation("RekamAlokasiAntrean", fields: [id_antrean], references: [id_antrean], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_antrean")
 
   @@index([id_pasien], map: "idx_rekam_alokasi_pasien")
   @@index([id_bed, status_alokasi], map: "idx_rekam_alokasi_bed_status")
@@ -116,8 +121,9 @@ model DaftarTunggu {
   created_at  DateTime? @db.DateTime(0)
   updated_at  DateTime? @db.DateTime(0)
 
-  pasien Pasien @relation("DaftarTungguPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_pasien")
-  akun   Akun   @relation("DaftarTungguAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_akun")
+  pasien        Pasien        @relation("DaftarTungguPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_pasien")
+  akun          Akun          @relation("DaftarTungguAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_daftar_tunggu_akun")
+  rekam_alokasi RekamAlokasi? @relation("RekamAlokasiAntrean")
 
   @@unique([no_antrean], map: "uq_daftar_tunggu_no_antrean")
   @@index([status, waktu_masuk, id_antrean], map: "idx_daftar_tunggu_fifo")

@@ -5,10 +5,13 @@ import morgan from "morgan";
 
 const app = express();
 
+// Frontend origin follows ARCHITECTURE.md (port 3000) and can be overridden per environment.
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+
 app.use(helmet());
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: FRONTEND_ORIGIN,
         credentials: true,
     }),
 );
@@ -17,8 +20,11 @@ app.use(express.json());
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({
-        success: true,
-        message: "Inpatient API is running",
+        data: {
+            status: "ok",
+            service: "inpatient-api",
+        },
+        meta: null,
     });
 });
 
