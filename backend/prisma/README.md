@@ -95,6 +95,30 @@ SHOW CREATE TABLE detail_rekap_tindakan;
 
 Pastikan kedua tabel terakhir memiliki CHECK jumlah > 0.
 
+### 4.1 Perubahan schema 31 Oktober 2026
+
+Migration `20261031000000_bed_soft_delete_allocation_guard_queue_link` tersedia
+di kedua folder migration dan dijalankan sesuai provider aktif:
+
+- `bed.deleted_at` — soft delete bed; bed nonaktif tidak dihapus fisik.
+- `rekam_alokasi.id_antrean` — nullable, unik, FK ke `daftar_tunggu`; satu entri
+  antrean maksimal menghasilkan satu alokasi.
+- Guard satu alokasi aktif per bed, berbeda per provider:
+  - MySQL: generated column `id_bed_aktif` (STORED) + `uq_rekam_alokasi_bed_aktif`.
+    InnoDB mengizinkan banyak NULL pada unique index, sehingga hanya baris
+    berstatus `Aktif` yang unik per `id_bed`.
+  - PostgreSQL: partial unique index `uq_rekam_alokasi_bed_aktif` pada `id_bed`
+    dengan predicate `status_alokasi = 'Aktif'`.
+
+`id_bed_aktif` tidak ada di `schema.prisma` karena Prisma tidak memodelkan
+generated column; partial index juga tidak dimodelkan. Jangan memakai
+`prisma db push`: perintah itu akan mencoba menghapus guard. Guard ini hanya
+hidup di migration SQL dan harus disalin kembali jika migration di-squash.
+
+Jumlah objek setelah perubahan: 23 foreign key (sebelumnya 22), 11 unique index
+di MySQL (sebelumnya 9), dan 10 unique index + 1 partial unique index di
+PostgreSQL (sebelumnya 9). Migration ini belum dijalankan ke database mana pun.
+
 ## 5. Jalankan aplikasi
 
 Dua terminal pada root repository:
