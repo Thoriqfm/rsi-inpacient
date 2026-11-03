@@ -76,6 +76,7 @@ export async function loginApi(
         .join("")
         .slice(0, 2)
         .toUpperCase();
+
       const rawRole = String(backendUser?.role || "");
       const mappedRole: UserRole =
         rawRole.toLowerCase().includes("administrasi")
@@ -179,19 +180,29 @@ export async function fetchAvailableBedsApi(): Promise<{
         const json = await res.json();
         const rawItems = json.data?.items || [];
         if (rawItems.length > 0) {
-          const mapped: BedItem[] = rawItems.map((b: Record<string, unknown>, idx: number) => ({
-            id_bed: Number(b.id_bed || idx + 1),
-            no_bed: String(b.no_bed || `BED-ANG-${101 + idx}`),
-            nama_bangsal: String(b.nama_bangsal || "Anggrek 1"),
-            nama_kamar: `Kamar ${101 + idx}`,
-            kelas_perawatan: (b.kelas_perawatan as BedItem["kelas_perawatan"]) || "Kelas 1",
-            tipe_bed: String(b.tipe_bed || "2 Bed/Rm"),
-            status: "Tersedia",
-            fasilitas: "1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central",
-            updated_relative: "10 menit lalu",
-            updated_timestamp: "Hari ini, 14:20 WIB",
-            occupant: null,
-          }));
+          const mapped: BedItem[] = rawItems.map((b: Record<string, unknown>, idx: number) => {
+            const roomNumMatch = String(b.no_bed || "").match(/(\d+)$/);
+            const roomNum = roomNumMatch ? roomNumMatch[1] : String(101 + idx);
+            const isVip = b.kelas_perawatan === "VIP";
+            const defaultKamar = isVip ? `Suite ${roomNum.slice(-2)}` : `Kamar ${roomNum}`;
+            const defaultFasilitas = isVip
+              ? "1 Tempat Tidur Elektrik • AC • Sofa Penunggu • Smart TV • Kulkas"
+              : "1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central";
+
+            return {
+              id_bed: Number(b.id_bed || idx + 1),
+              no_bed: String(b.no_bed || `BED-ANG-${101 + idx}`),
+              nama_bangsal: String(b.nama_bangsal || "Anggrek 1"),
+              nama_kamar: b.nama_kamar ? String(b.nama_kamar) : defaultKamar,
+              kelas_perawatan: (b.kelas_perawatan as BedItem["kelas_perawatan"]) || "Kelas 1",
+              tipe_bed: String(b.tipe_bed || (isVip ? "1 Bed/Rm" : "2 Bed/Rm")),
+              status: "Tersedia",
+              fasilitas: b.fasilitas ? String(b.fasilitas) : defaultFasilitas,
+              updated_relative: "10 menit lalu",
+              updated_timestamp: "Hari ini, 14:20 WIB",
+              occupant: null,
+            };
+          });
           return { items: mapped, source: "backend" };
         }
       }
@@ -225,19 +236,36 @@ export async function fetchBedsApi(): Promise<{
         const json = await res.json();
         const rawItems = json.data?.items || [];
         if (rawItems.length > 0) {
-          const mapped: BedItem[] = rawItems.map((b: Record<string, unknown>, idx: number) => ({
-            id_bed: Number(b.id_bed || idx + 1),
-            no_bed: String(b.no_bed || `BED-ANG-${101 + idx}`),
-            nama_bangsal: String(b.nama_bangsal || "Anggrek 1"),
-            nama_kamar: `Kamar ${101 + idx}`,
-            kelas_perawatan: (b.kelas_perawatan as BedItem["kelas_perawatan"]) || "Kelas 1",
-            tipe_bed: String(b.tipe_bed || "2 Bed/Rm"),
-            status: (b.status as BedStatus) || "Tersedia",
-            fasilitas: "1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central",
-            updated_relative: "10 menit lalu",
-            updated_timestamp: "Hari ini, 14:20 WIB",
-            occupant: null,
-          }));
+          const mapped: BedItem[] = rawItems.map((b: Record<string, unknown>, idx: number) => {
+            const rawOccupant = b.occupant as { no_rm?: string; nama_pasien?: string } | null;
+            const roomNumMatch = String(b.no_bed || "").match(/(\d+)$/);
+            const roomNum = roomNumMatch ? roomNumMatch[1] : String(101 + idx);
+            const isVip = b.kelas_perawatan === "VIP";
+            const defaultKamar = isVip ? `Suite ${roomNum.slice(-2)}` : `Kamar ${roomNum}`;
+            const defaultFasilitas = isVip
+              ? "1 Tempat Tidur Elektrik • AC • Sofa Penunggu • Smart TV • Kulkas"
+              : "1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central";
+
+            return {
+              id_bed: Number(b.id_bed || idx + 1),
+              no_bed: String(b.no_bed || `BED-ANG-${101 + idx}`),
+              nama_bangsal: String(b.nama_bangsal || "Anggrek 1"),
+              nama_kamar: b.nama_kamar ? String(b.nama_kamar) : defaultKamar,
+              kelas_perawatan: (b.kelas_perawatan as BedItem["kelas_perawatan"]) || "Kelas 1",
+              tipe_bed: String(b.tipe_bed || (isVip ? "1 Bed/Rm" : "2 Bed/Rm")),
+              status: (b.status as BedStatus) || "Tersedia",
+              fasilitas: b.fasilitas ? String(b.fasilitas) : defaultFasilitas,
+              updated_relative: "10 menit lalu",
+              updated_timestamp: "Hari ini, 14:20 WIB",
+              occupant: rawOccupant
+                ? {
+                    no_rm: rawOccupant.no_rm || "RM-2026-00142",
+                    nama_pasien: rawOccupant.nama_pasien || "Hendra Wijaya",
+                    dokter_dpjp: "dr. Nanda Putra, Sp.PD",
+                  }
+                : null,
+            };
+          });
           return { items: mapped, source: "backend" };
         }
       }
@@ -274,6 +302,19 @@ export async function createBedApi(
     throw error;
   }
 
+  const roomNumMatch = normalizedNoBed.match(/(\d+)$/);
+  const roomNum = roomNumMatch ? roomNumMatch[1] : "101";
+  const isVip = payload.kelas_perawatan === "VIP";
+  const { relative, timestamp } = formatNowTimestamp();
+
+  const resolvedKamar =
+    payload.nama_kamar || (isVip ? `Suite ${roomNum.slice(-2)}` : `Kamar ${roomNum}`);
+  const resolvedFasilitas =
+    payload.fasilitas ||
+    (isVip
+      ? "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas"
+      : "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central");
+
   const token = getToken();
   if (token && !token.startsWith("mock-")) {
     try {
@@ -286,34 +327,55 @@ export async function createBedApi(
         body: JSON.stringify({
           no_bed: normalizedNoBed,
           nama_bangsal: payload.nama_bangsal,
+          nama_kamar: resolvedKamar,
           kelas_perawatan: payload.kelas_perawatan,
-          tipe_bed: payload.tipe_bed || "Standar",
+          tipe_bed: payload.tipe_bed || (isVip ? "1 Bed/Rm" : "2 Bed/Rm"),
+          fasilitas: resolvedFasilitas,
           status: "Tersedia",
         }),
       });
       if (res.status === 409) {
         throw new Error(`Nomor Bed "${normalizedNoBed}" sudah terdaftar.`);
       }
-    } catch {
+      if (res.ok) {
+        const json = await res.json();
+        const b = json.data;
+        if (b) {
+          const createdFromBackend: BedItem = {
+            id_bed: Number(b.id_bed),
+            no_bed: String(b.no_bed),
+            nama_bangsal: String(b.nama_bangsal),
+            nama_kamar: b.nama_kamar ? String(b.nama_kamar) : resolvedKamar,
+            kelas_perawatan: (b.kelas_perawatan as BedItem["kelas_perawatan"]) || payload.kelas_perawatan,
+            tipe_bed: String(b.tipe_bed || (isVip ? "1 Bed/Rm" : "2 Bed/Rm")),
+            status: "Tersedia",
+            fasilitas: b.fasilitas ? String(b.fasilitas) : resolvedFasilitas,
+            updated_relative: relative,
+            updated_timestamp: timestamp,
+            occupant: null,
+          };
+          const updated = [createdFromBackend, ...beds];
+          saveMockBeds(updated);
+          return createdFromBackend;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("sudah terdaftar")) {
+        throw err;
+      }
       // proceed with local state update
     }
   }
-
-  const roomNumMatch = normalizedNoBed.match(/(\d+)$/);
-  const roomNum = roomNumMatch ? roomNumMatch[1] : "101";
-  const isVip = payload.kelas_perawatan === "VIP";
-  const { relative, timestamp } = formatNowTimestamp();
 
   const newBed: BedItem = {
     id_bed: Math.max(0, ...beds.map((b) => b.id_bed)) + 1,
     no_bed: normalizedNoBed,
     nama_bangsal: payload.nama_bangsal,
-    nama_kamar:
-      payload.nama_kamar || (isVip ? `Suite ${roomNum.slice(-2)}` : `Kamar ${roomNum}`),
+    nama_kamar: resolvedKamar,
     kelas_perawatan: payload.kelas_perawatan,
     tipe_bed:
       payload.tipe_bed ||
-      (payload.kelas_perawatan === "VIP"
+      (isVip
         ? "1 Bed/Rm"
         : payload.kelas_perawatan === "Kelas 1"
         ? "2 Bed/Rm"
@@ -321,10 +383,7 @@ export async function createBedApi(
         ? "4 Bed/Rm"
         : "6 Bed/Rm"),
     status: "Tersedia",
-    fasilitas:
-      payload.kelas_perawatan === "VIP"
-        ? "1 Tempat Tidur Elektrik • AC • Sofa Penunggu • Smart TV • Kulkas"
-        : "1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central",
+    fasilitas: resolvedFasilitas,
     updated_relative: relative,
     updated_timestamp: timestamp,
     occupant: null,
@@ -352,7 +411,7 @@ export async function updateBedStatusApi(
   const token = getToken();
   if (token && !token.startsWith("mock-")) {
     try {
-      await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
+      const res = await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -360,7 +419,16 @@ export async function updateBedStatusApi(
         },
         body: JSON.stringify({ status: payload.status }),
       });
-    } catch {
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json?.message) {
+          throw new Error(json.message);
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Terisi")) {
+        throw err;
+      }
       // continue local update
     }
   }
@@ -375,9 +443,8 @@ export async function updateBedStatusApi(
     occupant:
       payload.status === "Terisi"
         ? current.occupant || {
-            id_pasien: 101,
-            nama_pasien: "Hendra Wijaya",
             no_rm: "RM-2026-00142",
+            nama_pasien: "Hendra Wijaya",
             dokter_dpjp: "dr. Nanda Putra, Sp.PD",
           }
         : null,

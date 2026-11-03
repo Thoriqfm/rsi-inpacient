@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { BedItem, KelasPerawatan } from "@/types";
 import { BANGSAL_OPTIONS } from "@/lib/mock-fallback";
-import { X, CheckCircle2, AlertTriangle, Bed, Sparkles } from "lucide-react";
+import { X, CheckCircle2, AlertTriangle, Bed } from "lucide-react";
 
 interface TambahBedModalProps {
   isOpen: boolean;
@@ -68,11 +68,22 @@ export function TambahBedModal({
 
     setIsSubmitting(true);
     try {
+      const isVip = kelas === "VIP";
+      const roomNumMatch = normalized.match(/(\d+)$/);
+      const roomNum = roomNumMatch ? roomNumMatch[1] : "101";
+      const namaKamar = isVip ? `Suite ${roomNum.slice(-2)}` : `Kamar ${roomNum}`;
+      const fasilitasStr = isVip
+        ? "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas"
+        : "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central";
+
       const { createBedApi } = await import("@/lib/api-client");
       const created = await createBedApi({
         no_bed: normalized,
         nama_bangsal: bangsal.replace("Bangsal ", "").replace(" Utama", ""),
+        nama_kamar: namaKamar,
         kelas_perawatan: kelas,
+        tipe_bed: isVip ? "1 Bed/Rm" : kelas === "Kelas 1" ? "2 Bed/Rm" : kelas === "Kelas 2" ? "4 Bed/Rm" : "6 Bed/Rm",
+        fasilitas: fasilitasStr,
       });
       onSuccess(created);
       onClose();

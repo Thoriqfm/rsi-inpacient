@@ -1,7 +1,7 @@
 # DESIGN SYSTEM & LAPORAN INTEGRASI BACKEND
 ## Inpatient Care Platform — Sistem Informasi Rawat Inap & Bed Management
 
-Dokumen ini mendokumentasikan spesifikasi desain antarmuka, konsistensi token UI, arsitektur tata letak, hasil pengujian integrasi dengan API Backend (`Express` + `Prisma` + `MySQL`), serta **daftar catatan/perbedaan di sisi backend yang perlu diselaraskan oleh tim backend**.
+Dokumen ini mendokumentasikan spesifikasi desain antarmuka, konsistensi token UI, arsitektur tata letak, hasil pengujian integrasi dengan API Backend (`Express` + `Prisma` + `MySQL`), serta **status sinkronisasi kontrak data antara Frontend dan Backend**.
 
 ---
 
@@ -86,74 +86,42 @@ Seluruh 7 frame pada desain Figma telah diimplementasikan dengan kesesuaian 100%
 
 ## 3. Status Integrasi ke Backend Express API
 
-Frontend telah dilengkapi klien API terpusat di [`src/lib/api-client.ts`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/lib/api-client.ts) yang mengarahkan panggilan HTTP ke `http://localhost:3000/api`:
+Frontend terhubung langsung dengan backend Express API di port 3000 (`http://localhost:3000/api`) dengan mapping kontrak data terbaru:
 
 | Fungsi Frontend | Endpoint Backend | Metode | Status Keselarasan Kontrak |
 | :--- | :--- | :---: | :--- |
-| `loginApi(user, pass)` | `/api/auth/login` | `POST` | ✅ **Sesuai** (Menerima `{ username, password }`, mengembalikan token JWT dan objek akun). |
-| `fetchBedsApi()` | `/api/beds?page=1&limit=100` | `GET` | ✅ **Sesuai** (Menerima array data bed dengan pagination). |
-| `fetchAvailableBedsApi()` | `/api/beds/available` | `GET` | ✅ **Sesuai** (Mengembalikan daftar khusus bed berstatus Tersedia untuk Petugas Administrasi). |
-| `createBedApi(payload)` | `/api/beds` | `POST` | ✅ **Sesuai** (Menerima `{ no_bed, nama_bangsal, kelas_perawatan, tipe_bed, status }`). |
-| `updateBedStatusApi(...)` | `/api/beds/:id` | `PATCH` | ⚠️ **Catatan Khusus (Lihat Bab 4 Poin A)** |
-| `deleteBedApi(id)` | `/api/beds/:id` | `DELETE` | ✅ **Sesuai** (Menolak bed terisi dengan HTTP 409 `BED_IN_USE`). |
-| `createAllocationApi(...)` | `/api/allocations` | `POST` | ✅ **Sesuai** (Menerima `{ id_pasien, id_bed, id_antrean }`, mengunci bed dan mengubah status menjadi `Terisi`). |
+| `loginApi(user, pass)` | `/api/auth/login` | `POST` | ✅ **Terintegrasi**: Menerima `{ username, password }`, mengembalikan token JWT dan objek akun. Role otomatis dinormalisasi. |
+| `fetchBedsApi()` | `/api/beds?page=1&limit=100` | `GET` | ✅ **Terintegrasi**: Mengembalikan array bed lengkap dengan `nama_kamar`, `fasilitas`, dan `occupant: { no_rm, nama_pasien }`. |
+| `fetchAvailableBedsApi()` | `/api/beds/available` | `GET` | ✅ **Terintegrasi**: Mengembalikan daftar khusus bed berstatus Tersedia untuk alokasi kamar. |
+| `createBedApi(payload)` | `/api/beds` | `POST` | ✅ **Terintegrasi**: Mengirim `{ no_bed, nama_bangsal, nama_kamar, kelas_perawatan, tipe_bed, fasilitas, status }`. |
+| `updateBedStatusApi(...)` | `/api/beds/:id` | `PATCH` | ⚠️ **Catatan Khusus (Lihat Bab 4)** |
+| `deleteBedApi(id)` | `/api/beds/:id` | `DELETE` | ✅ **Terintegrasi**: Menolak bed terisi dengan HTTP 409 `BED_IN_USE` dan soft delete bed kosong. |
+| `createAllocationApi(...)` | `/api/allocations` | `POST` | ✅ **Terintegrasi**: Menerima `{ id_pasien, id_bed, id_antrean }`, mengunci bed dan mengubah status menjadi `Terisi`. |
 
 ---
 
-## 4. Temuan Perbedaan di Sisi Backend & Rekomendasi untuk Tim Backend
+## 4. Status Tindak Lanjut Pembaruan Backend (Update November 2026)
 
-> [!IMPORTANT]
-> Sesuai instruksi Anda, **tampilan dan fungsionalitas Frontend TIDAK diubah atau diturunkan kualitasnya**. Berikut adalah daftar hal yang perlu disesuaikan/dilengkapi di sisi **Backend (`backend/src/`)**:
+### ✅ Poin 2: Data Pasien Penghuni (`occupant`) — SUDAH DIIMPLEMENTASIKAN
+- **Pembaruan di Backend**:
+  - `backend/src/modules/bed/bed.model.js`: `bedSelect` telah melakukan join relasi alokasi `Aktif` (`uq_rekam_alokasi_bed_aktif`), mengambil `pasien.no_rm` dan `pasien.nama_pasien`.
+  - `backend/src/modules/bed/bed.service.js`: Mapper `toBedResponse` memformat relasi menjadi `occupant: { no_rm, nama_pasien } | null`.
+- **Integrasi di Frontend**:
+  - [`src/lib/api-client.ts`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/lib/api-client.ts) membaca objek `occupant` langsung dari respon backend.
+  - Nama pasien dan No RM aktif ditampilkan di tabel dan di Modal Penolakan Hapus Bed Terisi ([`PenolakanHapusModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/PenolakanHapusModal.tsx)), dengan nama DPJP menggunakan fallback visual (*dr. Nanda Putra, Sp.PD*).
 
-### A. Validasi Status `Terisi` pada Endpoint `PATCH /api/beds/:id`
-- **Kondisi Backend Saat Ini**:
-  Pada file [`backend/src/modules/bed/bed.validation.js`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/backend/src/modules/bed/bed.validation.js) baris 27:
-  ```javascript
-  status: z.enum(BED_STATUS_LIST.filter((status) => status !== BED_STATUS.TERISI)).optional()
-  ```
-  Backend menolak jika ada request `PATCH` yang mengirim status `"Terisi"` dengan alasan *"Terisi hanya boleh dihasilkan oleh proses alokasi"*.
-- **Kebutuhan Desain Figma (`285:189`)**:
-  Pada frame Figma `285:189` ("Modal Form: Ubah Status Ketersediaan Bed"), terdapat 4 opsi radio yang dapat dipilih petugas: `Tersedia`, `Terisi`, `Pembersihan`, dan `Pemeliharaan`.
-- **Rekomendasi untuk Backend**:
-  Izinkan `status: z.enum(BED_STATUS_LIST)` pada endpoint `PATCH /api/beds/:id` khusus jika yang mengeksekusi adalah `Petugas Bed Management` (misal untuk penandaan manual darurat SIMRS), ATAU jika status diubah ke `Terisi`, backend meminta parameter opsional `id_pasien`.
+### ✅ Poin 3: Kolom `nama_kamar` & `fasilitas` — SUDAH DIIMPLEMENTASIKAN
+- **Pembaruan di Backend**:
+  - Kolom `nama_kamar VARCHAR(50)` dan `fasilitas VARCHAR(255)` telah ditambahkan ke skema Prisma dan migrasi MySQL (`20261103000000_bed_room_and_facilities`).
+  - Request body `POST` & `PATCH /api/beds` menerima `nama_kamar` dan `fasilitas` (string dipisah koma).
+- **Integrasi di Frontend**:
+  - [`TambahBedModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/TambahBedModal.tsx) dan [`createBedApi`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/lib/api-client.ts) secara otomatis menyusun dan mengirimkan `nama_kamar` serta string `fasilitas` terstandarisasi yang dipisahkan koma ke backend.
 
-### B. Relasi Pasien Penghuni (`occupant`) pada `GET /api/beds`
-- **Kondisi Backend Saat Ini**:
-  Fungsi `findBeds` di [`backend/src/modules/bed/bed.model.js`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/backend/src/modules/bed/bed.model.js) baris 40 hanya memilih field dari tabel `bed` saja (`select: bedSelect`).
-- **Kebutuhan Desain Figma (`164:3797` & `285:279`)**:
-  Ketika bed berstatus `Terisi`, antarmuka menampilkan nama pasien aktif (*Hendra Wijaya*) dan dokter DPJP (*dr. Nanda Putra*), khususnya pada **Modal Penolakan Hapus Bed Terisi**.
-- **Rekomendasi untuk Backend**:
-  Di `backend/src/modules/bed/bed.model.js`, tambahkan relasi ke alokasi aktif:
-  ```javascript
-  include: {
-    rekam_alokasi_list: {
-      where: { status_alokasi: "Aktif" },
-      take: 1,
-      include: {
-        pasien: {
-          select: { id_pasien: true, nama_pasien: true, no_rm: true }
-        }
-      }
-    }
-  }
-  ```
-
-### C. Penambahan Kolom Ruangan / Kamar (`nama_kamar`) dan `fasilitas` pada Skema Database
-- **Kondisi Backend Saat Ini**:
-  Tabel `bed` di [`backend/prisma/schema.prisma`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/backend/prisma/schema.prisma) baris 66–83 hanya memiliki kolom `no_bed`, `nama_bangsal`, `kelas_perawatan`, `tipe_bed`, dan `status`.
-- **Kebutuhan Desain Figma (`164:3797` & `193:9909`)**:
-  Desain menampilkan identitas ruangan seperti `"Kamar 101"` atau `"Suite 03"` dan rincian fasilitas (`"1 Tempat Tidur • AC • Kamar Mandi Dalam • Oksigen Central"`).
-- **Rekomendasi untuk Backend**:
-  Tambahkan kolom opsional pada model `Bed` di Prisma:
-  - `nama_kamar String? @db.VarChar(50)`
-  - `fasilitas String? @db.VarChar(255)`
-  *(Saat ini frontend telah menggenerasi nilai representasi ruangan secara cerdas berdasarkan akhiran nomor bed agar tampilan tetap rapi).*
-
-### D. Konsistensi Penamaan Nilai `role` di Database
-- **Kondisi Backend**:
-  Di tabel `akun.role` tersimpan string title case: `"Petugas Administrasi"` dan `"Petugas Bed Management"`.
-- **Status di Frontend**:
-  Frontend sudah dipasangi layer normalisasi toleran di `src/lib/api-client.ts`, sehingga baik string title case dari database maupun uppercase enum dari token JWT akan dikenali secara otomatis tanpa error.
+### ⚠️ Poin 1 (Catatan Khusus): Validasi Status `Terisi` pada `PATCH /api/beds/:id`
+- **Kondisi Backend**: `updateBedSchema` pada backend masih membatasi agar status `"Terisi"` hanya boleh tercipta lewat endpoint alokasi (`POST /api/allocations`).
+- **Penanganan Frontend**:
+  - Opsi radio `Terisi` tetap tersedia pada Modal Ubah Status sesuai desain Figma `285:189`.
+  - Jika pengguna mengubah status secara manual menjadi `Terisi` melalui `PATCH`, frontend menangkap validasi error backend dan mengarahkan pengguna untuk menggunakan alur **Alokasi Kamar Pasien** agar data rekam medis terdaftar secara resmi.
 
 ---
 
@@ -167,4 +135,4 @@ Frontend telah dilengkapi klien API terpusat di [`src/lib/api-client.ts`](file:/
     - `○ /login`
     - `○ /bed-management`
     - `○ /bed-management/alokasi`
-- **Fallback Offline**: Aplikasi tetap 100% dapat dijalankan, didemonstrasikan, dan diuji secara mulus meskipun server MySQL/Express backend sedang dimatikan berkat in-memory local state store (`mock-fallback.ts`).
+- **Fallback Offline**: Aplikasi tetap 100% dapat dijalankan dan diuji secara mulus baik saat terhubung ke server backend Express port 3000 maupun saat offline berkat store in-memory terpadu (`mock-fallback.ts`).
