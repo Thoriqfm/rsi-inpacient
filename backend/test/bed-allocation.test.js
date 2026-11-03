@@ -59,7 +59,8 @@ async function createAkun(role) {
 async function createBed(status = "Tersedia") {
     const bed = await prisma.bed.create({
         data: {
-            no_bed: `T-${suffix}-${bedIds.length + 1}`,
+            // no_bed maksimal 20 karakter; suffix penuh bisa melewati batas.
+            no_bed: `T-${suffix.slice(-12)}-${bedIds.length + 1}`,
             nama_bangsal: "Bangsal Uji",
             kelas_perawatan: "Kelas 3",
             status,
@@ -153,6 +154,43 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
         assert.equal(second.status, 409);
         assert.equal(second.body.error.code, "BED_UNAVAILABLE");
         assert.equal(await prisma.rekamAlokasi.count({ where: { id_bed: bed.id_bed } }), 1);
+    });
+
+    test("detail bed menyertakan occupant dan field kamar", async () => {
+        const pasien = await createPasien();
+
+        const created = await api("POST", "/beds", {
+            token: bedManagerToken,
+            body: {
+                no_bed: `K-${suffix}`,
+                nama_bangsal: "Bangsal Uji",
+                nama_kamar: "Kamar 101",
+                kelas_perawatan: "Kelas 1",
+                fasilitas: "AC, Kamar Mandi Dalam",
+            },
+        });
+
+        assert.equal(created.status, 201);
+        assert.equal(created.body.data.nama_kamar, "Kamar 101");
+        assert.equal(created.body.data.fasilitas, "AC, Kamar Mandi Dalam");
+        assert.equal(created.body.data.occupant, null);
+        bedIds.push(created.body.data.id_bed);
+
+        const allocated = await api("POST", "/allocations", {
+            token: adminToken,
+            body: { id_pasien: pasien.id_pasien, id_bed: created.body.data.id_bed },
+        });
+        assert.equal(allocated.status, 201);
+
+        const detail = await api("GET", `/beds/${created.body.data.id_bed}`, {
+            token: bedManagerToken,
+        });
+
+        assert.equal(detail.status, 200);
+        assert.deepEqual(detail.body.data.occupant, {
+            no_rm: pasien.no_rm,
+            nama_pasien: pasien.nama_pasien,
+        });
     });
 
     test("status bed tidak bisa diubah manual selama alokasi aktif", async () => {

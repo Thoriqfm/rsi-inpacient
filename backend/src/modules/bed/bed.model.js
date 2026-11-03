@@ -1,16 +1,26 @@
 import prisma from "../../config/prisma.js";
-import { BED_STATUS } from "../../shared/constants/bed.js";
+import { ALLOCATION_STATUS, BED_STATUS } from "../../shared/constants/bed.js";
+
+// Maksimal satu alokasi aktif per bed dijaga uq_rekam_alokasi_bed_aktif.
+const activeOccupantSelect = {
+    where: { status_alokasi: ALLOCATION_STATUS.AKTIF },
+    take: 1,
+    select: { pasien: { select: { no_rm: true, nama_pasien: true } } },
+};
 
 const bedSelect = {
     id_bed: true,
     no_bed: true,
     nama_bangsal: true,
+    nama_kamar: true,
     kelas_perawatan: true,
     status: true,
     tipe_bed: true,
+    fasilitas: true,
     created_at: true,
     updated_at: true,
     deleted_at: true,
+    rekam_alokasi_list: activeOccupantSelect,
 };
 
 // Hanya field yang dibutuhkan proses alokasi; status dan data audit tidak diekspos.

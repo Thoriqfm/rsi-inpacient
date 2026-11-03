@@ -67,10 +67,14 @@ model Bed {
   id_bed          Int       @id @default(autoincrement())
   no_bed          String    @db.VarChar(20)
   nama_bangsal    String    @db.VarChar(100)
+  /// Ruangan spesifik, mis. Kamar 101 / Suite 03
+  nama_kamar      String?   @db.VarChar(50)
   kelas_perawatan String    @db.VarChar(50)
   /// Tersedia / Terisi / Pembersihan / Pemeliharaan
   status          String    @default("Tersedia") @db.VarChar(30)
   tipe_bed        String?   @db.VarChar(50)
+  /// Ringkasan fasilitas dipisah koma, mis. AC, Kamar Mandi Dalam, Oksigen Central
+  fasilitas       String?   @db.VarChar(255)
   created_at      DateTime? @db.DateTime(0)
   updated_at      DateTime? @db.DateTime(0)
   /// Soft delete; bed nonaktif tidak dihapus fisik
