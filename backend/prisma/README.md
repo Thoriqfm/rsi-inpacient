@@ -119,6 +119,18 @@ Jumlah objek setelah perubahan: 23 foreign key (sebelumnya 22), 11 unique index
 di MySQL (sebelumnya 9), dan 10 unique index + 1 partial unique index di
 PostgreSQL (sebelumnya 9). Migration ini belum dijalankan ke database mana pun.
 
+### 4.2 Perubahan schema 3 November 2026
+
+Migration `20261103000000_bed_room_and_facilities` menambah dua kolom nullable
+pada `bed` di kedua provider:
+
+- `nama_kamar VARCHAR(50)` — ruangan spesifik untuk tampilan (mis. `Kamar 101`).
+- `fasilitas VARCHAR(255)` — ringkasan fasilitas dipisah koma untuk display.
+
+Keduanya nullable sehingga bed lama tetap valid dan tidak perlu backfill. Tidak
+ada perubahan foreign key, unique index, atau CHECK; jumlah objek tetap.
+Frontend boleh memakai generator fallback selama nilainya masih `null`.
+
 ## 5. Jalankan aplikasi
 
 Dua terminal pada root repository:
