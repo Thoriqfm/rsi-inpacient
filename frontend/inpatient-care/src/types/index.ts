@@ -21,10 +21,10 @@ export type BedStatus =
 export type KelasPerawatan = "VIP" | "Kelas 1" | "Kelas 2" | "Kelas 3";
 
 export interface OccupantInfo {
-  id_pasien: number;
+  id_pasien?: number;
   nama_pasien: string;
   no_rm: string;
-  dokter_dpjp: string;
+  dokter_dpjp?: string;
   diagnosa?: string;
 }
 
@@ -56,9 +56,10 @@ export interface PasienCandidate {
 export interface CreateBedPayload {
   no_bed: string;
   nama_bangsal: string;
-  nama_kamar?: string;
+  nama_kamar?: string | null;
   kelas_perawatan: KelasPerawatan;
-  tipe_bed?: string;
+  tipe_bed?: string | null;
+  fasilitas?: string | null;
 }
 
 export interface UpdateBedStatusPayload {
