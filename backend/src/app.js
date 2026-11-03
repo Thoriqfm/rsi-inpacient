@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import routes from "./routes/index.js";
+import { errorHandler, notFound } from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -27,5 +29,9 @@ app.get("/api/health", (req, res) => {
         meta: null,
     });
 });
+
+app.use("/api", routes);
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
