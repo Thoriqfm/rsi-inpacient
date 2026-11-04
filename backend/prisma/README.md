@@ -146,6 +146,20 @@ npm run dev --workspace=frontend
 Frontend: <http://localhost:3000>. Backend: <http://localhost:3001/api/health>.
 Health API hanya memeriksa Express, bukan koneksi database. Fitur masih kerangka.
 
+### 4.3 Data awal rumah sakit rujukan (UC-05)
+
+Master rumah sakit rujukan belum punya endpoint tulis. Isi data sintetis sekali dari
+`backend` (idempoten; dilewati bila tabel sudah berisi data):
+
+```powershell
+node prisma/seed-referral-hospitals.js
+```
+
+Empat RS dibuat dengan status `Tidak Tersedia` dan `terakhir_diperbarui` null,
+sehingga tampil `stale: true` sampai petugas memperbarui ketersediaannya lewat
+`PATCH /api/referral-hospitals/:id/availability`. Skrip ini hanya untuk database
+lokal; jangan dijalankan ke database bersama tanpa persetujuan Backend Lead.
+
 ## Kembali ke PostgreSQL/Supabase
 
 1. Hentikan backend dan Prisma Studio.
