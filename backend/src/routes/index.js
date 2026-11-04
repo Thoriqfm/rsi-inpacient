@@ -6,6 +6,8 @@ import queueRoutes from "./queue.routes.js";
 import referralRoutes from "./referral.routes.js";
 import referralHospitalRoutes from "./referral-hospital.routes.js";
 import monitoringRoutes from "./monitoring.routes.js";
+import historyRoutes from "./history.routes.js";
+import rmeRoutes from "./rme.routes.js";
 
 const router = Router();
 
@@ -16,5 +18,7 @@ router.use("/queues", queueRoutes);
 router.use("/referrals", referralRoutes);
 router.use("/referral-hospitals", referralHospitalRoutes);
 router.use("/monitoring", monitoringRoutes);
+router.use("/histories", historyRoutes);
+router.use("/rme", rmeRoutes);
 
 export default router;
