@@ -27,29 +27,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [dataSource, setDataSource] = useState<"backend" | "mock">("mock");
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-      if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
-      } else {
-        // Default session: Budi Santoso (Petugas Bed Management) as seen in Figma 164:3797
-        const defaultUser = DEMO_USERS["budi.santoso"].account;
-        const defaultToken = "mock-jwt-token-1-init";
-        setUser(defaultUser);
+    async function initAuth() {
+      try {
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+        if (storedUser && storedToken && !storedToken.startsWith("mock-")) {
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
+          setDataSource("backend");
+          return;
+        }
+
+        // Attempt silent login to live backend if available
+        const parsedUser: UserAccount = storedUser
+          ? JSON.parse(storedUser)
+          : DEMO_USERS["budi.santoso"].account;
+        const targetUsername = parsedUser.username || "budi.santoso";
+
+        try {
+          const result = await loginApi(targetUsername, "password123");
+          setUser(result.user);
+          setToken(result.token);
+          setDataSource(result.source);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(result.user));
+          localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
+          return;
+        } catch {
+          // Fallback to mock session
+        }
+
+        const defaultToken = storedToken || "mock-jwt-token-1-init";
+        setUser(parsedUser);
         setToken(defaultToken);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
+        setDataSource("mock");
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsedUser));
         localStorage.setItem(TOKEN_STORAGE_KEY, defaultToken);
+      } catch {
+        // ignore JSON parse error
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      // ignore JSON parse error
-    } finally {
-      setIsLoading(false);
     }
+
+    initAuth();
   }, []);
 
-  const login = async (username: string, pass: string): Promise<UserAccount> => {
+  const login = async (
+    username: string,
+    pass: string
+  ): Promise<UserAccount> => {
     setIsLoading(true);
     try {
       const result = await loginApi(username, pass);
@@ -67,20 +94,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
+    setDataSource("mock");
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
   };
 
-  const switchRole = (newRole: UserRole) => {
-    let target = Object.values(DEMO_USERS).find((u) => u.account.role === newRole)?.account;
+  const switchRole = async (newRole: UserRole) => {
+    let target = Object.values(DEMO_USERS).find(
+      (u) => u.account.role === newRole
+    )?.account;
     if (!target) {
       target = DEMO_USERS["budi.santoso"].account;
     }
-    setUser(target);
-    const mockToken = `mock-jwt-token-${target.id_akun}-${Date.now()}`;
-    setToken(mockToken);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(target));
-    localStorage.setItem(TOKEN_STORAGE_KEY, mockToken);
+
+    try {
+      const result = await loginApi(target.username, "password123");
+      setUser(result.user);
+      setToken(result.token);
+      setDataSource(result.source);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(result.user));
+      localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
+    } catch {
+      setUser(target);
+      const mockToken = `mock-jwt-token-${target.id_akun}-${Date.now()}`;
+      setToken(mockToken);
+      setDataSource("mock");
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(target));
+      localStorage.setItem(TOKEN_STORAGE_KEY, mockToken);
+    }
   };
 
   return (
