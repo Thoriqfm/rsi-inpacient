@@ -71,7 +71,7 @@ export default function BedManagementPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.role]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
