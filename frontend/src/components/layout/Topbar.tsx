@@ -9,8 +9,6 @@ import {
   ChevronDown,
   LogOut,
   RefreshCw,
-  UserCheck,
-  ShieldAlert,
   ChevronRight,
   Database,
 } from "lucide-react";
@@ -23,7 +21,6 @@ export function Topbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -38,9 +35,19 @@ export function Topbar() {
   }, []);
 
   const isAlokasi = pathname.includes("/alokasi");
+  const isAntrian = pathname.startsWith("/sistem-antrian");
+  const antrianSubLabel = pathname.includes("/rujukan-pasien")
+    ? "Rujukan Pasien Darurat"
+    : pathname.includes("/pemantauan-status")
+    ? "Pemantauan Status Penanganan"
+    : "Daftar Tunggu Rawat Inap (FIFO)";
 
   const handleResetData = () => {
-    if (confirm("Reset ulang data simulasi tempat tidur ke kondisi awal Figma (68 bed)?")) {
+    if (
+      confirm(
+        "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, dan Surat Rujukan) ke kondisi awal?"
+      )
+    ) {
       resetMockBeds();
       window.location.reload();
     }
@@ -55,23 +62,40 @@ export function Topbar() {
     <header className="h-[72px] bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30">
       {/* Left: Breadcrumbs */}
       <nav className="flex items-center gap-2 text-sm">
-        <Link
-          href="/bed-management"
-          className={`font-semibold transition ${
-            !isAlokasi
-              ? "text-slate-900"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          Bed Management
-        </Link>
-
-        {isAlokasi && (
+        {isAntrian ? (
           <>
+            <Link
+              href="/sistem-antrian/daftar-tunggu"
+              className="font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              Sistem Antrian
+            </Link>
             <ChevronRight className="w-4 h-4 text-slate-400" />
-            <span className="font-semibold text-[#0d332f] bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
-              Alokasi Kamar Pasien
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              {antrianSubLabel}
             </span>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/bed-management"
+              className={`font-semibold transition ${
+                !isAlokasi
+                  ? "text-slate-900"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Bed Management
+            </Link>
+
+            {isAlokasi && (
+              <>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+                  Alokasi Kamar Pasien
+                </span>
+              </>
+            )}
           </>
         )}
       </nav>
@@ -88,15 +112,19 @@ export function Topbar() {
           title="Status Sumber Data"
         >
           <Database className="w-3.5 h-3.5" />
-          <span>{dataSource === "backend" ? "Backend API Terhubung" : "Mode Simulasi Lokal"}</span>
+          <span>
+            {dataSource === "backend"
+              ? "Backend API Terhubung"
+              : "Mode Simulasi Lokal"}
+          </span>
         </div>
 
         {/* Reset Data Button for Demo Convenience */}
         <button
           type="button"
           onClick={handleResetData}
-          title="Reset Data Bed ke Nilai Awal Figma"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+          title="Reset Data Simulasi ke Nilai Awal"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
           <span className="hidden lg:inline">Reset Data</span>
@@ -110,12 +138,10 @@ export function Topbar() {
             title="Pemberitahuan Sistem"
           >
             <Bell className="w-4 h-4" />
-            {/* Orange notification dot as in Figma */}
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f68624] ring-2 ring-white" />
           </button>
         </div>
 
-        {/* Vertical divider */}
         <div className="h-7 w-px bg-slate-200 mx-1" />
 
         {/* User Profile Pill & Dropdown */}
@@ -139,7 +165,6 @@ export function Topbar() {
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
           </button>
 
-          {/* Dropdown Menu */}
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2 border-b border-slate-100">

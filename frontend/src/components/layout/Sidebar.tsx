@@ -12,16 +12,17 @@ import {
   CreditCard,
   Settings,
   HelpCircle,
+  Clock,
+  Ambulance,
   Activity,
-  Layers,
+  ClipboardList,
 } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const isBedActive =
-    pathname === "/bed-management" || pathname.startsWith("/bed-management/");
+  const isAntrianSection = pathname.startsWith("/sistem-antrian");
 
   return (
     <aside className="w-64 min-w-[256px] bg-gradient-to-b from-[#0d332f] via-[#0d3732] to-[#082320] text-slate-200 flex flex-col justify-between shrink-0 border-r border-teal-900/30 select-none">
@@ -63,7 +64,7 @@ export function Sidebar() {
                 </div>
               )}
 
-              {/* Bed Management (Active Module) */}
+              {/* Bed Management (UC-01 & UC-02) */}
               <Link
                 href="/bed-management"
                 className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -89,41 +90,94 @@ export function Sidebar() {
                 )}
               </Link>
 
-              {/* Direct Alokasi Menu for Petugas Administrasi */}
-              {user?.role === "PETUGAS_ADMINISTRASI" && (
-                <Link
-                  href="/bed-management/alokasi"
-                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              {/* Alokasi Kamar (UC-03) */}
+              <Link
+                href="/bed-management/alokasi"
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                  pathname === "/bed-management/alokasi"
+                    ? "bg-[#13c9b3]/15 text-[#13c9b3] shadow-sm"
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Users
+                  className={`w-4 h-4 ${
                     pathname === "/bed-management/alokasi"
+                      ? "text-[#13c9b3]"
+                      : "text-teal-400/70"
+                  }`}
+                />
+                <span>Alokasi Kamar</span>
+                {pathname === "/bed-management/alokasi" && (
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#13c9b3] rounded-l-full shadow-sm shadow-teal-400" />
+                )}
+              </Link>
+
+              {/* Sistem Antrian (UC-04, UC-05, UC-06) */}
+              <div className="pt-1">
+                <Link
+                  href="/sistem-antrian/daftar-tunggu"
+                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isAntrianSection
                       ? "bg-[#13c9b3]/15 text-[#13c9b3] shadow-sm"
                       : "text-slate-300 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Users
+                  <ClipboardList
                     className={`w-4 h-4 ${
-                      pathname === "/bed-management/alokasi"
+                      isAntrianSection
                         ? "text-[#13c9b3]"
                         : "text-teal-400/70"
                     }`}
                   />
-                  <span>Alokasi Kamar</span>
-                  {pathname === "/bed-management/alokasi" && (
+                  <span>Sistem Antrian</span>
+                  {isAntrianSection && (
                     <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#13c9b3] rounded-l-full shadow-sm shadow-teal-400" />
                   )}
                 </Link>
-              )}
 
-              {/* If Administrasi, show related modules */}
+                {/* Sub-links under Sistem Antrian */}
+                <div className="mt-1 ml-4 pl-3 border-l border-teal-800/60 space-y-1">
+                  <Link
+                    href="/sistem-antrian/daftar-tunggu"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                      pathname.includes("/daftar-tunggu")
+                        ? "bg-white/10 text-[#13c9b3]"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span>Daftar Tunggu (FIFO)</span>
+                  </Link>
+
+                  <Link
+                    href="/sistem-antrian/rujukan-pasien"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                      pathname.includes("/rujukan-pasien")
+                        ? "bg-white/10 text-[#13c9b3]"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <Ambulance className="w-3.5 h-3.5 shrink-0" />
+                    <span>Rujukan Pasien Darurat</span>
+                  </Link>
+
+                  <Link
+                    href="/sistem-antrian/pemantauan-status"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                      pathname.includes("/pemantauan-status")
+                        ? "bg-white/10 text-[#13c9b3]"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 shrink-0" />
+                    <span>Pemantauan Status</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Additional Administrasi menus */}
               {user?.role === "PETUGAS_ADMINISTRASI" && (
                 <>
-                  <div
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition cursor-not-allowed opacity-60"
-                    title="Modul Antrian Pasien Rawat Inap"
-                  >
-                    <Users className="w-4 h-4 text-teal-400/60" />
-                    <span>Sistem Antrian</span>
-                  </div>
-
                   <div
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition cursor-not-allowed opacity-60"
                     title="Rekap Layanan & Tindakan"
@@ -171,7 +225,7 @@ export function Sidebar() {
             <span>Konektivitas SIMRS</span>
           </div>
           <p className="text-[11px] text-teal-200/60 leading-tight">
-            Sinkronisasi kamar rawat inap real-time aktif.
+            Sinkronisasi kamar, antrean & rujukan real-time aktif.
           </p>
         </div>
       </div>
