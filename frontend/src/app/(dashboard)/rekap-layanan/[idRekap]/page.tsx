@@ -46,6 +46,11 @@ export default function DetailRekapPage() {
   };
 
   const loadData = useCallback(async () => {
+    if (isNaN(idRekap) || idRekap <= 0) {
+      setLoading(false);
+      setErrorMsg("ID Rekap tidak valid atau tidak ditemukan.");
+      return;
+    }
     setLoading(true);
     try {
       const data = await fetchHistoryByIdApi(idRekap);
@@ -113,10 +118,27 @@ export default function DetailRekapPage() {
     router.push(`/pembayaran/buat/${rekap.id_pasien}?id_rekap=${rekap.id_rekap}`);
   };
 
-  if (loading || !rekap) {
+  if (loading) {
     return (
       <div className="max-w-[1200px] mx-auto py-16 text-center text-slate-500 text-sm">
         Memuat detail rekap riwayat layanan &amp; tindakan...
+      </div>
+    );
+  }
+
+  if (!rekap || errorMsg) {
+    return (
+      <div className="max-w-[1200px] mx-auto py-16 text-center space-y-4">
+        <p className="text-sm font-semibold text-rose-600">
+          {errorMsg || "Rekap riwayat layanan & tindakan tidak ditemukan."}
+        </p>
+        <Link
+          href="/rekap-layanan"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-semibold transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali ke Daftar Rekap</span>
+        </Link>
       </div>
     );
   }

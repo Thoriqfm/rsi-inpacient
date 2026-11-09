@@ -156,7 +156,7 @@ export function Sidebar() {
                 </div>
               </div>
 
-              {/* Rekap Layanan & Tindakan RME */}
+              {/* Rekap Layanan & Tindakan RME (Figma node 143:287) */}
               <div className="pt-1">
                 <Link
                   href="/rekap-layanan"
@@ -167,26 +167,8 @@ export function Sidebar() {
                       isRekapSection ? "text-[#00b89f]" : "text-teal-400/70"
                     }`}
                   />
-                  <span>Rekap Layanan</span>
+                  <span>Rekap Layanan & Tindakan</span>
                 </Link>
-
-                <div className="mt-1 ml-4 pl-3 border-l border-teal-800/40 space-y-1">
-                  <Link
-                    href="/rekap-layanan"
-                    className={getSubItemClass(pathname === "/rekap-layanan")}
-                  >
-                    <span>Daftar Rekap RME</span>
-                  </Link>
-
-                  <Link
-                    href="/rekap-layanan/pasien"
-                    className={getSubItemClass(
-                      pathname.startsWith("/rekap-layanan/pasien")
-                    )}
-                  >
-                    <span>Input Snapshot Tindakan</span>
-                  </Link>
-                </div>
               </div>
 
               {/* Pembayaran & Tagihan Billing */}
