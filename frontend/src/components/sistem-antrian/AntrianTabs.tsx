@@ -21,80 +21,57 @@ export function AntrianTabs({
   const tabs = [
     {
       label: "Daftar Tunggu (FIFO)",
-      sublabel: "Antrean Pasien Rawat Inap",
       href: "/sistem-antrian/daftar-tunggu",
       icon: Clock,
       active: pathname.includes("/daftar-tunggu"),
-      badge: waitingCount,
-      badgeColor: "bg-[#fef3e9] text-[#b45309] border-[#fed7aa]",
+      count: waitingCount,
     },
     {
-      label: "Rujukan Pasien Darurat",
-      sublabel: "RS Jejaring & Rujukan",
+      label: "Rujukan Pasien",
       href: "/sistem-antrian/rujukan-pasien",
       icon: Ambulance,
       active: pathname.includes("/rujukan-pasien"),
-      badge: referralCount,
-      badgeColor: "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]",
+      count: referralCount,
     },
     {
       label: "Pemantauan Status",
-      sublabel: "Tracking & Status Pasien",
       href: "/sistem-antrian/pemantauan-status",
       icon: Activity,
       active: pathname.includes("/pemantauan-status"),
-      badge: monitoringCount,
-      badgeColor: "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]",
+      count: monitoringCount,
     },
   ];
 
   return (
-    <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-1.5 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex flex-wrap gap-1.5">
+    <div className="flex items-center gap-2 sm:gap-6 border-b border-[#e9ebf0] overflow-x-auto pt-1 pb-0">
       {tabs.map((tab) => {
         const Icon = tab.icon;
+        const isActive = tab.active;
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`flex-1 min-w-[210px] flex items-center justify-between gap-3 px-4 py-2.5 rounded-[8px] transition cursor-pointer ${
-              tab.active
-                ? "bg-[#0a2e28] text-white shadow-xs"
-                : "text-[#666666] hover:bg-slate-50 hover:text-[#1e1e1e]"
+            className={`pb-3 -mb-[1px] text-xs sm:text-sm flex items-center gap-2 font-medium transition cursor-pointer shrink-0 border-b-2 ${
+              isActive
+                ? "text-[#00b89f] font-semibold border-[#00b89f]"
+                : "text-[#666666] hover:text-[#1e1e1e] border-transparent"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0 ${
-                  tab.active
-                    ? "bg-[#00b89f] text-white font-bold"
-                    : "bg-slate-100 text-[#4b5563]"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm font-semibold leading-tight">
-                  {tab.label}
-                </div>
-                <div
-                  className={`text-[10px] leading-tight mt-0.5 ${
-                    tab.active ? "text-teal-200/70" : "text-[#8c8c8c]"
-                  }`}
-                >
-                  {tab.sublabel}
-                </div>
-              </div>
-            </div>
-
-            {typeof tab.badge === "number" && (
+            <Icon
+              className={`w-4 h-4 ${
+                isActive ? "text-[#00b89f]" : "text-[#8c8c8c]"
+              }`}
+            />
+            <span>{tab.label}</span>
+            {typeof tab.count === "number" && (
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                  tab.active
-                    ? "bg-[#00b89f]/20 text-teal-200 border-[#00b89f]/40"
-                    : tab.badgeColor
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                  isActive
+                    ? "bg-[#e7faf7] text-[#00b89f] font-semibold"
+                    : "bg-[#f3f4f6] text-[#6b7280]"
                 }`}
               >
-                {tab.badge}
+                {tab.count}
               </span>
             )}
           </Link>

@@ -135,13 +135,6 @@ export default function DaftarTungguPage() {
         </div>
       )}
 
-      {/* Sub-navigation Tabs */}
-      <AntrianTabs
-        waitingCount={waitingList.length}
-        referralCount={referralCount}
-        monitoringCount={queues.length + referralCount}
-      />
-
       {/* Page Header (Canonical Style) */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div>
@@ -184,6 +177,13 @@ export default function DaftarTungguPage() {
           </button>
         </div>
       </div>
+
+      {/* Sub-navigation Tabs */}
+      <AntrianTabs
+        waitingCount={waitingList.length}
+        referralCount={referralCount}
+        monitoringCount={queues.length + referralCount}
+      />
 
       {/* Clinical Rule & Capacity Alert Banner (Canonical Style) */}
       <div className="rounded-[8px] bg-[#fef3e9] border border-[#fed7aa] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">

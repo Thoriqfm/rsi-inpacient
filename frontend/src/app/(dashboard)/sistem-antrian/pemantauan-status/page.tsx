@@ -121,13 +121,6 @@ export default function PemantauanStatusPage() {
         </div>
       )}
 
-      {/* Sub-navigation Tabs */}
-      <AntrianTabs
-        waitingCount={waitingQueueCount}
-        referralCount={referralTotalCount}
-        monitoringCount={items.length}
-      />
-
       {/* Page Header (Canonical Style) */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div>
@@ -153,6 +146,13 @@ export default function PemantauanStatusPage() {
           </button>
         </div>
       </div>
+
+      {/* Sub-navigation Tabs */}
+      <AntrianTabs
+        waitingCount={waitingQueueCount}
+        referralCount={referralTotalCount}
+        monitoringCount={items.length}
+      />
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
