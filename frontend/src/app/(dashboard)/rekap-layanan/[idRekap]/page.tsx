@@ -73,8 +73,12 @@ export default function DetailRekapPage() {
   }, [idRekap]);
 
   useEffect(() => {
+    if (params?.idRekap === "pasien" || isNaN(idRekap) || idRekap <= 0) {
+      router.replace("/rekap-layanan");
+      return;
+    }
     loadData();
-  }, [loadData]);
+  }, [params?.idRekap, idRekap, loadData, router]);
 
   // Stepper advance status
   const handleAdvanceStatus = async (nextStatus: HistoryStatus) => {
