@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -19,6 +22,11 @@ import {
 import { fetchPatientRmeApi } from "@/lib/api-client";
 
 export default function InformasiDataPasienPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Data Pasien & Riwayat RME" />;
+  }
+
   const params = useParams();
   const idPasien = Number(params?.idPasien || 1);
 

@@ -36,17 +36,7 @@ export const DEMO_USERS: Record<
       role: "PETUGAS_ADMINISTRASI",
     },
   },
-  "nanda.putra": {
-    password: "password123",
-    account: {
-      id_akun: 3,
-      username: "nanda.putra",
-      nama_petugas: "dr. Nanda Putra, Sp.PD",
-      jabatan_label: "Petugas Medis",
-      inisial: "NP",
-      role: "PETUGAS_MEDIS",
-    },
-  },
+
 };
 
 export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [

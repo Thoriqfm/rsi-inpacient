@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -415,6 +418,11 @@ function PenerbitanInvoiceContent() {
 }
 
 export default function PenerbitanInvoicePage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Penerbitan Invoice Tagihan" />;
+  }
+
   return (
     <Suspense
       fallback={

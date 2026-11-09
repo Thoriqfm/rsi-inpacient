@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -32,6 +34,11 @@ import {
 } from "@/lib/api-client";
 
 export default function PembayaranDashboardPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pembayaran & Billing" />;
+  }
+
   const [billings, setBillings] = useState<BillingItem[]>([]);
   const [readyRecaps, setReadyRecaps] = useState<HistoryRecapItem[]>([]);
   const [tariffs, setTariffs] = useState<TarifItem[]>([]);

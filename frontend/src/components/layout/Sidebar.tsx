@@ -66,149 +66,181 @@ export function Sidebar() {
               MENU UTAMA
             </div>
             <nav className="space-y-1">
-              {/* Dashboard */}
-              <Link
-                href="/dashboard"
-                className={getItemClass(pathname === "/dashboard")}
-              >
-                <LayoutDashboard
-                  className={`w-4 h-4 ${
-                    pathname === "/dashboard" ? "text-[#00b89f]" : "text-teal-400/70"
-                  }`}
-                />
-                <span>Dashboard SIMRS</span>
-              </Link>
-
-              {/* Bed Management */}
-              <Link
-                href="/bed-management"
-                className={getItemClass(pathname === "/bed-management")}
-              >
-                <Bed
-                  className={`w-4 h-4 ${
-                    pathname === "/bed-management" ? "text-[#00b89f]" : "text-teal-400/70"
-                  }`}
-                />
-                <span>
-                  {user?.role === "PETUGAS_ADMINISTRASI"
-                    ? "Ketersediaan Bed"
-                    : "Bed Management"}
-                </span>
-              </Link>
-
-              {/* Alokasi Kamar */}
-              <Link
-                href="/bed-management/alokasi"
-                className={getItemClass(pathname === "/bed-management/alokasi")}
-              >
-                <Users
-                  className={`w-4 h-4 ${
-                    pathname === "/bed-management/alokasi"
-                      ? "text-[#00b89f]"
-                      : "text-teal-400/70"
-                  }`}
-                />
-                <span>Alokasi Kamar Pasien</span>
-              </Link>
-
-              {/* Sistem Antrian */}
-              <div className="pt-1">
-                <Link
-                  href="/sistem-antrian/daftar-tunggu"
-                  className={getItemClass(isAntrianSection)}
-                >
-                  <ClipboardList
-                    className={`w-4 h-4 ${
-                      isAntrianSection ? "text-[#00b89f]" : "text-teal-400/70"
-                    }`}
-                  />
-                  <span>Sistem Antrean</span>
-                </Link>
-
-                <div className="mt-1 ml-4 pl-3 border-l border-teal-800/40 space-y-1">
+              {/* Strict RBAC: Petugas Bed Management ONLY sees Bed Management & Allocation */}
+              {user?.role === "PETUGAS_BED_MANAGEMENT" ? (
+                <>
+                  {/* Bed Management (Primary Workspace) */}
                   <Link
-                    href="/sistem-antrian/daftar-tunggu"
-                    className={getSubItemClass(
-                      pathname === "/sistem-antrian/daftar-tunggu" ||
-                        pathname === "/sistem-antrian"
-                    )}
+                    href="/bed-management"
+                    className={getItemClass(pathname === "/bed-management")}
                   >
-                    <span>Daftar Tunggu FIFO</span>
+                    <Bed
+                      className={`w-4 h-4 ${
+                        pathname === "/bed-management" ? "text-[#00b89f]" : "text-teal-400/70"
+                      }`}
+                    />
+                    <span>Bed Management</span>
                   </Link>
 
+                  {/* Alokasi Kamar Pasien */}
                   <Link
-                    href="/sistem-antrian/rujukan-pasien"
-                    className={getSubItemClass(
-                      pathname === "/sistem-antrian/rujukan-pasien"
-                    )}
+                    href="/bed-management/alokasi"
+                    className={getItemClass(pathname === "/bed-management/alokasi")}
                   >
-                    <span>Rujukan RS Jejaring</span>
+                    <Users
+                      className={`w-4 h-4 ${
+                        pathname === "/bed-management/alokasi"
+                          ? "text-[#00b89f]"
+                          : "text-teal-400/70"
+                      }`}
+                    />
+                    <span>Alokasi Kamar Pasien</span>
+                  </Link>
+                </>
+              ) : (
+                /* Petugas Administrasi: Full Administrative Operations */
+                <>
+                  {/* Dashboard */}
+                  <Link
+                    href="/dashboard"
+                    className={getItemClass(pathname === "/dashboard")}
+                  >
+                    <LayoutDashboard
+                      className={`w-4 h-4 ${
+                        pathname === "/dashboard" ? "text-[#00b89f]" : "text-teal-400/70"
+                      }`}
+                    />
+                    <span>Dashboard SIMRS</span>
                   </Link>
 
+                  {/* Ketersediaan Bed (Read-only view for Administrasi) */}
                   <Link
-                    href="/sistem-antrian/pemantauan-status"
-                    className={getSubItemClass(
-                      pathname === "/sistem-antrian/pemantauan-status"
-                    )}
+                    href="/bed-management"
+                    className={getItemClass(pathname === "/bed-management")}
                   >
-                    <span>Pemantauan Status</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Rekap Layanan & Tindakan RME (Figma node 143:287) */}
-              <div className="pt-1">
-                <Link
-                  href="/rekap-layanan"
-                  className={getItemClass(isRekapSection)}
-                >
-                  <FileText
-                    className={`w-4 h-4 ${
-                      isRekapSection ? "text-[#00b89f]" : "text-teal-400/70"
-                    }`}
-                  />
-                  <span>Rekap Layanan & Tindakan</span>
-                </Link>
-              </div>
-
-              {/* Pembayaran & Tagihan Billing */}
-              <div className="pt-1">
-                <Link
-                  href="/pembayaran"
-                  className={getItemClass(isPembayaranSection)}
-                >
-                  <CreditCard
-                    className={`w-4 h-4 ${
-                      isPembayaranSection ? "text-[#00b89f]" : "text-teal-400/70"
-                    }`}
-                  />
-                  <span>Pembayaran & Billing</span>
-                </Link>
-
-                <div className="mt-1 ml-4 pl-3 border-l border-teal-800/40 space-y-1">
-                  <Link
-                    href="/pembayaran"
-                    className={getSubItemClass(
-                      pathname === "/pembayaran" ||
-                        (pathname.startsWith("/pembayaran/") &&
-                          !pathname.startsWith("/pembayaran/buat"))
-                    )}
-                  >
-                    <Receipt className="w-3.5 h-3.5 shrink-0" />
-                    <span>Daftar Tagihan</span>
+                    <Bed
+                      className={`w-4 h-4 ${
+                        pathname === "/bed-management" ? "text-[#00b89f]" : "text-teal-400/70"
+                      }`}
+                    />
+                    <span>Ketersediaan Bed</span>
                   </Link>
 
+                  {/* Alokasi Kamar */}
                   <Link
-                    href="/pembayaran/buat"
-                    className={getSubItemClass(
-                      pathname.startsWith("/pembayaran/buat")
-                    )}
+                    href="/bed-management/alokasi"
+                    className={getItemClass(pathname === "/bed-management/alokasi")}
                   >
-                    <Calculator className="w-3.5 h-3.5 shrink-0" />
-                    <span>Buat Tagihan</span>
+                    <Users
+                      className={`w-4 h-4 ${
+                        pathname === "/bed-management/alokasi"
+                          ? "text-[#00b89f]"
+                          : "text-teal-400/70"
+                      }`}
+                    />
+                    <span>Alokasi Kamar Pasien</span>
                   </Link>
-                </div>
-              </div>
+
+                  {/* Sistem Antrean */}
+                  <div className="pt-1">
+                    <Link
+                      href="/sistem-antrian/daftar-tunggu"
+                      className={getItemClass(isAntrianSection)}
+                    >
+                      <ClipboardList
+                        className={`w-4 h-4 ${
+                          isAntrianSection ? "text-[#00b89f]" : "text-teal-400/70"
+                        }`}
+                      />
+                      <span>Sistem Antrean</span>
+                    </Link>
+
+                    <div className="mt-1 ml-4 pl-3 border-l border-teal-800/40 space-y-1">
+                      <Link
+                        href="/sistem-antrian/daftar-tunggu"
+                        className={getSubItemClass(
+                          pathname === "/sistem-antrian/daftar-tunggu" ||
+                            pathname === "/sistem-antrian"
+                        )}
+                      >
+                        <span>Daftar Tunggu FIFO</span>
+                      </Link>
+
+                      <Link
+                        href="/sistem-antrian/rujukan-pasien"
+                        className={getSubItemClass(
+                          pathname === "/sistem-antrian/rujukan-pasien"
+                        )}
+                      >
+                        <span>Rujukan RS Jejaring</span>
+                      </Link>
+
+                      <Link
+                        href="/sistem-antrian/pemantauan-status"
+                        className={getSubItemClass(
+                          pathname === "/sistem-antrian/pemantauan-status"
+                        )}
+                      >
+                        <span>Pemantauan Status</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Rekap Layanan & Tindakan RME (Figma node 143:287) */}
+                  <div className="pt-1">
+                    <Link
+                      href="/rekap-layanan"
+                      className={getItemClass(isRekapSection)}
+                    >
+                      <FileText
+                        className={`w-4 h-4 ${
+                          isRekapSection ? "text-[#00b89f]" : "text-teal-400/70"
+                        }`}
+                      />
+                      <span>Rekap Layanan & Tindakan</span>
+                    </Link>
+                  </div>
+
+                  {/* Pembayaran & Tagihan Billing */}
+                  <div className="pt-1">
+                    <Link
+                      href="/pembayaran"
+                      className={getItemClass(isPembayaranSection)}
+                    >
+                      <CreditCard
+                        className={`w-4 h-4 ${
+                          isPembayaranSection ? "text-[#00b89f]" : "text-teal-400/70"
+                        }`}
+                      />
+                      <span>Pembayaran & Billing</span>
+                    </Link>
+
+                    <div className="mt-1 ml-4 pl-3 border-l border-teal-800/40 space-y-1">
+                      <Link
+                        href="/pembayaran"
+                        className={getSubItemClass(
+                          pathname === "/pembayaran" ||
+                            (pathname.startsWith("/pembayaran/") &&
+                              !pathname.startsWith("/pembayaran/buat"))
+                        )}
+                      >
+                        <Receipt className="w-3.5 h-3.5 shrink-0" />
+                        <span>Daftar Tagihan</span>
+                      </Link>
+
+                      <Link
+                        href="/pembayaran/buat"
+                        className={getSubItemClass(
+                          pathname.startsWith("/pembayaran/buat")
+                        )}
+                      >
+                        <Calculator className="w-3.5 h-3.5 shrink-0" />
+                        <span>Buat Tagihan</span>
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
             </nav>
           </div>
 

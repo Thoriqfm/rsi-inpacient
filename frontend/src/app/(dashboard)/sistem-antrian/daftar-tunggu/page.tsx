@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -29,6 +31,12 @@ import { TambahAntreanModal } from "@/components/sistem-antrian/TambahAntreanMod
 import { DetailAntreanModal } from "@/components/sistem-antrian/DetailAntreanModal";
 
 export default function DaftarTungguPage() {
+  const { user } = useAuth();
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Sistem Antrean (Daftar Tunggu)" />;
+  }
+
   const [queues, setQueues] = useState<QueueItem[]>([]);
   const [availableBeds, setAvailableBeds] = useState<BedItem[]>([]);
   const [referralCount, setReferralCount] = useState<number>(2);

@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -20,6 +23,11 @@ import {
 } from "@/lib/api-client";
 
 export default function DetailTagihanPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Detail Tagihan Pasien" />;
+  }
+
   const params = useParams();
   const idTagihan = Number(params?.idTagihan || 1);
 

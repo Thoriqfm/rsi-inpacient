@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -362,6 +365,11 @@ function RincianBiayaPelayananContent() {
 }
 
 export default function RincianBiayaPelayananPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Formulir Tagihan Pasien" />;
+  }
+
   return (
     <Suspense
       fallback={

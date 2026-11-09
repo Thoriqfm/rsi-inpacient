@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -23,6 +25,12 @@ import { AntrianTabs } from "@/components/sistem-antrian/AntrianTabs";
 import { DetailPenangananModal } from "@/components/sistem-antrian/DetailPenangananModal";
 
 export default function PemantauanStatusPage() {
+  const { user } = useAuth();
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pemantauan Status Penanganan" />;
+  }
+
   const [items, setItems] = useState<MonitoringItem[]>([]);
   const [availableBeds, setAvailableBeds] = useState<BedItem[]>([]);
   const [loading, setLoading] = useState(true);

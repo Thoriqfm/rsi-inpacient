@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -17,6 +20,11 @@ import { HistoryStatus, PasienCandidate, RmeRecordItem } from "@/types";
 import { createHistoryApi, fetchPatientRmeApi } from "@/lib/api-client";
 
 export default function BuatRekapBaruPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Buat Rekap Tindakan Baru" />;
+  }
+
   const params = useParams();
   const router = useRouter();
   const idPasien = Number(params?.idPasien || 1);

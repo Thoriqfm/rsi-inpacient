@@ -72,7 +72,7 @@ export default function PengaturanPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <button
             type="button"
             onClick={() =>
@@ -81,18 +81,24 @@ export default function PengaturanPage() {
                 "Petugas Bed Management"
               )
             }
-            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
+            className={`p-5 rounded-[12px] border text-left transition cursor-pointer ${
               user?.role === "PETUGAS_BED_MANAGEMENT"
-                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
-                : "border-slate-200 hover:bg-slate-50"
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-2 ring-[#00b89f]"
+                : "border-[#e9ebf0] hover:bg-slate-50"
             }`}
           >
-            <div className="text-xs font-extrabold text-slate-900">
-              Petugas Bed Management
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-bold text-[#1e1e1e]">
+                Petugas Bed Management
+              </div>
+              {user?.role === "PETUGAS_BED_MANAGEMENT" && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f4ef] text-[#016b46]">
+                  Aktif
+                </span>
+              )}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              Fokus pada ketersediaan tempat tidur, pembersihan kamar, dan
-              pemantauan status hunian.
+            <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
+              Wewenang khusus inventaris kamar: kelola ketersediaan tempat tidur, update status kamar, alokasi bed, sterilisasi/pembersihan, dan pemeliharaan fasilitas.
             </div>
           </button>
 
@@ -104,38 +110,24 @@ export default function PengaturanPage() {
                 "Petugas Administrasi Rawat Inap"
               )
             }
-            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
+            className={`p-5 rounded-[12px] border text-left transition cursor-pointer ${
               user?.role === "PETUGAS_ADMINISTRASI"
-                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
-                : "border-slate-200 hover:bg-slate-50"
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-2 ring-[#00b89f]"
+                : "border-[#e9ebf0] hover:bg-slate-50"
             }`}
           >
-            <div className="text-xs font-extrabold text-slate-900">
-              Petugas Administrasi
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-bold text-[#1e1e1e]">
+                Petugas Administrasi
+              </div>
+              {user?.role === "PETUGAS_ADMINISTRASI" && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f4ef] text-[#016b46]">
+                  Aktif
+                </span>
+              )}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              Akses penuh ke Alokasi Kamar, Antrean Pasien, Rekap Tindakan, dan
-              Manajemen Billing & Tagihan.
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              handleSwitchRole("PETUGAS_MEDIS", "Petugas Medis / Dokter")
-            }
-            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
-              user?.role === "PETUGAS_MEDIS"
-                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
-                : "border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            <div className="text-xs font-extrabold text-slate-900">
-              Petugas Medis / Dokter
-            </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              Fokus pada tindakan medis RME, rujukan pasien darurat, dan
-              pemantauan klinis.
+            <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
+              Wewenang operasional admisi: Dashboard SIMRS, Antrean FIFO, Rujukan Pasien Darurat (SPGDT), Rekap Layanan & Tindakan RME, dan Manajemen Billing & Pembayaran.
             </div>
           </button>
         </div>

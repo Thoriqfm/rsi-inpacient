@@ -208,15 +208,11 @@ export async function loginApi(
         .toLowerCase()
         .includes("administrasi")
         ? "PETUGAS_ADMINISTRASI"
-        : rawRole.toLowerCase().includes("medis")
-        ? "PETUGAS_MEDIS"
         : "PETUGAS_BED_MANAGEMENT";
 
       const roleLabel =
         mappedRole === "PETUGAS_ADMINISTRASI"
           ? "Petugas Administrasi"
-          : mappedRole === "PETUGAS_MEDIS"
-          ? "Petugas Medis"
           : "Petugas Bed Management";
 
       return {

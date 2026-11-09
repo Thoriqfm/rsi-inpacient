@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -39,6 +41,12 @@ import { AntrianTabs } from "@/components/sistem-antrian/AntrianTabs";
 import { SuratRujukanModal } from "@/components/sistem-antrian/SuratRujukanModal";
 
 export default function RujukanPasienPage() {
+  const { user } = useAuth();
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Sistem Rujukan Pasien Darurat" />;
+  }
+
   const [hospitals, setHospitals] = useState<ReferralHospitalItem[]>([]);
   const [referrals, setReferrals] = useState<ReferralItem[]>([]);
   const [waitingCount, setWaitingCount] = useState<number>(3);

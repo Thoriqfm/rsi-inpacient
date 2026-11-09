@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -32,6 +34,12 @@ import {
 
 export default function RekapLayananPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Rekap Layanan & Tindakan" />;
+  }
+
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
   const [patients, setPatients] = useState<HistoryPatientSummary[]>([]);
   const [loading, setLoading] = useState(true);

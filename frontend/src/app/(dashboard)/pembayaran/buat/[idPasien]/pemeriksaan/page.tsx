@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -450,6 +453,11 @@ function PemeriksaanTagihanContent() {
 }
 
 export default function PemeriksaanTagihanPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pemeriksaan Tagihan" />;
+  }
+
   return (
     <Suspense
       fallback={

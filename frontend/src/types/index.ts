@@ -1,7 +1,6 @@
 export type UserRole =
   | "PETUGAS_BED_MANAGEMENT"
-  | "PETUGAS_ADMINISTRASI"
-  | "PETUGAS_MEDIS";
+  | "PETUGAS_ADMINISTRASI";
 
 export interface UserAccount {
   id_akun: number;

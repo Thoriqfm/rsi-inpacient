@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -24,6 +27,11 @@ import {
 } from "@/lib/api-client";
 
 export default function DetailRekapPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Detail Rekap Layanan & Tindakan" />;
+  }
+
   const params = useParams();
   const router = useRouter();
   const idRekap = Number(params?.idRekap || 1);

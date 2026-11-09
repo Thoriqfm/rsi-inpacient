@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -13,6 +16,11 @@ import { HistoryRecapItem } from "@/types";
 import { fetchHistoriesApi } from "@/lib/api-client";
 
 export default function PilihPasienBillingPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Buat Tagihan Pasien" />;
+  }
+
   const router = useRouter();
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
