@@ -98,7 +98,7 @@ export default function PengaturanPage() {
               )}
             </div>
             <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
-              Wewenang khusus inventaris kamar: kelola ketersediaan tempat tidur, update status kamar, alokasi bed, sterilisasi/pembersihan, dan pemeliharaan fasilitas.
+              Wewenang inventaris tempat tidur: kelola ketersediaan tempat tidur, update status kamar (Tersedia, Terisi, Pembersihan, Pemeliharaan fasilitas), dan monitor okupansi bangsal.
             </div>
           </button>
 
@@ -127,7 +127,7 @@ export default function PengaturanPage() {
               )}
             </div>
             <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
-              Wewenang operasional admisi: Dashboard SIMRS, Antrean FIFO, Rujukan Pasien Darurat (SPGDT), Rekap Layanan & Tindakan RME, dan Manajemen Billing & Pembayaran.
+              Wewenang admisi & administrasi: Dashboard SIMRS, Alokasi Kamar Pasien, Antrean FIFO, Rujukan Pasien Darurat (SPGDT), Rekap Layanan & Tindakan RME, dan Billing & Pembayaran.
             </div>
           </button>
         </div>

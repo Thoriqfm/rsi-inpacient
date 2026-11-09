@@ -201,18 +201,18 @@ export default function MainSimrsDashboardPage() {
         {/* KPI 4: Akumulasi Tagihan (Anti-Collision Vertical Architecture) */}
         <Link
           href="/pembayaran"
-          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)] hover:border-teal-300 transition cursor-pointer group"
+          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)] hover:border-[#00b89f]/60 transition cursor-pointer group min-w-0"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
-              <TrendingUp className="w-5 h-5 stroke-[1.8]" />
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            <div className="w-12 h-12 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
+              <TrendingUp className="w-6 h-6 stroke-[1.8]" />
             </div>
-            <div className="min-w-0">
-              <div className="text-xs text-[#8c8c8c] font-medium truncate">Total Tagihan</div>
-              <div className="text-base sm:text-lg font-bold text-[#1e1e1e] tracking-tight truncate">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-[#1e1e1e] truncate">Total Tagihan</div>
+              <div className="text-base sm:text-lg font-bold text-[#1e1e1e] tracking-tight mt-0.5 truncate">
                 {loading ? "..." : formatRupiah(totalRevenue).replace(",00", "")}
               </div>
-              <div className="text-[10px] text-[#0fa18f] font-semibold mt-0.5 truncate">
+              <div className="text-xs text-[#0fa18f] font-medium mt-0.5 truncate">
                 {billings.filter((b) => b.status !== "Batal").length} Invoice Aktif
               </div>
             </div>
