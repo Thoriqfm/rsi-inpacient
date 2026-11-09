@@ -147,7 +147,7 @@ export default function DaftarTungguPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-[11px] font-bold mb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-            <span>UC-04 • Antrean First-In First-Out (FIFO) Pasien Stabil</span>
+            <span>Antrean First-In First-Out (FIFO) Pasien Rawat Inap</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Daftar Tunggu Rawat Inap

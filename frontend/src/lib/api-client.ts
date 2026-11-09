@@ -1647,3 +1647,1352 @@ export async function fetchMonitoringApi(): Promise<{
     source: "mock",
   };
 }
+
+
+// ==========================================
+// UC-07: Rekap Riwayat Layanan & Tindakan Pasien APIs
+// ==========================================
+import type {
+  BillingDetailItem,
+  BillingItem,
+  BillingPreviewResult,
+  BillingStatus,
+  CreateBillingPayload,
+  CreateHistoryPayload,
+  DetailRekapItem,
+  HistoryPatientSummary,
+  HistoryRecapItem,
+  HistoryStatus,
+  RmeRecordItem,
+  TarifItem,
+  UpdateHistoryPayload,
+} from "@/types";
+import {
+  getMockBillings,
+  getMockHistories,
+  getMockRmeByPatient,
+  saveMockBillings,
+  saveMockHistories,
+  SEED_TARIFFS,
+} from "./mock-fallback";
+
+const HISTORY_VALID_TRANSITIONS: Record<HistoryStatus, HistoryStatus[]> = {
+  Draft: ["Proses Verifikasi"],
+  "Proses Verifikasi": ["Siap Billing"],
+  "Siap Billing": [],
+};
+
+const BILLING_VALID_TRANSITIONS: Record<BillingStatus, BillingStatus[]> = {
+  Draft: ["Belum Dibayar"],
+  "Belum Dibayar": ["Lunas"],
+  Lunas: [],
+  Batal: [],
+};
+
+function mapRawHistoryToHistoryItem(
+  row: Record<string, unknown>,
+  idx: number
+): HistoryRecapItem {
+  const rawPasien = (row.pasien || {}) as Record<string, unknown>;
+  const idPasien = Number(row.id_pasien || rawPasien.id_pasien || 1);
+  const noRm = String(rawPasien.no_rm || `RM-2026-0014${idx + 2}`);
+  const matched =
+    SEED_PATIENTS.find((p) => p.no_rm === noRm || p.id_pasien === idPasien) ||
+    SEED_PATIENTS[idx % SEED_PATIENTS.length];
+
+  const { timestamp: dibuatFormatted } = formatBackendTimestamp(
+    row.tanggal_dibuat
+  );
+  const { timestamp: diperbaruiFormatted } = formatBackendTimestamp(
+    row.tanggal_diperbarui || row.tanggal_dibuat
+  );
+
+  const rawDetails = Array.isArray(row.detail_tindakan)
+    ? (row.detail_tindakan as Record<string, unknown>[])
+    : [];
+
+  const fallbackRme = getMockRmeByPatient(idPasien);
+
+  const detailTindakan: DetailRekapItem[] =
+    rawDetails.length > 0
+      ? rawDetails.map((d, dIdx) => {
+          const kode = String(d.kode_tindakan || "TDK-VIS-01");
+          const tarif = SEED_TARIFFS.find((t) => t.kode_tindakan === kode);
+          const hargaSatuan = tarif ? tarif.harga_num : 150000;
+          const jumlah = Number(d.jumlah || 1);
+          return {
+            id_detail_rekap: Number(d.id_detail_rekap || dIdx + 1),
+            id_riwayat: Number(d.id_riwayat || dIdx + 1),
+            kode_tindakan: kode,
+            nama_tindakan: String(d.nama_tindakan || "Tindakan Medis"),
+            tanggal_tindakan: String(
+              d.tanggal_tindakan || new Date().toISOString()
+            ),
+            tanggal_tindakan_formatted: formatBackendTimestamp(
+              d.tanggal_tindakan
+            ).timestamp,
+            jumlah,
+            harga_satuan: hargaSatuan,
+            subtotal: hargaSatuan * jumlah,
+          };
+        })
+      : fallbackRme.map((r, rIdx) => ({
+          id_detail_rekap: rIdx + 1,
+          id_riwayat: r.id_riwayat,
+          kode_tindakan: r.kode_tindakan,
+          nama_tindakan: r.nama_tindakan,
+          tanggal_tindakan: r.tanggal_tindakan,
+          tanggal_tindakan_formatted: r.tanggal_tindakan_formatted,
+          jumlah: r.jumlah,
+          harga_satuan: r.harga_estimasi || 150000,
+          subtotal: (r.harga_estimasi || 150000) * r.jumlah,
+        }));
+
+  const rawTagihan = Array.isArray(row.tagihan)
+    ? (row.tagihan as Record<string, unknown>[])
+    : [];
+
+  return {
+    id_rekap: Number(row.id_rekap || idx + 1),
+    kode_rekap: String(row.kode_rekap || `RKP-20261106-00${idx + 1}`),
+    id_pasien: idPasien,
+    no_rm: noRm,
+    nama_pasien: String(rawPasien.nama_pasien || matched.nama_pasien),
+    jenis_kelamin_usia: matched.jenis_kelamin_usia,
+    kelas_perawatan: matched.kelas_rekomendasi,
+    dokter_dpjp: matched.dokter_dpjp,
+    diagnosa: matched.diagnosa_masuk,
+    hak_kelas_jaminan: matched.hak_kelas_jaminan,
+    status: (row.status as HistoryStatus) || "Draft",
+    catatan: row.catatan ? String(row.catatan) : null,
+    keterangan: row.keterangan ? String(row.keterangan) : null,
+    tanggal_dibuat: String(row.tanggal_dibuat || new Date().toISOString()),
+    tanggal_dibuat_formatted: dibuatFormatted,
+    tanggal_diperbarui: row.tanggal_diperbarui
+      ? String(row.tanggal_diperbarui)
+      : null,
+    tanggal_diperbarui_formatted: diperbaruiFormatted,
+    dibuat_oleh: String(row.dibuat_oleh || "Rini Aprilianti"),
+    jumlah_tindakan: Number(row.jumlah_tindakan || detailTindakan.length),
+    detail_tindakan: detailTindakan,
+    tagihan: rawTagihan.map((t) => ({
+      id_tagihan: Number(t.id_tagihan || 1),
+      no_tagihan: String(t.no_tagihan || "TGH-20261106-001"),
+      status: (t.status as BillingStatus) || "Draft",
+    })),
+  };
+}
+
+export async function fetchHistoriesApi(params?: {
+  status?: HistoryStatus;
+  id_pasien?: number;
+  q?: string;
+}): Promise<{
+  items: HistoryRecapItem[];
+  source: "backend" | "mock";
+}> {
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const searchParams = new URLSearchParams({ page: "1", limit: "100" });
+      if (params?.status) searchParams.set("status", params.status);
+      if (params?.id_pasien)
+        searchParams.set("id_pasien", String(params.id_pasien));
+      if (params?.q) searchParams.set("q", params.q);
+
+      const res = await fetch(
+        `${API_BASE_URL}/histories?${searchParams.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawItems = json.data?.items || [];
+        if (rawItems.length > 0) {
+          const mapped: HistoryRecapItem[] = rawItems.map(
+            (r: Record<string, unknown>, idx: number) =>
+              mapRawHistoryToHistoryItem(r, idx)
+          );
+          if (!params?.status && !params?.id_pasien && !params?.q) {
+            saveMockHistories(mapped);
+          }
+          return { items: mapped, source: "backend" };
+        }
+      }
+    } catch {
+      // fallback to local store
+    }
+  }
+
+  let items = getMockHistories();
+  // Sync tagihan refs from mock billings
+  const billings = getMockBillings();
+  items = items.map((h) => ({
+    ...h,
+    tagihan: billings
+      .filter((b) => b.id_rekap === h.id_rekap)
+      .map((b) => ({
+        id_tagihan: b.id_tagihan,
+        no_tagihan: b.no_tagihan,
+        status: b.status,
+      })),
+  }));
+
+  if (params?.status) {
+    items = items.filter((h) => h.status === params.status);
+  }
+  if (params?.id_pasien) {
+    items = items.filter((h) => h.id_pasien === params.id_pasien);
+  }
+  if (params?.q) {
+    const q = params.q.toLowerCase();
+    items = items.filter(
+      (h) =>
+        h.kode_rekap.toLowerCase().includes(q) ||
+        h.no_rm.toLowerCase().includes(q) ||
+        h.nama_pasien.toLowerCase().includes(q)
+    );
+  }
+
+  return { items, source: "mock" };
+}
+
+export async function fetchHistoryByIdApi(
+  id_rekap: number
+): Promise<HistoryRecapItem> {
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${API_BASE_URL}/histories/${id_rekap}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          return mapRawHistoryToHistoryItem(json.data, 0);
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  const histories = getMockHistories();
+  const billings = getMockBillings();
+  const found = histories.find((h) => h.id_rekap === id_rekap);
+  if (!found) {
+    throw new Error("Data rekap tindakan tidak ditemukan.");
+  }
+
+  return {
+    ...found,
+    tagihan: billings
+      .filter((b) => b.id_rekap === found.id_rekap)
+      .map((b) => ({
+        id_tagihan: b.id_tagihan,
+        no_tagihan: b.no_tagihan,
+        status: b.status,
+      })),
+  };
+}
+
+export async function searchHistoryPatientsApi(
+  query = ""
+): Promise<HistoryPatientSummary[]> {
+  const histories = getMockHistories();
+  const q = query.trim().toLowerCase();
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-") && q.length > 0) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/histories/patients?q=${encodeURIComponent(q)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const rawItems = json.data?.items || [];
+        if (rawItems.length > 0) {
+          return rawItems.map((row: Record<string, unknown>, idx: number) => {
+            const idPasien = Number(row.id_pasien || idx + 1);
+            const matched =
+              SEED_PATIENTS.find((p) => p.id_pasien === idPasien) ||
+              SEED_PATIENTS[idx % SEED_PATIENTS.length];
+            return {
+              id_pasien: idPasien,
+              no_rm: String(row.no_rm || matched.no_rm),
+              nama_pasien: String(row.nama_pasien || matched.nama_pasien),
+              jenis_kelamin_usia: matched.jenis_kelamin_usia,
+              kelas_perawatan: matched.kelas_rekomendasi,
+              hak_kelas_jaminan: matched.hak_kelas_jaminan,
+              dokter_dpjp: matched.dokter_dpjp,
+              diagnosa_masuk: matched.diagnosa_masuk,
+              status_penanganan: String(
+                row.status_penanganan || "Rawat Inap"
+              ),
+              tanggal_masuk_formatted: "04 Nov 2026",
+              jumlah_rme: Number(
+                row.jumlah_rme || getMockRmeByPatient(idPasien).length
+              ),
+              jumlah_rekap: Number(
+                row.jumlah_rekap ||
+                  histories.filter((h) => h.id_pasien === idPasien).length
+              ),
+            };
+          });
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  return SEED_PATIENTS.filter((p) => {
+    if (!q) return true;
+    return (
+      p.nama_pasien.toLowerCase().includes(q) ||
+      p.no_rm.toLowerCase().includes(q) ||
+      p.diagnosa_masuk.toLowerCase().includes(q) ||
+      p.dokter_dpjp.toLowerCase().includes(q)
+    );
+  }).map((p) => ({
+    id_pasien: p.id_pasien,
+    no_rm: p.no_rm,
+    nama_pasien: p.nama_pasien,
+    jenis_kelamin_usia: p.jenis_kelamin_usia,
+    kelas_perawatan: p.kelas_rekomendasi,
+    hak_kelas_jaminan: p.hak_kelas_jaminan,
+    dokter_dpjp: p.dokter_dpjp,
+    diagnosa_masuk: p.diagnosa_masuk,
+    status_penanganan:
+      p.kondisi_pasien === "Darurat" ? "Dirujuk / IGD" : "Rawat Inap Aktif",
+    tanggal_masuk_formatted: "04 Nov 2026",
+    jumlah_rme: getMockRmeByPatient(p.id_pasien).length,
+    jumlah_rekap: histories.filter((h) => h.id_pasien === p.id_pasien).length,
+  }));
+}
+
+export async function fetchPatientRmeApi(id_pasien: number): Promise<{
+  pasien: PasienCandidate;
+  items: RmeRecordItem[];
+  rekap_existing: HistoryRecapItem[];
+}> {
+  const pasien =
+    SEED_PATIENTS.find((p) => p.id_pasien === id_pasien) || SEED_PATIENTS[0];
+  const histories = getMockHistories().filter(
+    (h) => h.id_pasien === id_pasien
+  );
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/histories/rme?id_pasien=${id_pasien}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const rawItems = json.data?.items || [];
+        if (rawItems.length > 0) {
+          const mapped: RmeRecordItem[] = rawItems.map(
+            (r: Record<string, unknown>, idx: number) => {
+              const kode = String(r.kode_tindakan || "TDK-VIS-01");
+              const tarif = SEED_TARIFFS.find((t) => t.kode_tindakan === kode);
+              return {
+                id_riwayat: Number(r.id_riwayat || idx + 1),
+                id_pasien,
+                kode_tindakan: kode,
+                nama_tindakan: String(r.nama_tindakan || "Tindakan Medis"),
+                kategori: tarif?.kategori || "Pelayanan Medis",
+                tanggal_tindakan: String(
+                  r.tanggal_tindakan || new Date().toISOString()
+                ),
+                tanggal_tindakan_formatted: formatBackendTimestamp(
+                  r.tanggal_tindakan
+                ).timestamp,
+                jumlah: Number(r.jumlah || 1),
+                keterangan: r.keterangan ? String(r.keterangan) : null,
+                harga_estimasi: tarif ? tarif.harga_num : 150000,
+              };
+            }
+          );
+          return {
+            pasien,
+            items: mapped,
+            rekap_existing: histories,
+          };
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  return {
+    pasien,
+    items: getMockRmeByPatient(id_pasien),
+    rekap_existing: histories,
+  };
+}
+
+export async function createHistoryApi(
+  payload: CreateHistoryPayload
+): Promise<HistoryRecapItem> {
+  const histories = getMockHistories();
+  const pasien =
+    SEED_PATIENTS.find((p) => p.id_pasien === payload.id_pasien) ||
+    SEED_PATIENTS[0];
+
+  const allRme = getMockRmeByPatient(payload.id_pasien);
+  const selectedRme =
+    payload.id_riwayat && payload.id_riwayat.length > 0
+      ? allRme.filter((r) => payload.id_riwayat!.includes(r.id_riwayat))
+      : allRme;
+
+  if (selectedRme.length === 0) {
+    throw new Error(
+      "Pilih minimal 1 tindakan RME pasien untuk membuat snapshot rekap layanan."
+    );
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/histories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_pasien: payload.id_pasien,
+          ...(payload.id_riwayat ? { id_riwayat: payload.id_riwayat } : {}),
+          ...(payload.catatan ? { catatan: payload.catatan } : {}),
+          ...(payload.keterangan ? { keterangan: payload.keterangan } : {}),
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const created = mapRawHistoryToHistoryItem(
+            json.data,
+            histories.length
+          );
+          const updated = [created, ...histories];
+          saveMockHistories(updated);
+          return created;
+        }
+      }
+    } catch {
+      // fallback to local store
+    }
+  }
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}${String(now.getDate()).padStart(2, "0")}`;
+  const seq = String(histories.length + 1).padStart(3, "0");
+  const { timestamp } = formatNowTimestamp();
+
+  const newRecap: HistoryRecapItem = {
+    id_rekap:
+      histories.length > 0
+        ? Math.max(...histories.map((h) => h.id_rekap)) + 1
+        : 1,
+    kode_rekap: `RKP-${dateStr}-${seq}`,
+    id_pasien: pasien.id_pasien,
+    no_rm: pasien.no_rm,
+    nama_pasien: pasien.nama_pasien,
+    jenis_kelamin_usia: pasien.jenis_kelamin_usia,
+    kelas_perawatan: pasien.kelas_rekomendasi,
+    dokter_dpjp: pasien.dokter_dpjp,
+    diagnosa: pasien.diagnosa_masuk,
+    hak_kelas_jaminan: pasien.hak_kelas_jaminan,
+    status: "Draft",
+    catatan:
+      payload.catatan?.trim() ||
+      "Snapshot awal tindakan medis & perawatan rawat inap dari RME.",
+    keterangan:
+      payload.keterangan?.trim() ||
+      "Draft rekap tindakan menunggu verifikasi kelengkapan berkas.",
+    tanggal_dibuat: now.toISOString(),
+    tanggal_dibuat_formatted: timestamp,
+    tanggal_diperbarui: null,
+    tanggal_diperbarui_formatted: timestamp,
+    dibuat_oleh: getCurrentUserName(),
+    jumlah_tindakan: selectedRme.length,
+    detail_tindakan: selectedRme.map((r, idx) => ({
+      id_detail_rekap: Date.now() + idx,
+      id_riwayat: r.id_riwayat,
+      kode_tindakan: r.kode_tindakan,
+      nama_tindakan: r.nama_tindakan,
+      tanggal_tindakan: r.tanggal_tindakan,
+      tanggal_tindakan_formatted: r.tanggal_tindakan_formatted,
+      jumlah: r.jumlah,
+      harga_satuan: r.harga_estimasi || 150000,
+      subtotal: (r.harga_estimasi || 150000) * r.jumlah,
+    })),
+    tagihan: [],
+  };
+
+  const updated = [newRecap, ...histories];
+  saveMockHistories(updated);
+  return newRecap;
+}
+
+export async function updateHistoryApi(
+  id_rekap: number,
+  payload: UpdateHistoryPayload
+): Promise<HistoryRecapItem> {
+  const histories = getMockHistories();
+  const idx = histories.findIndex((h) => h.id_rekap === id_rekap);
+
+  if (idx !== -1) {
+    const current = histories[idx];
+    if (current.status === "Siap Billing") {
+      throw new Error(
+        "Rekap berstatus Siap Billing bersifat terkunci (immutable snapshot) dan tidak dapat diubah lagi."
+      );
+    }
+    if (payload.status && payload.status !== current.status) {
+      const allowed = HISTORY_VALID_TRANSITIONS[current.status] || [];
+      if (!allowed.includes(payload.status)) {
+        throw new Error(
+          `Transisi status tidak diizinkan: Status "${current.status}" hanya dapat maju ke "${allowed.join(
+            ", "
+          )}".`
+        );
+      }
+    }
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/histories/${id_rekap}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 409) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message ||
+            "Perubahan status rekap tidak diizinkan oleh aturan state machine."
+        );
+      }
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const updated = mapRawHistoryToHistoryItem(
+            json.data,
+            idx !== -1 ? idx : 0
+          );
+          if (idx !== -1) {
+            histories[idx] = updated;
+            saveMockHistories(histories);
+          }
+          return updated;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("tidak")) {
+        throw err;
+      }
+    }
+  }
+
+  if (idx === -1) {
+    throw new Error("Rekap tindakan tidak ditemukan.");
+  }
+
+  const { timestamp } = formatNowTimestamp();
+  const updatedLocal: HistoryRecapItem = {
+    ...histories[idx],
+    status: payload.status ?? histories[idx].status,
+    catatan:
+      payload.catatan !== undefined ? payload.catatan : histories[idx].catatan,
+    keterangan:
+      payload.keterangan !== undefined
+        ? payload.keterangan
+        : histories[idx].keterangan,
+    tanggal_diperbarui: new Date().toISOString(),
+    tanggal_diperbarui_formatted: timestamp,
+  };
+
+  histories[idx] = updatedLocal;
+  saveMockHistories(histories);
+  return updatedLocal;
+}
+
+export async function deleteHistoryApi(id_rekap: number): Promise<void> {
+  const histories = getMockHistories();
+  const billings = getMockBillings();
+  const target = histories.find((h) => h.id_rekap === id_rekap);
+
+  const linkedBilling = billings.find((b) => b.id_rekap === id_rekap);
+  if (linkedBilling || (target && target.tagihan.length > 0)) {
+    const noInv =
+      linkedBilling?.no_tagihan || target?.tagihan[0]?.no_tagihan || "Aktif";
+    const err = new Error(
+      `Rekap tindakan ini tidak dapat dihapus karena sudah digunakan pada Tagihan (${noInv}).`
+    );
+    (err as Error & { code?: string }).code = "HISTORY_HAS_INVOICE";
+    throw err;
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/histories/${id_rekap}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 409) {
+        const err = new Error(
+          "Rekap sudah digunakan pada tagihan dan tidak dapat dihapus."
+        );
+        (err as Error & { code?: string }).code = "HISTORY_HAS_INVOICE";
+        throw err;
+      }
+    } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        (err as Error & { code?: string }).code === "HISTORY_HAS_INVOICE"
+      ) {
+        throw err;
+      }
+    }
+  }
+
+  const remaining = histories.filter((h) => h.id_rekap !== id_rekap);
+  saveMockHistories(remaining);
+}
+
+// ==========================================
+// UC-08 & UC-09: Perhitungan Biaya & Pengelolaan Tagihan (Billing) APIs
+// ==========================================
+export async function fetchTariffsApi(): Promise<TarifItem[]> {
+  return SEED_TARIFFS;
+}
+
+function mapRawBillingToBillingItem(
+  row: Record<string, unknown>,
+  idx: number
+): BillingItem {
+  const rawPasien = (row.pasien || {}) as Record<string, unknown>;
+  const idPasien = Number(row.id_pasien || rawPasien.id_pasien || 1);
+  const noRm = String(rawPasien.no_rm || `RM-2026-0014${idx + 2}`);
+  const matched =
+    SEED_PATIENTS.find((p) => p.no_rm === noRm || p.id_pasien === idPasien) ||
+    SEED_PATIENTS[idx % SEED_PATIENTS.length];
+
+  const { timestamp: dibuatFormatted } = formatBackendTimestamp(
+    row.tanggal_dibuat
+  );
+  const { timestamp: diperbaruiFormatted } = formatBackendTimestamp(
+    row.tanggal_diperbarui || row.tanggal_dibuat
+  );
+
+  const rawDetails = Array.isArray(row.detail_tagihan_list)
+    ? (row.detail_tagihan_list as Record<string, unknown>[])
+    : [];
+
+  const detailList: BillingDetailItem[] = rawDetails.map((d, dIdx) => {
+    const hargaNum = Number(d.harga_satuan || 150000);
+    const jumlah = Number(d.jumlah || 1);
+    const subNum = Number(d.subtotal || hargaNum * jumlah);
+    const matchedTarif = SEED_TARIFFS.find(
+      (t) =>
+        t.id_tarif === Number(d.id_tarif) ||
+        t.nama_tindakan === String(d.nama_tindakan)
+    );
+    return {
+      id_detail_tagihan: Number(d.id_detail_tagihan || dIdx + 1),
+      id_detail_rekap: Number(d.id_detail_rekap || dIdx + 1),
+      id_tarif: Number(d.id_tarif || matchedTarif?.id_tarif || 1),
+      kode_tindakan: String(
+        d.kode_tindakan || matchedTarif?.kode_tindakan || `TDK-0${dIdx + 1}`
+      ),
+      nama_tindakan: String(d.nama_tindakan || "Tindakan Pelayanan"),
+      tanggal_tindakan_formatted: "05 Nov 2026",
+      jumlah,
+      harga_satuan: hargaNum.toFixed(2),
+      harga_satuan_num: hargaNum,
+      subtotal: subNum.toFixed(2),
+      subtotal_num: subNum,
+    };
+  });
+
+  const totalNum = Number(row.total_biaya || 0);
+
+  return {
+    id_tagihan: Number(row.id_tagihan || idx + 1),
+    id_pasien: idPasien,
+    id_rekap: Number(row.id_rekap || 1),
+    kode_rekap: String(row.kode_rekap || `RKP-20261106-00${idx + 1}`),
+    no_tagihan: String(row.no_tagihan || `TGH-20261106-00${idx + 1}`),
+    no_rm: noRm,
+    nama_pasien: String(rawPasien.nama_pasien || matched.nama_pasien),
+    jenis_kelamin_usia: matched.jenis_kelamin_usia,
+    kelas_perawatan: matched.kelas_rekomendasi,
+    dokter_dpjp: matched.dokter_dpjp,
+    diagnosa: matched.diagnosa_masuk,
+    hak_kelas_jaminan: matched.hak_kelas_jaminan,
+    total_biaya: totalNum.toFixed(2),
+    total_biaya_num: totalNum,
+    status: (row.status as BillingStatus) || "Draft",
+    catatan_penyesuaian: row.catatan_penyesuaian
+      ? String(row.catatan_penyesuaian)
+      : null,
+    alasan_pembatalan: row.alasan_pembatalan
+      ? String(row.alasan_pembatalan)
+      : null,
+    tanggal_dibuat: String(row.tanggal_dibuat || new Date().toISOString()),
+    tanggal_dibuat_formatted: dibuatFormatted,
+    tanggal_diperbarui: row.tanggal_diperbarui
+      ? String(row.tanggal_diperbarui)
+      : null,
+    tanggal_diperbarui_formatted: diperbaruiFormatted,
+    tanggal_dibatalkan: row.tanggal_dibatalkan
+      ? String(row.tanggal_dibatalkan)
+      : null,
+    tanggal_dibatalkan_formatted: row.tanggal_dibatalkan
+      ? formatBackendTimestamp(row.tanggal_dibatalkan).timestamp
+      : null,
+    dibuat_oleh: String(row.dibuat_oleh || "Rini Aprilianti"),
+    jumlah_item: Number(row.jumlah_item || detailList.length || 1),
+    detail_tagihan_list: detailList,
+  };
+}
+
+export async function fetchBillingsApi(params?: {
+  status?: BillingStatus;
+  id_pasien?: number;
+  q?: string;
+}): Promise<{
+  items: BillingItem[];
+  source: "backend" | "mock";
+}> {
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const searchParams = new URLSearchParams({ page: "1", limit: "100" });
+      if (params?.status) searchParams.set("status", params.status);
+      if (params?.id_pasien)
+        searchParams.set("id_pasien", String(params.id_pasien));
+      if (params?.q) searchParams.set("q", params.q);
+
+      const res = await fetch(
+        `${API_BASE_URL}/billing?${searchParams.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawItems = json.data?.items || [];
+        if (rawItems.length > 0) {
+          const mapped: BillingItem[] = rawItems.map(
+            (b: Record<string, unknown>, idx: number) =>
+              mapRawBillingToBillingItem(b, idx)
+          );
+          if (!params?.status && !params?.id_pasien && !params?.q) {
+            saveMockBillings(mapped);
+          }
+          return { items: mapped, source: "backend" };
+        }
+      }
+    } catch {
+      // fallback to local store
+    }
+  }
+
+  let items = getMockBillings();
+  if (params?.status) {
+    items = items.filter((b) => b.status === params.status);
+  }
+  if (params?.id_pasien) {
+    items = items.filter((b) => b.id_pasien === params.id_pasien);
+  }
+  if (params?.q) {
+    const q = params.q.toLowerCase();
+    items = items.filter(
+      (b) =>
+        b.no_tagihan.toLowerCase().includes(q) ||
+        b.kode_rekap.toLowerCase().includes(q) ||
+        b.no_rm.toLowerCase().includes(q) ||
+        b.nama_pasien.toLowerCase().includes(q)
+    );
+  }
+
+  return { items, source: "mock" };
+}
+
+export async function fetchBillingByIdApi(
+  id_tagihan: number
+): Promise<BillingItem> {
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${API_BASE_URL}/billing/${id_tagihan}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          return mapRawBillingToBillingItem(json.data, 0);
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  const billings = getMockBillings();
+  const found = billings.find((b) => b.id_tagihan === id_tagihan);
+  if (!found) {
+    throw new Error("Data tagihan tidak ditemukan.");
+  }
+  return found;
+}
+
+export async function previewBillingApi(
+  id_rekap: number
+): Promise<BillingPreviewResult> {
+  const histories = getMockHistories();
+  const rekap = histories.find((h) => h.id_rekap === id_rekap);
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/billing/preview`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id_rekap }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data;
+        if (data) {
+          const idPasien = Number(
+            data.pasien?.id_pasien || rekap?.id_pasien || 1
+          );
+          const matched =
+            SEED_PATIENTS.find((p) => p.id_pasien === idPasien) ||
+            SEED_PATIENTS[0];
+
+          const rawItems = Array.isArray(data.items) ? data.items : [];
+          const items: BillingDetailItem[] = rawItems.map(
+            (item: Record<string, unknown>, idx: number) => {
+              const hargaNum = Number(item.harga_satuan || 150000);
+              const jumlah = Number(item.jumlah || 1);
+              const subNum = Number(item.subtotal || hargaNum * jumlah);
+              return {
+                id_detail_rekap: Number(item.id_detail_rekap || idx + 1),
+                id_tarif: Number(item.id_tarif || idx + 1),
+                kode_tindakan: String(item.kode_tindakan || "TDK-01"),
+                nama_tindakan: String(item.nama_tindakan || "Tindakan Medis"),
+                tanggal_tindakan: String(
+                  item.tanggal_tindakan || new Date().toISOString()
+                ),
+                tanggal_tindakan_formatted: formatBackendTimestamp(
+                  item.tanggal_tindakan
+                ).timestamp,
+                jumlah,
+                harga_satuan: hargaNum.toFixed(2),
+                harga_satuan_num: hargaNum,
+                subtotal: subNum.toFixed(2),
+                subtotal_num: subNum,
+              };
+            }
+          );
+
+          const totalNum = Number(data.total_biaya || 0);
+          return {
+            id_rekap: Number(data.id_rekap || id_rekap),
+            kode_rekap: String(data.kode_rekap || rekap?.kode_rekap),
+            status: (data.status as HistoryStatus) || "Siap Billing",
+            pasien: {
+              id_pasien: idPasien,
+              no_rm: String(data.pasien?.no_rm || matched.no_rm),
+              nama_pasien: String(
+                data.pasien?.nama_pasien || matched.nama_pasien
+              ),
+              jenis_kelamin_usia: matched.jenis_kelamin_usia,
+              kelas_perawatan: matched.kelas_rekomendasi,
+              dokter_dpjp: matched.dokter_dpjp,
+              diagnosa: matched.diagnosa_masuk,
+              hak_kelas_jaminan: matched.hak_kelas_jaminan,
+            },
+            acuan_tarif: String(data.acuan_tarif || "tanggal_tindakan"),
+            items,
+            total_biaya: totalNum.toFixed(2),
+            total_biaya_num: totalNum,
+          };
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  if (!rekap) {
+    throw new Error("Rekap tindakan tidak ditemukan.");
+  }
+
+  if (rekap.status !== "Siap Billing") {
+    throw new Error(
+      `Rekap ${rekap.kode_rekap} masih berstatus "${rekap.status}". Hanya rekap berstatus "Siap Billing" yang dapat dihitung biayanya.`
+    );
+  }
+
+  let totalNum = 0;
+  const items: BillingDetailItem[] = rekap.detail_tindakan.map((d, idx) => {
+    const matchedTarif = SEED_TARIFFS.find(
+      (t) => t.kode_tindakan === d.kode_tindakan
+    );
+    const hargaNum = matchedTarif
+      ? matchedTarif.harga_num
+      : d.harga_satuan || 150000;
+    const subNum = hargaNum * d.jumlah;
+    totalNum += subNum;
+
+    return {
+      id_detail_rekap: d.id_detail_rekap || idx + 1,
+      id_tarif: matchedTarif?.id_tarif || idx + 1,
+      kode_tindakan: d.kode_tindakan,
+      nama_tindakan: d.nama_tindakan,
+      tanggal_tindakan: d.tanggal_tindakan,
+      tanggal_tindakan_formatted: d.tanggal_tindakan_formatted,
+      jumlah: d.jumlah,
+      harga_satuan: hargaNum.toFixed(2),
+      harga_satuan_num: hargaNum,
+      subtotal: subNum.toFixed(2),
+      subtotal_num: subNum,
+    };
+  });
+
+  return {
+    id_rekap: rekap.id_rekap,
+    kode_rekap: rekap.kode_rekap,
+    status: rekap.status,
+    pasien: {
+      id_pasien: rekap.id_pasien,
+      no_rm: rekap.no_rm,
+      nama_pasien: rekap.nama_pasien,
+      jenis_kelamin_usia: rekap.jenis_kelamin_usia,
+      kelas_perawatan: rekap.kelas_perawatan,
+      dokter_dpjp: rekap.dokter_dpjp,
+      diagnosa: rekap.diagnosa,
+      hak_kelas_jaminan: rekap.hak_kelas_jaminan,
+    },
+    acuan_tarif: "tanggal_tindakan",
+    items,
+    total_biaya: totalNum.toFixed(2),
+    total_biaya_num: totalNum,
+  };
+}
+
+export async function createBillingApi(
+  payload: CreateBillingPayload
+): Promise<BillingItem> {
+  const billings = getMockBillings();
+  const activeExisting = billings.find(
+    (b) => b.id_rekap === payload.id_rekap && b.status !== "Batal"
+  );
+  if (activeExisting) {
+    throw new Error(
+      `Rekap ini sudah memiliki tagihan aktif (${activeExisting.no_tagihan} - Status: ${activeExisting.status}).`
+    );
+  }
+
+  const preview = await previewBillingApi(payload.id_rekap);
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/billing`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_rekap: payload.id_rekap,
+          ...(payload.catatan ? { catatan: payload.catatan } : {}),
+        }),
+      });
+
+      if (res.status === 409) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message || "Rekap sudah memiliki tagihan aktif."
+        );
+      }
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const created = mapRawBillingToBillingItem(
+            json.data,
+            billings.length
+          );
+          const updated = [created, ...billings];
+          saveMockBillings(updated);
+          return created;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("sudah memiliki")) {
+        throw err;
+      }
+    }
+  }
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}${String(now.getDate()).padStart(2, "0")}`;
+  const seq = String(billings.length + 1).padStart(3, "0");
+  const { timestamp } = formatNowTimestamp();
+
+  const newBilling: BillingItem = {
+    id_tagihan:
+      billings.length > 0
+        ? Math.max(...billings.map((b) => b.id_tagihan)) + 1
+        : 1,
+    id_pasien: preview.pasien.id_pasien,
+    id_rekap: preview.id_rekap,
+    kode_rekap: preview.kode_rekap,
+    no_tagihan: `TGH-${dateStr}-${seq}`,
+    no_rm: preview.pasien.no_rm,
+    nama_pasien: preview.pasien.nama_pasien,
+    jenis_kelamin_usia: preview.pasien.jenis_kelamin_usia,
+    kelas_perawatan: preview.pasien.kelas_perawatan,
+    dokter_dpjp: preview.pasien.dokter_dpjp,
+    diagnosa: preview.pasien.diagnosa,
+    hak_kelas_jaminan: preview.pasien.hak_kelas_jaminan,
+    total_biaya: preview.total_biaya,
+    total_biaya_num: preview.total_biaya_num,
+    status: "Draft",
+    catatan_penyesuaian:
+      payload.catatan?.trim() ||
+      "Tagihan berhasil dikalkulasi otomatis berdasarkan rekap tindakan Siap Billing dan master tarif aktif.",
+    alasan_pembatalan: null,
+    tanggal_dibuat: now.toISOString(),
+    tanggal_dibuat_formatted: timestamp,
+    tanggal_diperbarui: null,
+    tanggal_diperbarui_formatted: timestamp,
+    tanggal_dibatalkan: null,
+    tanggal_dibatalkan_formatted: null,
+    dibuat_oleh: getCurrentUserName(),
+    jumlah_item: preview.items.length,
+    detail_tagihan_list: preview.items.map((item, idx) => ({
+      ...item,
+      id_detail_tagihan: Date.now() + idx,
+    })),
+  };
+
+  const updated = [newBilling, ...billings];
+  saveMockBillings(updated);
+  return newBilling;
+}
+
+export async function updateBillingStatusApi(
+  id_tagihan: number,
+  status: BillingStatus,
+  catatan_penyesuaian?: string
+): Promise<BillingItem> {
+  const billings = getMockBillings();
+  const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
+
+  if (status === "Batal") {
+    throw new Error(
+      "Pembatalan tagihan wajib menyertakan alasan pembatalan resmi."
+    );
+  }
+
+  if (idx !== -1) {
+    const current = billings[idx];
+    if (status !== current.status) {
+      const allowed = BILLING_VALID_TRANSITIONS[current.status] || [];
+      if (!allowed.includes(status)) {
+        throw new Error(
+          `Transisi status tidak diizinkan: Status "${current.status}" tidak dapat berubah menjadi "${status}".`
+        );
+      }
+    }
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/billing/${id_tagihan}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.status === 409) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message || "Perubahan status tagihan ditolak."
+        );
+      }
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const updated = mapRawBillingToBillingItem(
+            json.data,
+            idx !== -1 ? idx : 0
+          );
+          if (idx !== -1) {
+            billings[idx] = {
+              ...updated,
+              catatan_penyesuaian:
+                catatan_penyesuaian ?? updated.catatan_penyesuaian,
+            };
+            saveMockBillings(billings);
+          }
+          return billings[idx] || updated;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("tidak")) {
+        throw err;
+      }
+    }
+  }
+
+  if (idx === -1) {
+    throw new Error("Tagihan tidak ditemukan.");
+  }
+
+  const { timestamp } = formatNowTimestamp();
+  const updatedLocal: BillingItem = {
+    ...billings[idx],
+    status,
+    catatan_penyesuaian:
+      catatan_penyesuaian !== undefined
+        ? catatan_penyesuaian
+        : billings[idx].catatan_penyesuaian,
+    tanggal_diperbarui: new Date().toISOString(),
+    tanggal_diperbarui_formatted: timestamp,
+  };
+
+  billings[idx] = updatedLocal;
+  saveMockBillings(billings);
+  return updatedLocal;
+}
+
+export async function recalculateBillingApi(
+  id_tagihan: number,
+  catatan_penyesuaian?: string
+): Promise<BillingItem> {
+  const billings = getMockBillings();
+  const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
+
+  if (idx !== -1 && billings[idx].status !== "Draft") {
+    throw new Error(
+      "Hanya tagihan berstatus Draft yang dapat dihitung ulang (Recalculate). Tagihan yang sudah diterbitkan telah dikunci nominalnya."
+    );
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/billing/${id_tagihan}/recalculate`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.status === 409) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message ||
+            "Hanya tagihan Draft yang dapat dihitung ulang."
+        );
+      }
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const updated = mapRawBillingToBillingItem(
+            json.data,
+            idx !== -1 ? idx : 0
+          );
+          if (idx !== -1) {
+            billings[idx] = {
+              ...updated,
+              catatan_penyesuaian:
+                catatan_penyesuaian ?? updated.catatan_penyesuaian,
+            };
+            saveMockBillings(billings);
+          }
+          return billings[idx] || updated;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Hanya tagihan")) {
+        throw err;
+      }
+    }
+  }
+
+  if (idx === -1) {
+    throw new Error("Tagihan tidak ditemukan.");
+  }
+
+  const current = billings[idx];
+  const preview = await previewBillingApi(current.id_rekap);
+  const { timestamp } = formatNowTimestamp();
+
+  const updatedLocal: BillingItem = {
+    ...current,
+    total_biaya: preview.total_biaya,
+    total_biaya_num: preview.total_biaya_num,
+    jumlah_item: preview.items.length,
+    detail_tagihan_list: preview.items.map((item, dIdx) => ({
+      ...item,
+      id_detail_tagihan: current.detail_tagihan_list[dIdx]?.id_detail_tagihan || Date.now() + dIdx,
+    })),
+    catatan_penyesuaian:
+      catatan_penyesuaian !== undefined
+        ? catatan_penyesuaian
+        : current.catatan_penyesuaian,
+    tanggal_diperbarui: new Date().toISOString(),
+    tanggal_diperbarui_formatted: timestamp,
+  };
+
+  billings[idx] = updatedLocal;
+  saveMockBillings(billings);
+  return updatedLocal;
+}
+
+export async function cancelBillingApi(
+  id_tagihan: number,
+  alasan: string
+): Promise<BillingItem> {
+  if (!alasan.trim()) {
+    throw new Error("Alasan pembatalan tagihan wajib diisi.");
+  }
+
+  const billings = getMockBillings();
+  const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
+
+  if (
+    idx !== -1 &&
+    billings[idx].status !== "Draft" &&
+    billings[idx].status !== "Belum Dibayar"
+  ) {
+    throw new Error(
+      `Tagihan berstatus "${billings[idx].status}" sudah bersifat final dan tidak dapat dibatalkan.`
+    );
+  }
+
+  const token = getToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/billing/${id_tagihan}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ alasan: alasan.trim() }),
+      });
+
+      if (res.status === 409) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message || "Tagihan tidak dapat dibatalkan."
+        );
+      }
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const updated = mapRawBillingToBillingItem(
+            json.data,
+            idx !== -1 ? idx : 0
+          );
+          if (idx !== -1) {
+            billings[idx] = updated;
+            saveMockBillings(billings);
+          }
+          return updated;
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("tidak dapat")) {
+        throw err;
+      }
+    }
+  }
+
+  if (idx === -1) {
+    throw new Error("Tagihan tidak ditemukan.");
+  }
+
+  const { timestamp } = formatNowTimestamp();
+  const nowIso = new Date().toISOString();
+
+  const updatedLocal: BillingItem = {
+    ...billings[idx],
+    status: "Batal",
+    alasan_pembatalan: alasan.trim(),
+    tanggal_dibatalkan: nowIso,
+    tanggal_dibatalkan_formatted: timestamp,
+    tanggal_diperbarui: nowIso,
+    tanggal_diperbarui_formatted: timestamp,
+  };
+
+  billings[idx] = updatedLocal;
+  saveMockBillings(billings);
+  return updatedLocal;
+}

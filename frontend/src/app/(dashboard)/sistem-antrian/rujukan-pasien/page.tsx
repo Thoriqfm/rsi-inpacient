@@ -214,7 +214,7 @@ export default function RujukanPasienPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-700 text-[11px] font-bold mb-2">
             <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-            <span>UC-05 • Penanganan Cepat Pasien Kondisi Darurat (SPGDT)</span>
+            <span>Penanganan Cepat Pasien Kondisi Darurat (SPGDT)</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Rujukan Pasien Darurat ke RS Lain

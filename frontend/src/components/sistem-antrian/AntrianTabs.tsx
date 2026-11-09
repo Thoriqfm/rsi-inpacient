@@ -21,7 +21,7 @@ export function AntrianTabs({
   const tabs = [
     {
       label: "Daftar Tunggu (FIFO)",
-      sublabel: "UC-04 • Antrean Pasien Stabil",
+      sublabel: "Antrean Pasien Rawat Inap",
       href: "/sistem-antrian/daftar-tunggu",
       icon: Clock,
       active: pathname.includes("/daftar-tunggu"),
@@ -30,7 +30,7 @@ export function AntrianTabs({
     },
     {
       label: "Rujukan Pasien Darurat",
-      sublabel: "UC-05 • RS Jejaring & Surat Rujukan",
+      sublabel: "RS Jejaring & Rujukan",
       href: "/sistem-antrian/rujukan-pasien",
       icon: Ambulance,
       active: pathname.includes("/rujukan-pasien"),
@@ -39,7 +39,7 @@ export function AntrianTabs({
     },
     {
       label: "Pemantauan Status",
-      sublabel: "UC-06 • Tracking Penanganan",
+      sublabel: "Tracking & Status Pasien",
       href: "/sistem-antrian/pemantauan-status",
       icon: Activity,
       active: pathname.includes("/pemantauan-status"),

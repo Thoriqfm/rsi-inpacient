@@ -209,7 +209,7 @@ export default function BedManagementPage() {
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-4 h-4 text-teal-700 shrink-0" />
             <span>
-              <strong>Peran Akun: Petugas Administrasi</strong> — Akses Anda difokuskan untuk pemantauan ketersediaan dan melakukan <em>Alokasi Kamar Pasien (UC-03)</em>. Pendaftaran tempat tidur baru, pengubahan status manual (Pembersihan/Pemeliharaan), serta penghapusan master bed merupakan wewenang <em>Petugas Bed Management (UC-02)</em>.
+              <strong>Peran Akun: Petugas Administrasi</strong> — Akses Anda difokuskan untuk pemantauan ketersediaan dan melakukan <em>Alokasi Kamar Pasien</em>. Pendaftaran tempat tidur baru, pengubahan status manual (Pembersihan/Pemeliharaan), serta pengelolaan master bed merupakan wewenang <em>Petugas Bed Management</em>.
             </span>
           </div>
           <Link

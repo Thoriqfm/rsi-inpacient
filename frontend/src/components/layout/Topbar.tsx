@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Database,
 } from "lucide-react";
-import { resetMockBeds } from "@/lib/mock-fallback";
+import { resetAllMockData } from "@/lib/mock-fallback";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -34,21 +34,49 @@ export function Topbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isDashboard = pathname === "/dashboard";
   const isAlokasi = pathname.includes("/alokasi");
   const isAntrian = pathname.startsWith("/sistem-antrian");
+  const isRekap = pathname.startsWith("/rekap-layanan");
+  const isPembayaran = pathname.startsWith("/pembayaran");
+  const isPengaturan = pathname.startsWith("/pengaturan");
+  const isBantuan = pathname.startsWith("/bantuan");
+
   const antrianSubLabel = pathname.includes("/rujukan-pasien")
     ? "Rujukan Pasien Darurat"
     : pathname.includes("/pemantauan-status")
     ? "Pemantauan Status Penanganan"
     : "Daftar Tunggu Rawat Inap (FIFO)";
 
+  const rekapSubLabel = pathname.includes("/pasien/")
+    ? pathname.endsWith("/buat")
+      ? "Buat Snapshot Rekap Baru"
+      : "Data Pasien & Riwayat RME"
+    : pathname.endsWith("/edit")
+    ? "Edit & Verifikasi Status Rekap"
+    : pathname !== "/rekap-layanan"
+    ? "Detail Rekap Tindakan"
+    : "Rekap Riwayat Layanan & Tindakan";
+
+  const pembayaranSubLabel = pathname.includes("/pemeriksaan")
+    ? "Pemeriksaan & Penyesuaian Tagihan"
+    : pathname.includes("/penerbitan")
+    ? "Penerbitan Invoice Resmi"
+    : pathname.startsWith("/pembayaran/buat/")
+    ? "Rincian Biaya Pelayanan"
+    : pathname === "/pembayaran/buat"
+    ? "Pilih Pasien Rawat Inap"
+    : pathname !== "/pembayaran"
+    ? "Detail & Pelunasan Tagihan"
+    : "Manajemen Tagihan & Pembayaran";
+
   const handleResetData = () => {
     if (
       confirm(
-        "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, dan Surat Rujukan) ke kondisi awal?"
+        "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, Rujukan, Rekap Tindakan RME, dan Tagihan Billing) ke kondisi awal?"
       )
     ) {
-      resetMockBeds();
+      resetAllMockData();
       window.location.reload();
     }
   };
@@ -61,8 +89,16 @@ export function Topbar() {
   return (
     <header className="h-[72px] bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30">
       {/* Left: Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm">
-        {isAntrian ? (
+      <nav className="flex items-center gap-2 text-sm flex-wrap">
+        {isDashboard ? (
+          <>
+            <span className="font-semibold text-slate-500">SIMRS Rawat Inap</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Dashboard Operasional Terpadu
+            </span>
+          </>
+        ) : isAntrian ? (
           <>
             <Link
               href="/sistem-antrian/daftar-tunggu"
@@ -73,6 +109,48 @@ export function Topbar() {
             <ChevronRight className="w-4 h-4 text-slate-400" />
             <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
               {antrianSubLabel}
+            </span>
+          </>
+        ) : isRekap ? (
+          <>
+            <Link
+              href="/rekap-layanan"
+              className="font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              Rekap Layanan
+            </Link>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              {rekapSubLabel}
+            </span>
+          </>
+        ) : isPembayaran ? (
+          <>
+            <Link
+              href="/pembayaran"
+              className="font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              Pembayaran & Billing
+            </Link>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              {pembayaranSubLabel}
+            </span>
+          </>
+        ) : isPengaturan ? (
+          <>
+            <span className="font-semibold text-slate-500">Sistem</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Pengaturan Sistem & Profil
+            </span>
+          </>
+        ) : isBantuan ? (
+          <>
+            <span className="font-semibold text-slate-500">Sistem</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Pusat Bantuan & Panduan SOP
             </span>
           </>
         ) : (

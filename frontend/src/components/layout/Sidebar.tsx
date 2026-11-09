@@ -16,6 +16,8 @@ import {
   Ambulance,
   Activity,
   ClipboardList,
+  Calculator,
+  Receipt,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -23,12 +25,14 @@ export function Sidebar() {
   const { user } = useAuth();
 
   const isAntrianSection = pathname.startsWith("/sistem-antrian");
+  const isRekapSection = pathname.startsWith("/rekap-layanan");
+  const isPembayaranSection = pathname.startsWith("/pembayaran");
 
   return (
-    <aside className="w-64 min-w-[256px] bg-gradient-to-b from-[#0d332f] via-[#0d3732] to-[#082320] text-slate-200 flex flex-col justify-between shrink-0 border-r border-teal-900/30 select-none">
+    <aside className="w-64 min-w-[256px] bg-gradient-to-b from-[#0d332f] via-[#0d3732] to-[#082320] text-slate-200 flex flex-col justify-between shrink-0 border-r border-teal-900/30 select-none overflow-y-auto">
       {/* Brand Header */}
       <div>
-        <div className="h-[72px] px-5 flex items-center gap-3 border-b border-teal-800/40">
+        <div className="h-[72px] px-5 flex items-center gap-3 border-b border-teal-800/40 sticky top-0 bg-[#0d332f]/95 backdrop-blur-xs z-10">
           <div className="w-9 h-9 rounded-lg bg-[#13c9b3] text-[#0d332f] font-black flex items-center justify-center text-xl shadow-md shadow-teal-500/20">
             +
           </div>
@@ -43,26 +47,37 @@ export function Sidebar() {
         </div>
 
         {/* Menu Items */}
-        <div className="px-3 py-6 space-y-6">
+        <div className="px-3 py-5 space-y-6">
           {/* MENU UTAMA */}
           <div>
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-teal-300/50 mb-2">
               Menu Utama
             </div>
             <nav className="space-y-1">
-              {/* If Administrasi, show Dashboard */}
-              {user?.role === "PETUGAS_ADMINISTRASI" && (
-                <div
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition cursor-not-allowed opacity-60"
-                  title="Modul Administrasi - Halaman Utama"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-teal-400/60" />
-                  <span>Dashboard</span>
-                  <span className="ml-auto text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-slate-400">
-                    SIMRS
-                  </span>
-                </div>
-              )}
+              {/* Dashboard SIMRS */}
+              <Link
+                href="/dashboard"
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                  pathname === "/dashboard"
+                    ? "bg-[#13c9b3]/15 text-[#13c9b3] shadow-sm"
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <LayoutDashboard
+                  className={`w-4 h-4 ${
+                    pathname === "/dashboard"
+                      ? "text-[#13c9b3]"
+                      : "text-teal-400/70"
+                  }`}
+                />
+                <span>Dashboard</span>
+                <span className="ml-auto text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-teal-200/80 font-bold">
+                  SIMRS
+                </span>
+                {pathname === "/dashboard" && (
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#13c9b3] rounded-l-full shadow-sm shadow-teal-400" />
+                )}
+              </Link>
 
               {/* Bed Management (UC-01 & UC-02) */}
               <Link
@@ -175,26 +190,81 @@ export function Sidebar() {
                 </div>
               </div>
 
-              {/* Additional Administrasi menus */}
-              {user?.role === "PETUGAS_ADMINISTRASI" && (
-                <>
-                  <div
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition cursor-not-allowed opacity-60"
-                    title="Rekap Layanan & Tindakan"
-                  >
-                    <FileText className="w-4 h-4 text-teal-400/60" />
-                    <span>Rekap Layanan</span>
-                  </div>
+              {/* Rekap Layanan & Tindakan */}
+              <div className="pt-1">
+                <Link
+                  href="/rekap-layanan"
+                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isRekapSection
+                      ? "bg-[#13c9b3]/15 text-[#13c9b3] shadow-sm"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <FileText
+                    className={`w-4 h-4 ${
+                      isRekapSection
+                        ? "text-[#13c9b3]"
+                        : "text-teal-400/70"
+                    }`}
+                  />
+                  <span>Rekap Layanan</span>
+                  {isRekapSection && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#13c9b3] rounded-l-full shadow-sm shadow-teal-400" />
+                  )}
+                </Link>
+              </div>
 
-                  <div
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition cursor-not-allowed opacity-60"
-                    title="Pembayaran & Billing"
+              {/* Pembayaran & Billing */}
+              <div className="pt-1">
+                <Link
+                  href="/pembayaran"
+                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isPembayaranSection
+                      ? "bg-[#13c9b3]/15 text-[#13c9b3] shadow-sm"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <CreditCard
+                    className={`w-4 h-4 ${
+                      isPembayaranSection
+                        ? "text-[#13c9b3]"
+                        : "text-teal-400/70"
+                    }`}
+                  />
+                  <span>Pembayaran (Billing)</span>
+                  {isPembayaranSection && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#13c9b3] rounded-l-full shadow-sm shadow-teal-400" />
+                  )}
+                </Link>
+
+                <div className="mt-1 ml-4 pl-3 border-l border-teal-800/60 space-y-1">
+                  <Link
+                    href="/pembayaran"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                      pathname === "/pembayaran" ||
+                      (pathname.startsWith("/pembayaran/") &&
+                        !pathname.startsWith("/pembayaran/buat"))
+                        ? "bg-white/10 text-[#13c9b3]"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
                   >
-                    <CreditCard className="w-4 h-4 text-teal-400/60" />
-                    <span>Pembayaran (Billing)</span>
-                  </div>
-                </>
-              )}
+                    <Receipt className="w-3.5 h-3.5 shrink-0" />
+                    <span>Daftar Tagihan</span>
+                  </Link>
+
+                  <Link
+                    href="/pembayaran/buat"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                      pathname.startsWith("/pembayaran/buat")
+                        ? "bg-white/10 text-[#13c9b3]"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <Calculator className="w-3.5 h-3.5 shrink-0" />
+                    <span>Buat Tagihan</span>
+                  </Link>
+                </div>
+              </div>
             </nav>
           </div>
 
@@ -204,14 +274,40 @@ export function Sidebar() {
               Lainnya
             </div>
             <nav className="space-y-1">
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition cursor-pointer">
-                <Settings className="w-4 h-4 text-teal-400/60" />
+              <Link
+                href="/pengaturan"
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                  pathname === "/pengaturan"
+                    ? "bg-[#13c9b3]/15 text-[#13c9b3] font-semibold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                }`}
+              >
+                <Settings
+                  className={`w-4 h-4 ${
+                    pathname === "/pengaturan"
+                      ? "text-[#13c9b3]"
+                      : "text-teal-400/60"
+                  }`}
+                />
                 <span>Pengaturan</span>
-              </div>
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition cursor-pointer">
-                <HelpCircle className="w-4 h-4 text-teal-400/60" />
+              </Link>
+              <Link
+                href="/bantuan"
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                  pathname === "/bantuan"
+                    ? "bg-[#13c9b3]/15 text-[#13c9b3] font-semibold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                }`}
+              >
+                <HelpCircle
+                  className={`w-4 h-4 ${
+                    pathname === "/bantuan"
+                      ? "text-[#13c9b3]"
+                      : "text-teal-400/60"
+                  }`}
+                />
                 <span>Pusat Bantuan</span>
-              </div>
+              </Link>
             </nav>
           </div>
         </div>
@@ -225,7 +321,7 @@ export function Sidebar() {
             <span>Konektivitas SIMRS</span>
           </div>
           <p className="text-[11px] text-teal-200/60 leading-tight">
-            Sinkronisasi kamar, antrean & rujukan real-time aktif.
+            Sinkronisasi kamar, antrean, rekap RME & billing aktif.
           </p>
         </div>
       </div>

@@ -232,3 +232,195 @@ export interface MonitoringItem {
     } | null;
   } | null;
 }
+
+
+// ==========================================
+// UC-07: Rekap Riwayat Layanan & Tindakan Pasien
+// ==========================================
+export type HistoryStatus = "Draft" | "Proses Verifikasi" | "Siap Billing";
+
+export interface RmeRecordItem {
+  id_riwayat: number;
+  id_pasien: number;
+  kode_tindakan: string;
+  nama_tindakan: string;
+  kategori?: string;
+  tanggal_tindakan: string;
+  tanggal_tindakan_formatted: string;
+  jumlah: number;
+  keterangan: string | null;
+  catatan_medis?: string | null;
+  dokter_pelaksana?: string;
+  harga_estimasi?: number;
+}
+
+export interface DetailRekapItem {
+  id_detail_rekap: number;
+  id_riwayat: number;
+  kode_tindakan: string;
+  nama_tindakan: string;
+  tanggal_tindakan: string;
+  tanggal_tindakan_formatted: string;
+  jumlah: number;
+  catatan_khusus?: string;
+  dokter_pelaksana?: string;
+  harga_satuan?: number;
+  subtotal?: number;
+}
+
+export interface HistoryTagihanRef {
+  id_tagihan: number;
+  no_tagihan: string;
+  status: BillingStatus;
+}
+
+export interface HistoryRecapItem {
+  id_rekap: number;
+  kode_rekap: string;
+  id_pasien: number;
+  no_rm: string;
+  nama_pasien: string;
+  jenis_kelamin_usia: string;
+  kelas_perawatan: KelasPerawatan;
+  nama_kamar?: string;
+  periode_perawatan?: string;
+  dokter_dpjp: string;
+  diagnosa: string;
+  hak_kelas_jaminan: string;
+  status: HistoryStatus;
+  catatan: string | null;
+  keterangan: string | null;
+  tanggal_dibuat: string;
+  tanggal_dibuat_formatted: string;
+  tanggal_diperbarui: string | null;
+  tanggal_diperbarui_formatted: string;
+  dibuat_oleh: string;
+  jumlah_tindakan: number;
+  detail_tindakan: DetailRekapItem[];
+  tagihan: HistoryTagihanRef[];
+}
+
+export interface HistoryPatientSummary {
+  id_pasien: number;
+  no_rm: string;
+  nama_pasien: string;
+  jenis_kelamin_usia: string;
+  kelas_perawatan: KelasPerawatan;
+  hak_kelas_jaminan: string;
+  dokter_dpjp: string;
+  diagnosa_masuk: string;
+  status_penanganan: string;
+  tanggal_masuk_formatted: string;
+  periode_perawatan?: string;
+  has_recap?: boolean;
+  jumlah_rme: number;
+  jumlah_rekap: number;
+}
+
+export interface CreateHistoryPayload {
+  id_pasien: number;
+  id_riwayat?: number[];
+  catatan?: string;
+  keterangan?: string;
+}
+
+export interface UpdateHistoryPayload {
+  status?: HistoryStatus;
+  catatan?: string | null;
+  keterangan?: string | null;
+}
+
+// ==========================================
+// UC-08 & UC-09: Perhitungan Biaya & Pengelolaan Tagihan (Billing)
+// ==========================================
+export type BillingStatus = "Draft" | "Belum Dibayar" | "Lunas" | "Batal";
+
+export interface TarifItem {
+  id_tarif: number;
+  kode_tindakan: string;
+  nama_tindakan: string;
+  kategori: string;
+  harga: string;
+  harga_num: number;
+  tanggal_berlaku: string;
+  tanggal_berakhir: string | null;
+  status: "Aktif" | "Nonaktif";
+}
+
+export interface BillingDetailItem {
+  id_detail_tagihan?: number;
+  id_detail_rekap: number;
+  id_tarif: number;
+  kode_tindakan: string;
+  nama_tindakan: string;
+  kategori?: string;
+  satuan?: string;
+  tanggal_tindakan?: string;
+  tanggal_tindakan_formatted?: string;
+  tanggal?: string;
+  jumlah: number;
+  harga_satuan: string;
+  harga_satuan_num: number;
+  subtotal: string;
+  subtotal_num: number;
+}
+
+export interface BillingPreviewResult {
+  id_rekap: number;
+  kode_rekap: string;
+  status: HistoryStatus;
+  pasien: {
+    id_pasien: number;
+    no_rm: string;
+    nama_pasien: string;
+    jenis_kelamin_usia: string;
+    kelas_perawatan: KelasPerawatan;
+    dokter_dpjp: string;
+    diagnosa: string;
+    hak_kelas_jaminan: string;
+    periode_perawatan?: string;
+    nama_kamar?: string;
+  };
+  acuan_tarif: string;
+  items: BillingDetailItem[];
+  rincian_biaya?: BillingDetailItem[];
+  total_biaya: string;
+  total_biaya_num: number;
+}
+
+export interface BillingItem {
+  id_tagihan: number;
+  id_pasien: number;
+  id_rekap: number;
+  kode_rekap: string;
+  no_tagihan: string;
+  no_rm: string;
+  nama_pasien: string;
+  jenis_kelamin_usia: string;
+  kelas_perawatan: KelasPerawatan;
+  dokter_dpjp: string;
+  diagnosa: string;
+  hak_kelas_jaminan: string;
+  periode_perawatan?: string;
+  nama_kamar?: string;
+  total_biaya: string;
+  total_biaya_num: number;
+  status: BillingStatus;
+  catatan_penyesuaian: string | null;
+  alasan_pembatalan: string | null;
+  tanggal_dibuat: string;
+  tanggal_dibuat_formatted: string;
+  tanggal_terbit_formatted?: string;
+  tanggal_diperbarui: string | null;
+  tanggal_diperbarui_formatted: string;
+  tanggal_dibatalkan: string | null;
+  tanggal_dibatalkan_formatted: string | null;
+  dibuat_oleh: string;
+  jumlah_item: number;
+  detail_tagihan_list: BillingDetailItem[];
+}
+
+export interface CreateBillingPayload {
+  id_rekap: number;
+  catatan?: string;
+}
