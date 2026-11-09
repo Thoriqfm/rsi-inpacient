@@ -37,28 +37,26 @@ export default function PengaturanPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0d332f] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-teal-500/30 flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-[#13c9b3] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0a2e28] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-teal-500/30 flex items-center gap-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-[#00b89f] shrink-0" />
           <span className="text-sm font-medium">{toastMsg}</span>
         </div>
       )}
 
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold mb-2">
-          <Settings className="w-3.5 h-3.5 text-teal-600" />
-          <span>Preferensi & Konfigurasi Sistem</span>
+        <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
+          PREFERENSI & KONFIGURASI SISTEM
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
           Pengaturan SIMRS Rawat Inap
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Kelola simulasi peran pengguna (Role-Based Access Control), koneksi
-          API Backend, dan reset state data demonstrasi.
+        <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-2xl leading-relaxed">
+          Kelola simulasi peran pengguna (Role-Based Access Control), koneksi API Backend, dan reset state data demonstrasi.
         </p>
       </div>
 
       {/* Active Profile & Quick Role Switcher */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center">
             <UserCheck className="w-5 h-5" />
@@ -83,9 +81,9 @@ export default function PengaturanPage() {
                 "Petugas Bed Management"
               )
             }
-            className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
+            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
               user?.role === "PETUGAS_BED_MANAGEMENT"
-                ? "border-[#13c9b3] bg-teal-50/50"
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
                 : "border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -106,9 +104,9 @@ export default function PengaturanPage() {
                 "Petugas Administrasi Rawat Inap"
               )
             }
-            className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
+            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
               user?.role === "PETUGAS_ADMINISTRASI"
-                ? "border-[#13c9b3] bg-teal-50/50"
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
                 : "border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -126,9 +124,9 @@ export default function PengaturanPage() {
             onClick={() =>
               handleSwitchRole("PETUGAS_MEDIS", "Petugas Medis / Dokter")
             }
-            className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
+            className={`p-4 rounded-[10px] border text-left transition cursor-pointer ${
               user?.role === "PETUGAS_MEDIS"
-                ? "border-[#13c9b3] bg-teal-50/50"
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-1 ring-[#00b89f]"
                 : "border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -144,7 +142,7 @@ export default function PengaturanPage() {
       </div>
 
       {/* API & Stateful Mock Storage */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-700 flex items-center justify-center">
             <Server className="w-5 h-5" />

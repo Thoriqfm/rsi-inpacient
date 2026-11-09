@@ -128,36 +128,35 @@ export default function PemantauanStatusPage() {
         monitoringCount={items.length}
       />
 
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Page Header (Canonical Style) */}
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-[11px] font-bold mb-2">
-            <Activity className="w-3.5 h-3.5 text-teal-600" />
-            <span>
-              Konsolidasi Pemantauan Daftar Tunggu & Rujukan Pasien
-            </span>
+          <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
+            MONITORING PENANGANAN PASIEN
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
             Pemantauan Status Penanganan Pasien
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-3xl leading-relaxed">
             Lacak progres penanganan seluruh pasien baik yang berada di jalur Daftar Tunggu (FIFO) maupun Rujukan RS Lain secara terpadu.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={loadData}
-          className="self-start lg:self-auto px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-2 transition cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Segarkan Status Penanganan</span>
-        </button>
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={loadData}
+            className="px-3.5 py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs font-medium flex items-center gap-2 transition cursor-pointer shadow-2xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Segarkan Status Penanganan</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500">
               Total Pasien Dipantau
@@ -177,7 +176,7 @@ export default function PemantauanStatusPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500">
               Sedang Mengantre Bed
@@ -197,7 +196,7 @@ export default function PemantauanStatusPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500">
               Jalur Rujukan RS Lain
@@ -217,7 +216,7 @@ export default function PemantauanStatusPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500">
               Selesai Tertangani
@@ -239,7 +238,7 @@ export default function PemantauanStatusPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -247,7 +246,7 @@ export default function PemantauanStatusPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari Nama Pasien, No. RM, No. Surat Rujukan, atau RS Tujuan..."
-            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
+            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-[8px] border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
           />
         </div>
 
@@ -278,7 +277,7 @@ export default function PemantauanStatusPage() {
                 e.target.value as "Semua" | "Stabil" | "Darurat"
               )
             }
-            className="px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-700"
+            className="px-3 py-2 text-xs font-bold rounded-[8px] border border-[#e2e8f0] bg-white text-slate-700"
           >
             <option value="Semua">Semua Kondisi</option>
             <option value="Stabil">Kondisi Stabil</option>
@@ -288,7 +287,7 @@ export default function PemantauanStatusPage() {
       </div>
 
       {/* Monitoring Consolidated Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900">

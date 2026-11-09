@@ -168,8 +168,8 @@ export default function RekapLayananPage() {
     <div className="max-w-[1200px] mx-auto space-y-6 pb-12 text-[#1e1e1e]">
       {/* Toast Notification (Figma 72:6995) */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0d332f] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-teal-500/30 flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-[#13c9b3] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0a2e28] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-teal-500/30 flex items-center gap-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-[#00b89f] shrink-0" />
           <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
           <button
             type="button"
@@ -201,7 +201,7 @@ export default function RekapLayananPage() {
         <button
           type="button"
           onClick={() => setActiveTab("Draft")}
-          className={`bg-white border border-[#e9ebf0] rounded-[12px] p-[18px] min-h-[112px] flex items-center justify-between text-left transition shadow-[0px_4px_8px_rgba(26,39,50,0.05)] cursor-pointer hover:border-[#13c9b3] ${
+          className={`bg-white border border-[#e9ebf0] rounded-[12px] p-[18px] min-h-[112px] flex items-center justify-between text-left transition shadow-[0px_4px_8px_rgba(26,39,50,0.05)] cursor-pointer hover:border-[#00b89f] ${
             activeTab === "Draft" ? "ring-2 ring-[#0fa18f]/20 border-[#0fa18f]" : ""
           }`}
         >
@@ -420,7 +420,7 @@ export default function RekapLayananPage() {
               {counts.total}
             </span>
             {activeTab === "Semua" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#13c9b3] rounded-t-[2px]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
             )}
           </button>
 
@@ -447,7 +447,7 @@ export default function RekapLayananPage() {
               {counts.draft}
             </span>
             {activeTab === "Draft" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#13c9b3] rounded-t-[2px]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
             )}
           </button>
 
@@ -476,7 +476,7 @@ export default function RekapLayananPage() {
               {counts.verifikasi}
             </span>
             {activeTab === "Proses Verifikasi" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#13c9b3] rounded-t-[2px]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
             )}
           </button>
 
@@ -503,7 +503,7 @@ export default function RekapLayananPage() {
               {counts.siapBilling}
             </span>
             {activeTab === "Siap Billing" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#13c9b3] rounded-t-[2px]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
             )}
           </button>
         </div>

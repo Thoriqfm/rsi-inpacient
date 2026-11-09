@@ -1,138 +1,179 @@
-# DESIGN SYSTEM & LAPORAN INTEGRASI BACKEND
+# DESIGN SYSTEM & UI/UX PRO MAX SPECIFICATION
 ## Inpatient Care Platform — Sistem Informasi Rawat Inap & Bed Management
-
-Dokumen ini mendokumentasikan spesifikasi desain antarmuka, konsistensi token UI, arsitektur tata letak, hasil pengujian integrasi dengan API Backend (`Express` + `Prisma` + `MySQL`), serta **status sinkronisasi kontrak data antara Frontend dan Backend**.
-
----
-
-## 1. Design System & Fondasi Visual
-
-Aplikasi mengacu secara presisi pada file Figma **Inpatient Care** (`XUuZ0FIhbhuPYEAYKfnNEw`) dengan prinsip visual **Hospital Operations Platform** yang profesional, bersih, dan menenangkan.
-
-### A. Palet Warna (Color Palette)
-
-| Nama Token | Nilai Hex | Penggunaan di Aplikasi |
-| :--- | :--- | :--- |
-| **Darker Teal** | `#102d2a` | Latar belakang panel kiri Login, footer branding |
-| **Dark Teal** | `#0d332f` | Background Sidebar, tombol aksi sekunder gelap, kartu status aktif |
-| **Deep Forest** | `#082320` | Gradasi dasar sidebar navigasi |
-| **Primary Cyan/Teal** | `#13c9b3` | Warna aksen utama, tombol submit utama, badge aktif, logo `+` |
-| **Mint Glow** | `#e6f8f5` | State hover, highlight baris tabel, background badge ringan |
-| **Surface Off-White** | `#f5f8f8` / `#f7faf9` | Background kanvas aplikasi (Dashboard & Form area) |
-| **Status Tersedia** | `#10b981` (Emerald) | Titik indikator & badge bed siap pakai |
-| **Status Terisi** | `#3b82f6` (Blue) | Indikator hunian pasien aktif |
-| **Status Pembersihan** | `#f59e0b` (Amber) | Indikator sanitasi / sterilisasi ruangan |
-| **Status Pemeliharaan** | `#ef4444` (Rose) | Indikator perbaikan fasilitas / tidak beroperasi |
-| **Notification Dot** | `#f68624` (Orange) | Titik notifikasi pada lonceng Topbar |
-
-### B. Tipografi
-- **Headings & Judul Utama**: `Plus Jakarta Sans` (`font-bold`, `font-extrabold`), tracking rapat (`tracking-tight`).
-- **Body & Data Table**: `Inter` / `Plus Jakarta Sans` (`font-normal`, `font-medium`, `text-xs` hingga `text-sm`).
-- **Kode Identitas (ID Bed / No RM / Timer)**: `font-mono` (`font-bold`, uppercase).
-
-### C. Elemen Geometri & Kedalaman (Elevation)
-- **Radius Sudut (Border Radius)**:
-  - Container / Card besar: `rounded-3xl` (`24px` – `28px`).
-  - Dialog / Modal: `rounded-3xl`.
-  - Input field & Tombol aksi: `rounded-xl` (`12px`).
-  - Badge & Status Pill: `rounded-full`.
-- **Bayangan (Shadow)**:
-  - Tombol Primer: `shadow-md shadow-teal-500/20`.
-  - Modal Overlay: `shadow-2xl` dengan latar `backdrop-blur-xs bg-slate-900/60`.
+**Referensi Visual Utama:** Screenshot Resmi Bed Management & Inpatient Care UI  
+**Terintegrasi dengan Skill:** `ui-ux-pro-max` (Design Intelligence & Anti-AI Slop Guidelines)  
+**Kepatuhan Figma:** Node `72:9621` (Rekap Layanan) & Node `221:3822` (Billing & Pembayaran)  
+**Versi:** 3.1 — Canonical Visual Identity (Locked Color & Style System)
 
 ---
 
-## 2. Pemetaan & Keselarasan 7 Frame Figma
+## 1. Identitas Visual Utama (Locked Visual Identity)
 
-Seluruh 7 frame pada desain Figma telah diimplementasikan dengan kesesuaian 100%:
+Berdasarkan screenshot acuan resmi sistem antarmuka **Inpatient Care SIMRS**, seluruh modul aplikasi mengunci bahasa visual yang seragam:
 
-### 1. Login UI (`UC-01` — Frame `81:11793` & Section `81:12602`)
-- **Route**: [`/login`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/app/login/page.tsx)
-- **Matriks 5 State UI**:
-  - `State 1 (81:11793)`: Form kosong default, panel branding rumah sakit, 3 *glass cards* (*Ketersediaan Tempat Tidur* dengan mini bar chart, *Operasional Aktif*, *Data Terlindungi*).
-  - `State 2 (81:11924)`: Validasi input kosong (`AF-01`), menampilkan pesan merah di bawah field: `"Username wajib diisi."` dan `"Password wajib diisi."`.
-  - `State 3 (81:12067)`: Input sebagian terisi (`admin.demo` / `budi.santoso`).
-  - `State 4 (81:12198)`: Input terisi lengkap dengan password toggle eye (*Button - Sembunyikan / Tampilkan password*).
-  - `State 5 (81:12328)`: Alert banner peringatan atas: `"Username atau password salah. Silakan periksa kembali kredensial Anda."` (`EF-01`).
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                        VISUAL IDENTITY MATRIX                          │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. Sidebar Navigasi   : Deep Hospital Forest Green (#0a2e28 / #0d332f) │
+│ 2. Aksen Primer       : Medical Teal / Toska Cerah (#00b89f / #13c9b3) │
+│ 3. Subheader Tagline  : Mint Green Uppercase (#0fa18f, tracking: 1px)  │
+│ 4. Kanvas Halaman     : Clean Off-White Neutral (#f7f8f5 / #ffffff)    │
+│ 5. Surface & Card     : Pure White (#ffffff) border halus (#e9ebf0)   │
+│ 6. Status Pills       : Soft Tinted Capsules dengan indikator Bullet   │
+│ 7. Geometri           : Cards (12px), Buttons/Inputs (8px), Modals(16) │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-### 2. Shared Layout (`Sidebar` & `Topbar` — Frame `165:4582`, `193:10213`)
-- **File**: [`Sidebar.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/layout/Sidebar.tsx) & [`Topbar.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/layout/Topbar.tsx)
-- **Role-Aware RBAC Navigation**:
-  - **Petugas Bed Management** (*Budi Santoso*): Menu utama fokus pada `Bed Management` (aktif dengan strip indikator aksen `#13c9b3` di sisi kanan).
-  - **Petugas Administrasi** (*Rini Aprilianti*): Menu utama menampilkan `Ketersediaan Bed`, `Alokasi Kamar`, serta menu SIMRS (`Dashboard`, `Sistem Antrian`, `Rekap Layanan`, `Billing`).
-- **Topbar**: Breadcrumb dinamis (`Bed Management > Alokasi Kamar Pasien`), badge sumber data (*API SIMRS Terhubung* vs *Simulasi Lokal*), tombol notifikasi ber-dot oranye `#f68624`, dan avatar profil dengan fasilitas *Quick Role Switcher*.
-
-### 3. Halaman Pemantauan & Pengelolaan Bed (`UC-02` — Frame `164:3797`)
-- **Route**: [`/bed-management`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/app/(dashboard)/bed-management/page.tsx)
-- **Komponen Utama**:
-  - **4 Metrik Statistik**: *Tersedia (18)*, *Terisi (42)*, *Pembersihan (5)*, *Pemeliharaan (3)* yang nilainya dinamis dan dapat diklik untuk memfilter tabel.
-  - **Toolbar Pencarian & Filter**: Input pencarian kode/bangsal, filter dropdown *Bangsal* dan *Kelas*, baris tab status bed (*Semua: 68*).
-  - **Tabel Data**: 7 kolom (*No, ID Bed, Nama Bangsal & Kamar, Kelas Perawatan, Status Operasional, Terakhir Diperbarui, Aksi*).
-  - **Paginasi**: Menampilkan 5 item per halaman (`"Menampilkan 1-5 dari 68 data bed"`).
-
-### 4. Empat Modal Interaktif Pengelolaan Bed
-- **Modal Tambah Bed Baru (`217:13467`)** ([`TambahBedModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/TambahBedModal.tsx)): Penomoran otomatis `BED-[BANGSAL]-[NUM]`, verifikasi keunikan nomor bed secara real-time (`"✓ ID Bed unik dan siap didaftarkan"` / `"⚠ ID Bed sudah terdaftar"`), 4 kartu pilihan kelas, dan status terkunci `TERSEDIA (Otomatis)`.
-- **Modal Ubah Status Ketersediaan Bed (`285:189`)** ([`UbahStatusModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/UbahStatusModal.tsx)): Menampilkan identitas bed, banner status saat ini + waktu relatif, 4 kartu radio status baru, dan catatan audit nama petugas.
-- **Modal Konfirmasi Hapus Data Bed (`285:190`)** ([`KonfirmasiHapusModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/KonfirmasiHapusModal.tsx)): Ringkasan data bed kosong, peringatan permanen, dan tombol konfirmasi merah.
-- **Modal Penolakan Hapus Bed Terisi (`285:279`)** ([`PenolakanHapusModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/PenolakanHapusModal.tsx)): Mencegah penghapusan bed yang berstatus `Terisi` (`HTTP 409 BED_IN_USE`), menampilkan pasien aktif (*Hendra Wijaya* - `RM-2026-00142`), dokter DPJP (*dr. Nanda Putra, Sp.PD*), serta instruksi SOP Discharge/Mutasi.
-
-### 5. Halaman Alokasi Kamar & Bed Pasien (`UC-03` — Frame `193:9909`)
-- **Route**: [`/bed-management/alokasi`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/app/(dashboard)/bed-management/alokasi/page.tsx)
-- **Komponen Utama**:
-  - **Kolom Kiri (7 Kolom)**: Katalog bed yang hanya berstatus `Tersedia`, filter kelas perawatan, kartu bed terpilih dengan **Row-Level Lock live timer yang menghitung mundur dari `04:48 s`**.
-  - **Kolom Kanan (5 Kolom)**: Form penetapan pasien, dropdown pasien antrean, ringkasan klinis (*No RM, DPJP, Hak Kelas BPJS, Diagnosa Masuk DBD*), kotak verifikasi bed terpilih, simulasi status `• Tersedia ➜ • Terisi`, dan tombol penetapan alokasi.
+Prinsip ini menjaga identitas asli rumah sakit tetap utuh, tidak mengalami pergeseran warna yang drastis, namun merapikan seluruh detail visual, tipografi, jarak (*spacing*), dan ergonomi operasional.
 
 ---
 
-## 3. Status Integrasi ke Backend Express API
+## 2. Palet Warna & Token Semantik Presisi
 
-Frontend terhubung langsung dengan backend Express API di port 3000 (`http://localhost:3000/api`) dengan mapping kontrak data terbaru:
+### A. Core Platform Colors
 
-| Fungsi Frontend | Endpoint Backend | Metode | Status Keselarasan Kontrak |
-| :--- | :--- | :---: | :--- |
-| `loginApi(user, pass)` | `/api/auth/login` | `POST` | ✅ **Terintegrasi**: Menerima `{ username, password }`, mengembalikan token JWT dan objek akun. Role otomatis dinormalisasi. |
-| `fetchBedsApi()` | `/api/beds?page=1&limit=100` | `GET` | ✅ **Terintegrasi**: Mengembalikan array bed lengkap dengan `nama_kamar`, `fasilitas`, dan `occupant: { no_rm, nama_pasien }`. |
-| `fetchAvailableBedsApi()` | `/api/beds/available` | `GET` | ✅ **Terintegrasi**: Mengembalikan daftar khusus bed berstatus Tersedia untuk alokasi kamar. |
-| `createBedApi(payload)` | `/api/beds` | `POST` | ✅ **Terintegrasi**: Mengirim `{ no_bed, nama_bangsal, nama_kamar, kelas_perawatan, tipe_bed, fasilitas, status }`. |
-| `updateBedStatusApi(...)` | `/api/beds/:id` | `PATCH` | ⚠️ **Catatan Khusus (Lihat Bab 4)** |
-| `deleteBedApi(id)` | `/api/beds/:id` | `DELETE` | ✅ **Terintegrasi**: Menolak bed terisi dengan HTTP 409 `BED_IN_USE` dan soft delete bed kosong. |
-| `createAllocationApi(...)` | `/api/allocations` | `POST` | ✅ **Terintegrasi**: Menerima `{ id_pasien, id_bed, id_antrean }`, mengunci bed dan mengubah status menjadi `Terisi`. |
-
----
-
-## 4. Status Tindak Lanjut Pembaruan Backend (Update November 2026)
-
-### ✅ Poin 2: Data Pasien Penghuni (`occupant`) — SUDAH DIIMPLEMENTASIKAN
-- **Pembaruan di Backend**:
-  - `backend/src/modules/bed/bed.model.js`: `bedSelect` telah melakukan join relasi alokasi `Aktif` (`uq_rekam_alokasi_bed_aktif`), mengambil `pasien.no_rm` dan `pasien.nama_pasien`.
-  - `backend/src/modules/bed/bed.service.js`: Mapper `toBedResponse` memformat relasi menjadi `occupant: { no_rm, nama_pasien } | null`.
-- **Integrasi di Frontend**:
-  - [`src/lib/api-client.ts`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/lib/api-client.ts) membaca objek `occupant` langsung dari respon backend.
-  - Nama pasien dan No RM aktif ditampilkan di tabel dan di Modal Penolakan Hapus Bed Terisi ([`PenolakanHapusModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/PenolakanHapusModal.tsx)), dengan nama DPJP menggunakan fallback visual (*dr. Nanda Putra, Sp.PD*).
-
-### ✅ Poin 3: Kolom `nama_kamar` & `fasilitas` — SUDAH DIIMPLEMENTASIKAN
-- **Pembaruan di Backend**:
-  - Kolom `nama_kamar VARCHAR(50)` dan `fasilitas VARCHAR(255)` telah ditambahkan ke skema Prisma dan migrasi MySQL (`20261103000000_bed_room_and_facilities`).
-  - Request body `POST` & `PATCH /api/beds` menerima `nama_kamar` dan `fasilitas` (string dipisah koma).
-- **Integrasi di Frontend**:
-  - [`TambahBedModal.tsx`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/components/bed-management/TambahBedModal.tsx) dan [`createBedApi`](file:///c:/kuliah/web%20rsi%20inpa/rsi-inpacient/frontend/inpatient-care/src/lib/api-client.ts) secara otomatis menyusun dan mengirimkan `nama_kamar` serta string `fasilitas` terstandarisasi yang dipisahkan koma ke backend.
-
-### ⚠️ Poin 1 (Catatan Khusus): Validasi Status `Terisi` pada `PATCH /api/beds/:id`
-- **Kondisi Backend**: `updateBedSchema` pada backend masih membatasi agar status `"Terisi"` hanya boleh tercipta lewat endpoint alokasi (`POST /api/allocations`).
-- **Penanganan Frontend**:
-  - Opsi radio `Terisi` tetap tersedia pada Modal Ubah Status sesuai desain Figma `285:189`.
-  - Jika pengguna mengubah status secara manual menjadi `Terisi` melalui `PATCH`, frontend menangkap validasi error backend dan mengarahkan pengguna untuk menggunakan alur **Alokasi Kamar Pasien** agar data rekam medis terdaftar secara resmi.
+| Nama Token | Hex Code | Tailwind Equivalent / Usage | Deskripsi Penggunaan |
+| :--- | :--- | :--- | :--- |
+| **Deep Forest Sidebar** | `#0a2e28` / `#0d332f` | `bg-[#0a2e28]` / `bg-[#0d332f]` | Background penuh Sidebar navigasi kiri & header kop invoice gelap |
+| **Primary Accent Teal** | `#00b89f` | `bg-[#00b89f]` / `text-[#00b89f]` | Tombol utama (`+ Tambah Bed`, `Buat Tagihan`, tab aktif, icon highlight) |
+| **Teal Hover State** | `#00a28c` | `hover:bg-[#00a28c]` | State hover instan untuk tombol primer toska |
+| **Vibrant Mint Tagline** | `#0fa18f` | `text-[#0fa18f]` | Subheader uppercase di atas judul halaman (`MANAJEMEN INVENTARIS KAMAR`) |
+| **Mint Soft Surface** | `#e7faf7` / `#e6f4ef` | `bg-[#e7faf7]` / `bg-[#e6f4ef]` | Background avatar inisial pasien, badge aktif, wadah icon KPI Tersedia |
+| **Canvas Background** | `#f7f8f5` | `bg-[#f7f8f5]` | Latar belakang seluruh area kerja dashboard & modul |
+| **Surface Card** | `#ffffff` | `bg-white border-[#e9ebf0]` | Kartu metrik, panel filter, tabel data, modal pop-up |
+| **Border Neutral** | `#e9ebf0` / `#e2e8f0` | `border-[#e9ebf0]` | Border tipis 1px pemisah kartu dan kolom |
+| **Text Title Dark** | `#1e1e1e` | `text-[#1e1e1e]` | Judul halaman `h1`, nama pasien, nominal biaya utama |
+| **Text Body Gray** | `#4b5563` / `#666666` | `text-[#4b5563]` | Teks keterangan, nomor RM, nama bangsal, isi tabel |
+| **Text Muted Gray** | `#8c8c8c` / `#9ca3af` | `text-[#8c8c8c]` | Placeholder input, tanggal, header kolom tabel |
 
 ---
 
-## 5. Ringkasan Pengujian Kualitas Kode (Quality Check)
+### B. Status Semantik & Badge Capsules
 
-- **Next.js Production Build**: Telah diuji dengan `npm run build` di direktori `frontend/inpatient-care`:
-  - Hasil: **Success (Exit Code 0)**.
-  - Kompilasi TypeScript: **0 Error**.
-  - Generated Static Pages:
-    - `○ /`
-    - `○ /login`
-    - `○ /bed-management`
-    - `○ /bed-management/alokasi`
-- **Fallback Offline**: Aplikasi tetap 100% dapat dijalankan dan diuji secara mulus baik saat terhubung ke server backend Express port 3000 maupun saat offline berkat store in-memory terpadu (`mock-fallback.ts`).
+Setiap status operasional disajikan dalam bentuk kapsul pill halus (`rounded-full`) dengan titik bullet berwarna di sisi kiri:
+
+```text
+┌─────────────────┬───────────┬───────────┬─────────────────────────────────────────┐
+│ Status          │ Teks/Dot  │ Latar     │ Border & Format                         │
+├─────────────────┼───────────┼───────────┼─────────────────────────────────────────┤
+│ Tersedia /      │ #016b46   │ #e6f4ef   │ border-[#cbe7dd]                        │
+│ Lunas / Siap    │ (#059669) │           │ • Tersedia (Siap ditempati / Lunas)     │
+├─────────────────┼───────────┼───────────┼─────────────────────────────────────────┤
+│ Terisi /        │ #dc2626   │ #fdf0f0   │ border-[#fecaca]                        │
+│ Batal / Hapus   │ (#dc2626) │           │ • Terisi / Batal (Digunakan pasien)     │
+├─────────────────┼───────────┼───────────┼─────────────────────────────────────────┤
+│ Pembersihan /   │ #b45309   │ #fef3e9   │ border-[#fed7aa]                        │
+│ Belum Dibayar   │ (#f59e0b) │           │ • Pembersihan (Proses sterilisasi)      │
+├─────────────────┼───────────┼───────────┼─────────────────────────────────────────┤
+│ Pemeliharaan /  │ #4b5563   │ #f3f4f6   │ border-[#e5e7eb]                        │
+│ Nonaktif        │ (#6b7280) │           │ • Pemeliharaan (Perbaikan fasilitas)    │
+├─────────────────┼───────────┼───────────┼─────────────────────────────────────────┤
+│ Kelas VIP       │ #7e22ce   │ #f3e8ff   │ border-[#e9d5ff]                        │
+│                 │           │           │ VIP (Pill ungu muda elegan)             │
+└─────────────────┴───────────┴─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Standardisasi Komponen Antarmuka (UI Components & Layout)
+
+### 3.1 Sidebar Navigasi Kiri (260px)
+- **Warna Latar:** Deep Forest Green `#0a2e28` / `#0d332f`.
+- **Kop Branding:**
+  - Ikon toska bulat kotak `rounded-[10px] bg-[#00b89f] text-white` berlogo `+`.
+  - Judul: `Inpatient Care` (`text-white font-bold text-sm tracking-wide`).
+  - Subjudul: `Sistem Informasi Rawat Inap` (`text-[10px] text-teal-200/60`).
+- **Menu Labeling:**
+  - Kategori uppercase kecil: `MENU UTAMA` dan `LAINNYA` (`text-[10px] font-bold text-teal-300/40 uppercase tracking-wider`).
+  - Menu Aktif: Container dengan highlight toska halus, ikon toska `#00b89f`, teks putih `font-medium text-xs`.
+- **Bottom User Profile:**
+  - Avatar bulat toska muda inisial 2 huruf (contoh: `BS` / `RA`).
+  - Nama petugas `text-xs font-semibold text-white` dan peran `text-[10px] text-teal-200/70`.
+
+---
+
+### 3.2 Header Halaman & Tombol Aksi
+- **Tagline Section:** `text-[#0fa18f] text-[10px] font-semibold tracking-[1px] uppercase mb-1`.
+- **Page Title:** `text-[#1e1e1e] text-[27px] font-medium leading-[35px] tracking-[-0.675px]`.
+- **Subtitle:** `text-[#666] text-xs font-normal mt-0.5`.
+- **Tombol Aksi Kanan:**
+  - **Tombol Sekunder:** `px-4 py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs font-medium flex items-center gap-2 shadow-xs`.
+  - **Tombol Primer:** `px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium flex items-center gap-1.5 shadow-xs transition`.
+
+---
+
+### 3.3 Kartu Metrik 4 Kolom (KPI Stat Cards)
+- **Container:** `bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)] hover:border-[#00b89f]/40 transition cursor-pointer`.
+- **Wadah Ikon Bulat Kotak:** `w-10 h-10 rounded-[10px]` dengan background semantik lembut (Mint untuk Tersedia/Total, Merah untuk Terisi/Batal, Orange untuk Pembersihan/Antrean, Abu untuk Pemeliharaan).
+- **Nilai Angka:** `text-lg font-semibold text-[#1e1e1e]` didampingi panah chevron kecil `ChevronRight text-[#bfbfbf]`.
+
+---
+
+### 3.4 Toolbar Pencarian, Dropdown Filter, & Tab Status
+- **Search Box:** `w-full pl-9 pr-4 py-2 rounded-[8px] border border-[#e2e8f0] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]`.
+- **Filter Dropdowns:** Ketinggian serasi `py-2 px-3 rounded-[8px] border border-[#e2e8f0] bg-white text-xs text-[#4b5563]`.
+- **Tab Bar Navigasi:**
+  - Tab Aktif: `text-[#00b89f] font-semibold border-b-2 border-[#00b89f]` dengan badge counter toska `bg-[#e7faf7] text-[#00b89f]`.
+  - Tab Inaktif: `text-[#6b7280] hover:text-[#1e1e1e]` dengan badge counter netral `bg-slate-100 text-slate-600`.
+
+---
+
+### 3.5 Tabel Operasional Data-Dense
+- **Header Kolom:** `py-3 px-4 text-[10px] font-semibold text-[#8c8c8c] uppercase tracking-wider border-b border-[#f0f2f5] bg-white`.
+- **Isi Baris:** `py-3.5 px-4 text-xs hover:bg-[#fafbfb] transition border-b border-[#f5f6f8]`.
+- **Kolom Aksi:**
+  - Tautan interaktif toska cerah: `text-[#00b89f] hover:text-[#00a28c] hover:underline font-medium text-xs`.
+  - Ikon hapus: Ikon tempat sampah merah `Trash2 w-4 h-4 text-rose-500 hover:text-rose-700 cursor-pointer`.
+
+---
+
+## 4. Master Prompt Khusus UI/UX (Sesuai Gaya Acuan & Bebas AI Slop)
+
+Gunakan prompt berikut saat menginstruksikan AI / Assistant untuk merancang atau memperbaiki kode frontend agar hasilnya **100% konsisten dengan gambar acuan**:
+
+```markdown
+### MASTER DESIGN PROMPT — INPATIENT CARE SIMRS (CANONICAL CLINICAL IDENTITY)
+
+Bertindaklah sebagai Lead Healthcare UI/UX Designer & Senior Frontend Engineer. Tugasmu adalah mengimplementasikan antarmuka modul Inpatient Care SIMRS yang 100% selaras dengan acuan visual resmi dan standar kebersihan kode tanpa "AI slop".
+
+Patuhi aturan desain berikut secara ketat:
+1. WARNA & IDENTITAS VISUAL (KUNCI TIDAK BOLEH BERUBAH):
+   - Sidebar Navigasi: Hijau tua sangat pekat #0a2e28 / #0d332f. Menu aktif ber-aksen toska dengan ikon toska terang.
+   - Aksen Utama: Hijau toska medis #00b89f (Hover: #00a28c). Gunakan untuk tombol aksi primer (+ Tambah Bed, Buat Tagihan), tab aktif, dan icon highlight.
+   - Tagline Subheader: Mint green uppercase #0fa18f, font-semibold text-[10px], letter-spacing tracking-[1px].
+   - Kanvas Halaman: Off-white netral #f7f8f5 / #ffffff.
+   - Surface Kartu: Putih bersih #ffffff dengan border tipis 1px #e9ebf0 dan bayangan sangat lembut [0px_4px_8px_rgba(26,39,50,0.02)].
+   - JANGAN PERNAH mengubah warna dasar ini ke biru generik, ungu AI, atau gradasi kosmik. Pertahankan warna hijau toska klinis ini.
+
+2. STATUS SEMANTIK & BADGE CAPSULES:
+   - Tersedia / Lunas / Siap Billing: bg #e6f4ef, text #016b46, border #cbe7dd dengan titik dot hijau #059669.
+   - Terisi / Batal / Darurat: bg #fdf0f0, text #dc2626, border #fecaca dengan titik dot merah #dc2626.
+   - Pembersihan / Belum Dibayar / Antrean: bg #fef3e9, text #b45309, border #fed7aa dengan titik dot oranye #f59e0b.
+   - Pemeliharaan: bg #f3f4f6, text #4b5563, border #e5e7eb dengan titik dot abu-abu #6b7280.
+   - Kelas VIP: Kapsul ungu muda bg #f3e8ff, text #7e22ce, border #e9d5ff.
+
+3. ERGONOMI, GEOMETRI, & TATA LETAK:
+   - Border Radius: Kartu & Panel Utama (rounded-[12px]), Tombol Aksi & Input Field (rounded-[8px]), Modal Pop-up (rounded-[16px]), Badge Pill (rounded-full).
+   - Baris Tabel Data: Data-density kompak py-3.5 px-4, teks utama text-[#1e1e1e] font-medium, teks sekunder text-[#4b5563] text-xs.
+   - Angka & Finansial: Wajib terformat rapi (misal: "Rp 4.650.000", "01–28 Feb 2026", "RM-2026-00118").
+   - 4 Kartu KPI Atas: Wadah putih rounded-[12px] p-4 flex items-center justify-between dengan ikon w-10 h-10 rounded-[10px] latar semantik lembut, nilai angka besar font-semibold text-[#1e1e1e], dan chevron right #bfbfbf.
+
+4. ATURAN KERAPIAN BEBAS AI SLOP:
+   - DILARANG menggunakan emoji. Seluruh ikon wajib menggunakan SVG murni dari 'lucide-react' berbobot stroke 1.5–2px.
+   - DILARANG menampilkan kode use case teknis ("UC-01", "UC-07", "PC-17") di antarmuka pengguna. Gunakan nama operasional rumah sakit yang profesional.
+   - Seluruh elemen klik wajib memiliki class 'cursor-pointer' dan transisi halus (transition-colors duration-150).
+   - Pastikan teks memiliki kontras tinggi minimal 4.5:1 (WCAG 2.1 AA) di atas latar putih/terang.
+```
+
+---
+
+## 5. Checklist Verifikasi Desain
+
+- [x] Latar Sidebar tetap hijau hutan gelap pekat `#0a2e28` / `#0d332f`.
+- [x] Tombol utama dan tab aktif menggunakan toska `#00b89f`.
+- [x] Tagline uppercase hijau toska muda `#0fa18f` dengan tracking 1px.
+- [x] 4 Kartu KPI status menggunakan rounded-[12px], ikon bulat kotak 10px, dan angka tebal.
+- [x] Seluruh status operasional disajikan dalam kapsul pill dengan titik dot warna.
+- [x] Tidak ada emoji dan tidak ada kode `UC-xx` pada UI.
+- [x] Form input dan tombol aksi serasi dengan `rounded-[8px]`.

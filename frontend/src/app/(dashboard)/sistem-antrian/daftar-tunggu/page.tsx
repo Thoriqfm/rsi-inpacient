@@ -142,26 +142,25 @@ export default function DaftarTungguPage() {
         monitoringCount={queues.length + referralCount}
       />
 
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Page Header (Canonical Style) */}
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-[11px] font-bold mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-            <span>Antrean First-In First-Out (FIFO) Pasien Rawat Inap</span>
+          <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
+            ANTREAN FIRST-IN FIRST-OUT (FIFO)
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Daftar Tunggu Rawat Inap
+          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
+            Daftar Tunggu Pasien Rawat Inap
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Kelola antrean pasien kondisi stabil saat kelas perawatan penuh atau sedang dalam proses pembersihan.
+          <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-2xl leading-relaxed">
+            Kelola antrean pasien kondisi stabil saat kelas perawatan penuh atau sedang dalam proses sterilisasi/pembersihan tempat tidur.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           <button
             type="button"
             onClick={loadData}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-2 transition"
+            className="px-3.5 py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs font-medium flex items-center gap-2 transition cursor-pointer shadow-2xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Segarkan</span>
@@ -169,37 +168,37 @@ export default function DaftarTungguPage() {
 
           <Link
             href="/sistem-antrian/rujukan-pasien"
-            className="px-3.5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center gap-1.5 transition"
+            className="px-3.5 py-2 rounded-[8px] border border-[#fecaca] bg-[#fdf0f0] hover:bg-rose-100/60 text-[#dc2626] text-xs font-medium flex items-center gap-1.5 transition"
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
+            <AlertTriangle className="w-3.5 h-3.5 text-[#dc2626]" />
             <span>Pasien Darurat? Buat Rujukan</span>
           </Link>
 
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#0d332f] hover:bg-[#134b45] text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-teal-950/15 transition cursor-pointer"
+            className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-[#13c9b3]" />
-            <span>Tambah ke Daftar Tunggu</span>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Tambah ke Antrean</span>
           </button>
         </div>
       </div>
 
-      {/* Clinical Rule & Capacity Alert Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/70 to-teal-50/50 border border-amber-200/80 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Clinical Rule & Capacity Alert Banner (Canonical Style) */}
+      <div className="rounded-[8px] bg-[#fef3e9] border border-[#fed7aa] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+          <div className="w-10 h-10 rounded-[8px] bg-white border border-[#fed7aa] flex items-center justify-center text-[#d97706] shrink-0 mt-0.5">
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+            <h3 className="text-xs sm:text-sm font-bold text-[#b45309]">
               Aturan Prioritas Antrean FIFO & Keselamatan Pasien
             </h3>
-            <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+            <p className="text-xs text-[#b45309]/90 mt-0.5 leading-relaxed">
               Pasien dengan kondisi <strong>Stabil</strong> otomatis diurutkan berdasarkan waktu pendaftaran (<em>First-In First-Out</em>). Saat kamar tersedia, prioritas alokasi diberikan kepada antrean paling awal:{" "}
               {firstInLine ? (
-                <strong className="text-[#0d332f]">
+                <strong className="text-[#0a2e28] underline">
                   {firstInLine.no_antrean_formatted} — {firstInLine.nama_pasien} ({firstInLine.kelas_perawatan})
                 </strong>
               ) : (
@@ -214,7 +213,7 @@ export default function DaftarTungguPage() {
           <button
             type="button"
             onClick={() => setSelectedQueue(firstInLine)}
-            className="px-4 py-2 rounded-xl bg-white border border-amber-300 hover:bg-amber-50 text-amber-900 text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-sm transition"
+            className="px-4 py-2 rounded-[8px] bg-white border border-[#fed7aa] hover:bg-amber-50 text-[#b45309] text-xs font-medium flex items-center gap-1.5 shrink-0 shadow-2xs transition cursor-pointer"
           >
             <span>Proses Prioritas #1</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -222,90 +221,73 @@ export default function DaftarTungguPage() {
         )}
       </div>
 
-      {/* KPI Summary Cards */}
+      {/* 4 KPI Summary Cards (Canonical Clinical Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500">
-              Antrean Menunggu (FIFO)
-            </p>
-            <p className="text-2xl font-black text-slate-900 mt-1">
-              {waitingList.length}{" "}
-              <span className="text-xs font-semibold text-amber-600">
-                Pasien
-              </span>
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Kondisi stabil menunggu bed
-            </p>
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-[10px] bg-[#fef3e9] text-[#d97706] flex items-center justify-center shrink-0">
+              <Clock className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#1e1e1e]">Menunggu (FIFO)</div>
+              <div className="text-xs text-[#8c8c8c] mt-0.5">Kondisi stabil</div>
+            </div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600">
-            <Clock className="w-5 h-5" />
-          </div>
+          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+            {waitingList.length}
+          </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500">
-              Prioritas Berikutnya
-            </p>
-            <p className="text-lg font-black text-[#0d332f] mt-1 truncate max-w-[170px]">
-              {firstInLine
-                ? `${firstInLine.no_antrean_formatted} • ${firstInLine.nama_pasien}`
-                : "Antrean Kosong"}
-            </p>
-            <p className="text-[11px] text-teal-700 font-medium mt-1">
-              {firstInLine
-                ? `Hak Kelas: ${firstInLine.kelas_perawatan}`
-                : "Semua pasien terlayani"}
-            </p>
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-[10px] bg-[#e6f4ef] text-[#00b89f] flex items-center justify-center shrink-0">
+              <Users className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#1e1e1e]">Prioritas #1</div>
+              <div className="text-xs text-[#8c8c8c] mt-0.5 truncate max-w-[130px]">
+                {firstInLine ? firstInLine.nama_pasien : "Antrean Kosong"}
+              </div>
+            </div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-700">
-            <Users className="w-5 h-5" />
-          </div>
+          <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-100 text-[#4b5563]">
+            {firstInLine ? firstInLine.kelas_perawatan : "-"}
+          </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500">
-              Selesai Dialokasikan
-            </p>
-            <p className="text-2xl font-black text-blue-600 mt-1">
-              {allocatedCount}{" "}
-              <span className="text-xs font-semibold text-slate-500">
-                Pasien
-              </span>
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Telah masuk kamar rawat inap
-            </p>
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-[10px] bg-[#e7faf7] text-[#0fa18f] flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#1e1e1e]">Dialokasikan</div>
+              <div className="text-xs text-[#8c8c8c] mt-0.5">Masuk kamar ranap</div>
+            </div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
+          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+            {allocatedCount}
+          </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500">
-              Bed Tersedia Saat Ini
-            </p>
-            <p className="text-2xl font-black text-emerald-600 mt-1">
-              {availableBeds.length}{" "}
-              <span className="text-xs font-semibold text-slate-500">Bed</span>
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Siap dialokasikan ke antrean
-            </p>
+        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
+              <Bed className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#1e1e1e]">Bed Tersedia</div>
+              <div className="text-xs text-[#8c8c8c] mt-0.5">Siap alokasi</div>
+            </div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600">
-            <Bed className="w-5 h-5" />
-          </div>
+          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+            {availableBeds.length}
+          </span>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -313,7 +295,7 @@ export default function DaftarTungguPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari No. Antrean (#01), Nama Pasien, No. RM, atau Diagnosa..."
-            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
+            className="w-full pl-10 pr-4 py-2 text-xs rounded-[8px] border border-[#e2e8f0] focus:outline-none focus:border-[#00b89f]"
           />
         </div>
 
@@ -357,7 +339,7 @@ export default function DaftarTungguPage() {
       </div>
 
       {/* FIFO Queue Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900">

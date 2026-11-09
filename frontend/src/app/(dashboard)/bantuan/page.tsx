@@ -74,15 +74,14 @@ export default function BantuanPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-10">
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold mb-2">
-          <HelpCircle className="w-3.5 h-3.5 text-teal-600" />
-          <span>Pusat Bantuan & Dokumentasi SOP</span>
+        <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
+          DOKUMENTASI OPERASIONAL & PANDUAN SOP
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
           Panduan Alur Kerja SIMRS Rawat Inap
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Standar Operasional Prosedur (SOP) operasional terpadu pada Modul Inpatient Care.
+        <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-2xl leading-relaxed">
+          Standar Operasional Prosedur (SOP) operasional terpadu pada modul Inpatient Care SIMRS.
         </p>
       </div>
 
@@ -90,11 +89,11 @@ export default function BantuanPage() {
         {USE_CASE_GUIDES.map((uc) => (
           <div
             key={uc.code}
-            className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-teal-400 transition"
+            className="bg-white rounded-[12px] border border-[#e9ebf0] p-5 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] flex flex-col justify-between space-y-4 hover:border-[#00b89f] transition"
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-[#0d332f] text-[#13c9b3]">
+                <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-[#0a2e28] text-[#00b89f]">
                   {uc.code}
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400">
@@ -125,7 +124,7 @@ export default function BantuanPage() {
 
       <div className="bg-[#0d332f] text-white rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="font-extrabold text-sm flex items-center gap-2 text-[#13c9b3]">
+          <div className="font-extrabold text-sm flex items-center gap-2 text-[#00b89f]">
             <CheckCircle2 className="w-4 h-4" />
             <span>Alur Terintegrasi Akhir-ke-Akhir (End-to-End Workflow)</span>
           </div>
