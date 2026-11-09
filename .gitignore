@@ -12,3 +12,4 @@ AGENTS.md
 frontend/.next/
 .agents/
 skills-lock.json
+.vercel
