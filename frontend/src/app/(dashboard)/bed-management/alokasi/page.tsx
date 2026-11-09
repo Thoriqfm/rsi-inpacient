@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -25,6 +27,11 @@ import {
 
 export default function AlokasiBedPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Alokasi Kamar Pasien" />;
+  }
+
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -171,26 +178,25 @@ export default function AlokasiBedPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Back Link & Header (Figma 193:9909) */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-10 text-[#1e1e1e]">
+      {/* Back Link & Header */}
       <div className="space-y-2">
         <Link
           href="/bed-management"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 transition group"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#666666] hover:text-[#00b89f] transition group"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition" />
           <span>Kembali ke Daftar Ketersediaan Bed</span>
         </Link>
 
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-teal-700 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#13c9b3]" />
-            Alokasi Rawat Inap
+          <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
+            ALOKASI RAWAT INAP
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
             Alokasi Kamar & Bed Pasien
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-3xl leading-relaxed">
             Pilih tempat tidur yang berstatus Tersedia dan tetapkan (assign) kepada pasien yang membutuhkan perawatan rawat inap.
           </p>
         </div>
@@ -198,26 +204,26 @@ export default function AlokasiBedPage() {
 
       {/* Main 12-Column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: 7 Columns - Available Bed Catalog (Figma 193:9909) */}
+        {/* LEFT COLUMN: 7 Columns - Available Bed Catalog */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 space-y-4">
+          <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-slate-800 text-base">
+                <h2 className="font-bold text-[#1e1e1e] text-sm sm:text-base">
                   Daftar Bed Tersedia
                 </h2>
-                <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  {availableBeds.length} Bed Tersedia
+                <span className="text-xs font-medium bg-[#e6f4ef] text-[#016b46] px-2.5 py-0.5 rounded-full border border-[#cbe7dd]">
+                  {availableBeds.length} Tersedia
                 </span>
               </div>
             </div>
 
-            {/* Active Filter Banner (Figma 193:9909) */}
-            <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between text-xs text-emerald-900">
+            {/* Active Filter Banner */}
+            <div className="p-3 rounded-[8px] bg-[#e6f4ef]/60 border border-[#cbe7dd] flex items-center justify-between text-xs text-[#016b46]">
               <div className="flex items-center gap-2 font-medium">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
                 <span>
-                  Filter Aktif: Hanya menampilkan bed berstatus <strong>Tersedia</strong> ({availableBeds.length} Bed)
+                  Hanya menampilkan tempat tidur berstatus <strong>Tersedia</strong> ({availableBeds.length} Bed)
                 </span>
               </div>
               <button
@@ -226,7 +232,7 @@ export default function AlokasiBedPage() {
                   setSelectedKelas("Semua Kelas");
                   setSearchQuery("");
                 }}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                className="text-xs font-medium text-[#00b89f] hover:underline cursor-pointer"
               >
                 Reset
               </button>
@@ -241,12 +247,12 @@ export default function AlokasiBedPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cari kode bed atau nama bangsal..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#13c9b3]/40"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-[#e2e8f0] rounded-[8px] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]"
                 />
               </div>
             </div>
 
-            {/* Class Filter Pills (Figma 193:9909) */}
+            {/* Class Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {["Semua Kelas", "VIP", "Kelas 1", "Kelas 2", "Kelas 3"].map((cls) => {
                 const isSelected = selectedKelas === cls;
@@ -255,13 +261,13 @@ export default function AlokasiBedPage() {
                     key={cls}
                     type="button"
                     onClick={() => setSelectedKelas(cls)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                    className={`px-3 py-1.5 rounded-[8px] text-xs font-medium transition cursor-pointer flex items-center gap-1 shrink-0 ${
                       isSelected
-                        ? "bg-[#0d332f] text-white shadow-xs"
+                        ? "bg-[#00b89f] text-white shadow-2xs"
                         : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                     }`}
                   >
-                    {isSelected && <Check className="w-3.5 h-3.5 text-[#13c9b3]" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                     <span>{cls}</span>
                   </button>
                 );
@@ -272,11 +278,11 @@ export default function AlokasiBedPage() {
             <div className="space-y-3 pt-2">
               {isLoading ? (
                 <div className="py-12 text-center text-slate-400">
-                  <div className="w-6 h-6 border-2 border-teal-600/20 border-t-teal-600 rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-6 h-6 border-2 border-[#00b89f]/20 border-t-[#00b89f] rounded-full animate-spin mx-auto mb-2" />
                   <span>Memuat daftar bed tersedia...</span>
                 </div>
               ) : filteredAvailableBeds.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-xs text-slate-500">
+                <div className="p-8 text-center bg-slate-50 rounded-[8px] border border-dashed border-slate-200 text-xs text-slate-500">
                   Tidak ada tempat tidur yang tersedia pada kelas perawatan atau pencarian ini.
                 </div>
               ) : (
@@ -286,73 +292,73 @@ export default function AlokasiBedPage() {
                   return (
                     <div
                       key={bed.id_bed}
-                      className={`p-4 sm:p-5 rounded-2xl border transition relative ${
+                      className={`p-4 rounded-[10px] border transition relative ${
                         isSelected
-                          ? "border-[#13c9b3] bg-teal-50/20 shadow-md ring-2 ring-[#13c9b3]/25"
-                          : "border-slate-200/90 hover:border-slate-300 bg-white"
+                          ? "border-[#00b89f] bg-[#e6f4ef]/20 shadow-xs ring-1 ring-[#00b89f]"
+                          : "border-[#e9ebf0] hover:border-slate-300 bg-white"
                       }`}
                     >
                       {/* Top Row: Bed Code & Selection Status */}
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                          <span className="font-mono text-xs font-bold text-[#1e1e1e] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                             {bed.no_bed}
                           </span>
-                          <span className="text-xs font-semibold text-slate-700">
+                          <span className="text-xs font-semibold text-[#1e1e1e]">
                             {bed.nama_bangsal} • {bed.nama_kamar}
                           </span>
                         </div>
 
                         {isSelected ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#13c9b3]/20 text-teal-900 border border-[#13c9b3]/40">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-700" />
-                            Dipilih Saat Ini
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e6f4ef] text-[#016b46] border border-[#cbe7dd]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                            Dipilih
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => handleSelectBed(bed)}
-                            className="px-3.5 py-1.5 rounded-xl border border-slate-300 hover:border-[#13c9b3] hover:bg-teal-50/50 text-slate-700 hover:text-teal-900 text-xs font-bold transition cursor-pointer"
+                            className="px-3 py-1 rounded-[6px] border border-[#e2e8f0] hover:border-[#00b89f] hover:bg-slate-50 text-slate-700 hover:text-[#00b89f] text-xs font-medium transition cursor-pointer"
                           >
                             Pilih Bed
                           </button>
                         )}
                       </div>
 
-                      {/* Row-Level Lock Countdown Banner (Figma 193:9909) */}
+                      {/* Row-Level Lock Countdown Banner */}
                       {isSelected && (
-                        <div className="my-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs flex items-center justify-between animate-fadeIn">
+                        <div className="my-3 p-2.5 rounded-[8px] bg-[#fef3e9] border border-[#fed7aa] text-[#b45309] text-xs flex items-center justify-between animate-fadeIn">
                           <div className="flex items-center gap-2 font-medium">
-                            <Lock className="w-3.5 h-3.5 text-amber-600" />
+                            <Lock className="w-3.5 h-3.5 text-[#f59e0b]" />
                             <span>
                               Dikunci Sementara untuk Alokasi Anda (Row-Level Lock)
                             </span>
                           </div>
-                          <span className="font-mono font-bold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">
+                          <span className="font-mono font-bold text-[#b45309] bg-white px-2 py-0.5 rounded border border-[#fed7aa]">
                             {formatTimer(lockSeconds)}
                           </span>
                         </div>
                       )}
 
                       {/* Details & Facilities */}
-                      <div className="text-xs text-slate-500 space-y-1">
+                      <div className="text-xs text-[#666666] space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-700">
+                          <span className="font-medium text-[#1e1e1e]">
                             Kelas Perawatan:
                           </span>
                           <span
                             className={
                               bed.kelas_perawatan === "VIP"
-                                ? "font-bold text-purple-700"
-                                : "font-medium text-slate-700"
+                                ? "font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200"
+                                : "font-normal text-[#4b5563]"
                             }
                           >
                             {bed.kelas_perawatan} ({bed.tipe_bed})
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                          <span>Fasilitas:</span>
-                          <span className="text-slate-600">{bed.fasilitas}</span>
+                        <div>Fasilitas: {bed.fasilitas}</div>
+                        <div className="text-[11px] text-[#8c8c8c]">
+                          Terakhir diperbarui: {bed.updated_relative}
                         </div>
                       </div>
                     </div>
@@ -363,101 +369,79 @@ export default function AlokasiBedPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: 5 Columns - Patient Assignment Form (Figma 193:9909) */}
+        {/* RIGHT COLUMN: 5 Columns - Patient Assignment & Action */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 space-y-5">
+          <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] p-5 space-y-4">
             <div>
-              <h2 className="font-bold text-slate-800 text-base">
-                Formulir Penetapan (Assign) Pasien
+              <h2 className="font-bold text-[#1e1e1e] text-base">
+                Form Penetapan Alokasi
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Pilih pasien antrean rawat inap dan konfirmasi penempatan kamar.
+              <p className="text-xs text-[#666666] mt-0.5">
+                Pastikan data pasien dan ranjang yang dipilih telah sesuai dengan diagnosa medis.
               </p>
             </div>
 
+            {/* Error message */}
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            {/* Patient Selector Dropdown */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                Pilih Pasien dari Antrean <span className="text-rose-500">*</span>
+            {/* Select Patient */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[#1e1e1e]">
+                Pilih Pasien Rawat Inap
               </label>
               <select
                 value={selectedPatientId}
                 onChange={(e) => setSelectedPatientId(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#13c9b3]/40 cursor-pointer"
+                className="w-full px-3 py-2 bg-white border border-[#e2e8f0] rounded-[8px] text-xs text-[#1e1e1e] focus:outline-none focus:border-[#00b89f] cursor-pointer"
               >
                 {INITIAL_PASIEN_CANDIDATES.map((p) => (
                   <option key={p.id_pasien} value={p.id_pasien}>
-                    {p.no_rm} — {p.nama_pasien} ({p.kelas_rekomendasi})
+                    {p.nama_pasien} ({p.no_rm}) - DPJP: {p.dokter_dpjp}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Patient Clinical Summary Card (Figma 193:9909) */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-200/60 font-bold text-slate-800">
-                <User className="w-4 h-4 text-teal-600" />
-                <span>Ringkasan Klinis Pasien</span>
-              </div>
-
-              <div className="space-y-2 text-slate-600">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Nama Pasien:</span>
-                  <span className="font-bold text-slate-800">
-                    {selectedPatient.nama_pasien} ({selectedPatient.jenis_kelamin_usia})
+            {/* Patient Card Preview */}
+            {selectedPatient && (
+              <div className="p-3.5 rounded-[10px] bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-semibold text-[#1e1e1e]">
+                  <User className="w-4 h-4 text-[#00b89f]" />
+                  <span>{selectedPatient.nama_pasien}</span>
+                  <span className="text-[11px] font-normal text-[#8c8c8c]">
+                    ({selectedPatient.jenis_kelamin_usia})
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">No. Rekam Medis:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {selectedPatient.no_rm}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Dokter DPJP:</span>
-                  <span className="font-medium text-slate-800">
-                    {selectedPatient.dokter_dpjp}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Hak Kelas Jaminan:</span>
-                  <span className="font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200/60">
-                    {selectedPatient.hak_kelas_jaminan}
-                  </span>
-                </div>
-                <div className="pt-1 border-t border-slate-200/60">
-                  <div className="text-slate-400 mb-0.5">Diagnosa Masuk:</div>
-                  <div className="font-medium text-slate-800 bg-white p-2 rounded-lg border border-slate-200">
-                    {selectedPatient.diagnosa_masuk}
-                  </div>
+                <div className="text-[#666666] space-y-0.5">
+                  <div>No. RM: {selectedPatient.no_rm}</div>
+                  <div>Diagnosa Masuk: {selectedPatient.diagnosa_masuk}</div>
+                  <div>DPJP: {selectedPatient.dokter_dpjp}</div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Selected Bed Verification Card (Figma 193:9909) */}
-            <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200/70 space-y-2 text-xs">
+            {/* Selected Bed Summary */}
+            <div className="p-3.5 rounded-[10px] bg-[#e6f4ef]/40 border border-[#cbe7dd] space-y-1.5 text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-teal-900">
+                <span className="font-medium text-[#1e1e1e]">
                   Tempat Tidur Terpilih:
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Tervalidasi
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#016b46] bg-[#e6f4ef] px-2 py-0.5 rounded-full border border-[#cbe7dd]">
+                  <CheckCircle2 className="w-3 h-3 text-[#059669]" />
+                  Tersedia
                 </span>
               </div>
               {selectedBed ? (
                 <div>
-                  <div className="font-mono font-bold text-slate-900 text-sm">
+                  <div className="font-mono font-bold text-[#1e1e1e] text-sm">
                     {selectedBed.no_bed}
                   </div>
-                  <div className="text-slate-600 mt-0.5">
+                  <div className="text-[#666666] mt-0.5">
                     {selectedBed.nama_bangsal} • {selectedBed.nama_kamar} ({selectedBed.kelas_perawatan})
                   </div>
                 </div>
@@ -468,46 +452,30 @@ export default function AlokasiBedPage() {
               )}
             </div>
 
-            {/* Status Transition Simulation (Figma 193:9909) */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
-              <span className="font-semibold text-slate-600">
-                Simulasi Perubahan Status Operasional:
-              </span>
-              <div className="flex items-center gap-2 pt-1 font-mono text-xs">
-                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                  • Tersedia
-                </span>
-                <span className="text-slate-400">➜</span>
-                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
-                  • Terisi (Occupied)
-                </span>
-              </div>
-            </div>
-
             {/* Concurrency Lock Info */}
-            <div className="p-3 rounded-xl bg-teal-950/5 border border-teal-900/10 text-[11px] text-slate-600 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-[8px] bg-teal-950/5 border border-teal-900/10 text-[11px] text-slate-600 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#00b89f] shrink-0 mt-0.5" />
               <p className="leading-relaxed">
                 <strong>Perlindungan Kunci Sesi:</strong> Status bed otomatis dikunci saat penetapan untuk mencegah duplikasi alokasi pasien oleh petugas lain.
               </p>
             </div>
 
-            {/* Action Buttons (Figma 193:9909) */}
+            {/* Action Buttons */}
             <div className="space-y-2 pt-2">
               <button
                 type="button"
                 onClick={handleAssignAllocation}
                 disabled={isSubmitting || !selectedBed || lockSeconds <= 0}
-                className="w-full py-3 px-4 bg-[#13c9b3] hover:bg-[#0fb39f] active:bg-[#0c9d8c] text-[#0d332f] font-bold rounded-xl text-sm transition duration-150 shadow-md shadow-teal-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 px-4 bg-[#00b89f] hover:bg-[#00a28c] text-white font-medium rounded-[8px] text-xs transition duration-150 shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-[#0d332f]/30 border-t-[#0d332f] rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Menetapkan Alokasi...</span>
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4 stroke-[3]" />
+                    <Check className="w-4 h-4 stroke-[2.5]" />
                     <span>Tetapkan Alokasi & Kunci Kamar</span>
                   </>
                 )}
@@ -517,7 +485,7 @@ export default function AlokasiBedPage() {
                 type="button"
                 onClick={() => router.push("/bed-management")}
                 disabled={isSubmitting}
-                className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition cursor-pointer"
+                className="w-full py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs font-medium transition cursor-pointer"
               >
                 Batal
               </button>
@@ -528,37 +496,40 @@ export default function AlokasiBedPage() {
 
       {/* SUCCESS MODAL POPUP AFTER ALLOCATION */}
       {successResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 p-6 space-y-5 text-center">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
-              <CheckCircle2 className="w-8 h-8" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[16px] w-full max-w-md shadow-2xl border border-[#e9ebf0] p-6 space-y-5 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#e6f4ef] text-[#00b89f] flex items-center justify-center mx-auto border border-[#cbe7dd]">
+              <CheckCircle2 className="w-6 h-6 text-[#059669]" />
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-lg font-bold text-slate-800">
+              <h3 className="text-base font-bold text-[#1e1e1e]">
                 Alokasi Kamar Berhasil Ditetapkan!
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#666666]">
                 Data tempat tidur dan rekam rawat inap pasien telah diperbarui di SIMRS.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-left text-xs space-y-2">
+            <div className="p-4 rounded-[10px] bg-slate-50 border border-slate-200/80 text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">Pasien:</span>
-                <span className="font-bold text-slate-800">{successResult.patientName}</span>
+                <span className="text-[#8c8c8c]">Pasien:</span>
+                <span className="font-semibold text-[#1e1e1e]">{successResult.patientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Kamar / Bed:</span>
-                <span className="font-mono font-bold text-slate-800">{successResult.bedNo}</span>
+                <span className="text-[#8c8c8c]">Kamar / Bed:</span>
+                <span className="font-mono font-bold text-[#1e1e1e]">{successResult.bedNo}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status Baru:</span>
-                <span className="font-bold text-blue-700">Terisi (Occupied)</span>
+                <span className="text-[#8c8c8c]">Status Baru:</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fdf0f0] text-[#dc2626] border border-[#fecaca]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                  Terisi
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Waktu Alokasi:</span>
-                <span className="font-medium text-slate-600">{successResult.time}</span>
+                <span className="text-[#8c8c8c]">Waktu Alokasi:</span>
+                <span className="font-medium text-[#4b5563]">{successResult.time}</span>
               </div>
             </div>
 
@@ -566,14 +537,14 @@ export default function AlokasiBedPage() {
               <button
                 type="button"
                 onClick={() => setSuccessResult(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition cursor-pointer"
+                className="flex-1 py-2 rounded-[8px] border border-[#e2e8f0] bg-white text-[#1e1e1e] hover:bg-slate-50 text-xs font-medium transition cursor-pointer"
               >
                 Alokasikan Pasien Lain
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/bed-management")}
-                className="flex-1 py-2.5 rounded-xl bg-[#0d332f] hover:bg-[#102d2a] text-white text-xs font-bold transition shadow-sm cursor-pointer"
+                className="flex-1 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium transition shadow-xs cursor-pointer"
               >
                 Lihat Daftar Bed
               </button>

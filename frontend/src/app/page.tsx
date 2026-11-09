@@ -12,7 +12,7 @@ export default function HomePage() {
     if (!isLoading) {
       if (user) {
         if (user.role === "PETUGAS_ADMINISTRASI") {
-          router.replace("/bed-management/alokasi");
+          router.replace("/dashboard");
         } else {
           router.replace("/bed-management");
         }

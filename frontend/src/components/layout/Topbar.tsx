@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Database,
 } from "lucide-react";
-import { resetMockBeds } from "@/lib/mock-fallback";
+import { resetAllMockData } from "@/lib/mock-fallback";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -34,21 +34,49 @@ export function Topbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isDashboard = pathname === "/dashboard";
   const isAlokasi = pathname.includes("/alokasi");
   const isAntrian = pathname.startsWith("/sistem-antrian");
+  const isRekap = pathname.startsWith("/rekap-layanan");
+  const isPembayaran = pathname.startsWith("/pembayaran");
+  const isPengaturan = pathname.startsWith("/pengaturan");
+  const isBantuan = pathname.startsWith("/bantuan");
+
   const antrianSubLabel = pathname.includes("/rujukan-pasien")
     ? "Rujukan Pasien Darurat"
     : pathname.includes("/pemantauan-status")
     ? "Pemantauan Status Penanganan"
     : "Daftar Tunggu Rawat Inap (FIFO)";
 
+  const rekapSubLabel = pathname.includes("/pasien/")
+    ? pathname.endsWith("/buat")
+      ? "Buat Snapshot Rekap Baru"
+      : "Data Pasien & Riwayat RME"
+    : pathname.endsWith("/edit")
+    ? "Edit & Verifikasi Status Rekap"
+    : pathname !== "/rekap-layanan"
+    ? "Detail Rekap Tindakan"
+    : "Rekap Riwayat Layanan & Tindakan";
+
+  const pembayaranSubLabel = pathname.includes("/pemeriksaan")
+    ? "Pemeriksaan & Penyesuaian Tagihan"
+    : pathname.includes("/penerbitan")
+    ? "Penerbitan Invoice Resmi"
+    : pathname.startsWith("/pembayaran/buat/")
+    ? "Rincian Biaya Pelayanan"
+    : pathname === "/pembayaran/buat"
+    ? "Pilih Pasien Rawat Inap"
+    : pathname !== "/pembayaran"
+    ? "Detail & Pelunasan Tagihan"
+    : "Manajemen Tagihan & Pembayaran";
+
   const handleResetData = () => {
     if (
       confirm(
-        "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, dan Surat Rujukan) ke kondisi awal?"
+        "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, Rujukan, Rekap Tindakan RME, dan Tagihan Billing) ke kondisi awal?"
       )
     ) {
-      resetMockBeds();
+      resetAllMockData();
       window.location.reload();
     }
   };
@@ -61,8 +89,16 @@ export function Topbar() {
   return (
     <header className="h-[72px] bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30">
       {/* Left: Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm">
-        {isAntrian ? (
+      <nav className="flex items-center gap-2 text-sm flex-wrap">
+        {isDashboard ? (
+          <>
+            <span className="font-semibold text-slate-500">SIMRS Rawat Inap</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Dashboard Operasional Terpadu
+            </span>
+          </>
+        ) : isAntrian ? (
           <>
             <Link
               href="/sistem-antrian/daftar-tunggu"
@@ -73,6 +109,48 @@ export function Topbar() {
             <ChevronRight className="w-4 h-4 text-slate-400" />
             <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
               {antrianSubLabel}
+            </span>
+          </>
+        ) : isRekap ? (
+          <>
+            <Link
+              href="/rekap-layanan"
+              className="font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              Rekap Layanan
+            </Link>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              {rekapSubLabel}
+            </span>
+          </>
+        ) : isPembayaran ? (
+          <>
+            <Link
+              href="/pembayaran"
+              className="font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              Pembayaran & Billing
+            </Link>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              {pembayaranSubLabel}
+            </span>
+          </>
+        ) : isPengaturan ? (
+          <>
+            <span className="font-semibold text-slate-500">Sistem</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Pengaturan Sistem & Profil
+            </span>
+          </>
+        ) : isBantuan ? (
+          <>
+            <span className="font-semibold text-slate-500">Sistem</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="font-semibold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md text-xs border border-teal-200/50">
+              Pusat Bantuan & Panduan SOP
             </span>
           </>
         ) : (
@@ -134,35 +212,35 @@ export function Topbar() {
         <div className="relative">
           <button
             type="button"
-            className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition relative"
+            className="w-9 h-9 rounded-[8px] border border-[#e2e8f0] bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 transition relative shadow-2xs cursor-pointer"
             title="Pemberitahuan Sistem"
           >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f68624] ring-2 ring-white" />
+            <Bell className="w-4 h-4 text-[#4b5563]" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00b89f] ring-2 ring-white" />
           </button>
         </div>
 
         <div className="h-7 w-px bg-slate-200 mx-1" />
 
-        {/* User Profile Pill & Dropdown */}
+        {/* User Profile Pill & Dropdown (Matched to Official UI) */}
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-3 p-1.5 pr-2.5 rounded-xl hover:bg-slate-100 transition cursor-pointer text-left"
+            className="flex items-center gap-2.5 p-1 px-2 rounded-[8px] hover:bg-slate-50 transition cursor-pointer text-left border border-transparent hover:border-[#e2e8f0]"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0d332f] to-[#13c9b3] text-white font-bold text-sm flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-[#a3e4db] text-[#0a2e28] font-bold text-xs flex items-center justify-center shrink-0">
               {user?.inisial || "BS"}
             </div>
             <div className="hidden sm:block">
-              <div className="text-xs font-bold text-slate-800 leading-tight">
+              <div className="text-xs font-semibold text-[#1e1e1e] leading-tight">
                 {user?.nama_petugas || "Budi Santoso"}
               </div>
-              <div className="text-[11px] text-slate-500 leading-tight">
+              <div className="text-[10px] text-[#8c8c8c] leading-tight">
                 {user?.jabatan_label || "Petugas Bed Management"}
               </div>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-[#bfbfbf] ml-0.5" />
           </button>
 
           {dropdownOpen && (

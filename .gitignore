@@ -10,3 +10,5 @@ docs/
 AGENTS.md
 .next/
 frontend/.next/
+.agents/
+skills-lock.json
