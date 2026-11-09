@@ -174,13 +174,15 @@ export default function BedManagementPage() {
 
         {/* Action Buttons with RBAC */}
         <div className="flex items-center gap-3 shrink-0 pt-1">
-          <Link
-            href="/bed-management/alokasi"
-            className="px-4 py-2.5 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs sm:text-sm font-medium flex items-center gap-2 shadow-2xs transition"
-          >
-            <Bed className="w-4 h-4 text-[#4b5563]" />
-            <span>Alokasi Kamar Pasien</span>
-          </Link>
+          {!isBedManager && (
+            <Link
+              href="/bed-management/alokasi"
+              className="px-4 py-2.5 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs sm:text-sm font-medium flex items-center gap-2 shadow-2xs transition"
+            >
+              <Bed className="w-4 h-4 text-[#4b5563]" />
+              <span>Alokasi Kamar Pasien</span>
+            </Link>
+          )}
 
           {isBedManager && (
             <button

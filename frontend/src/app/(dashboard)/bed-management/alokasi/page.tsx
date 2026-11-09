@@ -1,4 +1,6 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -25,6 +27,11 @@ import {
 
 export default function AlokasiBedPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Alokasi Kamar Pasien" />;
+  }
+
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

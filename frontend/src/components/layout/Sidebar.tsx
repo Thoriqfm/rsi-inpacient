@@ -66,7 +66,7 @@ export function Sidebar() {
               MENU UTAMA
             </div>
             <nav className="space-y-1">
-              {/* Strict RBAC: Petugas Bed Management ONLY sees Bed Management & Allocation */}
+              {/* Strict RBAC: Petugas Bed Management ONLY manages Bed Management */}
               {user?.role === "PETUGAS_BED_MANAGEMENT" ? (
                 <>
                   {/* Bed Management (Primary Workspace) */}
@@ -80,21 +80,6 @@ export function Sidebar() {
                       }`}
                     />
                     <span>Bed Management</span>
-                  </Link>
-
-                  {/* Alokasi Kamar Pasien */}
-                  <Link
-                    href="/bed-management/alokasi"
-                    className={getItemClass(pathname === "/bed-management/alokasi")}
-                  >
-                    <Users
-                      className={`w-4 h-4 ${
-                        pathname === "/bed-management/alokasi"
-                          ? "text-[#00b89f]"
-                          : "text-teal-400/70"
-                      }`}
-                    />
-                    <span>Alokasi Kamar Pasien</span>
                   </Link>
                 </>
               ) : (

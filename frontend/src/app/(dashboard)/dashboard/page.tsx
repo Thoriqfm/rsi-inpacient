@@ -23,9 +23,14 @@ import {
 } from "@/lib/api-client";
 import { BedItem, QueueItem, HistoryRecapItem, BillingItem } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 export default function MainSimrsDashboardPage() {
   const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
+  }
+
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [queues, setQueues] = useState<QueueItem[]>([]);
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
@@ -193,28 +198,26 @@ export default function MainSimrsDashboardPage() {
           </div>
         </Link>
 
-        {/* KPI 4: Akumulasi Tagihan */}
+        {/* KPI 4: Akumulasi Tagihan (Anti-Collision Vertical Architecture) */}
         <Link
           href="/pembayaran"
           className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)] hover:border-teal-300 transition cursor-pointer group"
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
-              <TrendingUp className="w-6 h-6 stroke-[1.8]" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5 stroke-[1.8]" />
             </div>
-            <div>
-              <div className="text-sm font-semibold text-[#1e1e1e]">Total Tagihan</div>
-              <div className="text-xs text-[#8c8c8c] mt-0.5">
+            <div className="min-w-0">
+              <div className="text-xs text-[#8c8c8c] font-medium truncate">Total Tagihan</div>
+              <div className="text-base sm:text-lg font-bold text-[#1e1e1e] tracking-tight truncate">
+                {loading ? "..." : formatRupiah(totalRevenue).replace(",00", "")}
+              </div>
+              <div className="text-[10px] text-[#0fa18f] font-semibold mt-0.5 truncate">
                 {billings.filter((b) => b.status !== "Batal").length} Invoice Aktif
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-lg sm:text-xl font-bold text-[#1e1e1e]">
-              {loading ? "..." : formatRupiah(totalRevenue).replace(",00", "")}
-            </span>
-            <ChevronRight className="w-4 h-4 text-[#bfbfbf] group-hover:translate-x-0.5 transition" />
-          </div>
+          <ChevronRight className="w-4 h-4 text-[#bfbfbf] group-hover:translate-x-0.5 transition shrink-0 ml-1" />
         </Link>
       </div>
 
