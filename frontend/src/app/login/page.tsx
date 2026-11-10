@@ -20,7 +20,7 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isStrictBackend } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -315,15 +315,25 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Form Notes matching Figma frame 81:11913 & 81:11919 */}
-          <div className="mt-5 space-y-2.5">
+          {/* Form Notes */}
+          <div className="mt-5 space-y-2">
             <div className="flex items-center gap-2 text-xs text-slate-600">
-              <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Akses sistem diberikan sesuai peran akun Anda.</span>
+              <Info className="w-3.5 h-3.5 text-[#00b89f] shrink-0" />
+              <span>
+                {isStrictBackend
+                  ? "Mode Strict Backend aktif: Kredensial divalidasi langsung ke server backend API."
+                  : "Akses sistem diberikan sesuai peran akun Anda."}
+              </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Autentikasi ini disimulasikan untuk prototipe. Pada implementasi SIMRS produksi, proses login divalidasi ke basis data rumah sakit dan menerapkan sesi terenkripsi.
-            </p>
+            {isStrictBackend ? (
+              <p className="text-[11px] text-[#016b46] bg-[#e6f4ef] border border-[#cbe7dd] p-2.5 rounded-lg leading-relaxed">
+                Koneksi langsung ke server backend MySQL. Fallback ke mockup dinonaktifkan.
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Mode Simulasi Mock: Menggunakan sesi lokal di browser jika server backend tidak aktif.
+              </p>
+            )}
           </div>
 
           {/* Quick Select Demo Accounts for Instant Testing */}

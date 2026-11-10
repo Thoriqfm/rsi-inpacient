@@ -17,7 +17,7 @@ import { resetAllMockData } from "@/lib/mock-fallback";
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, switchRole, dataSource } = useAuth();
+  const { user, logout, switchRole, dataSource, isStrictBackend } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +71,12 @@ export function Topbar() {
     : "Manajemen Tagihan & Pembayaran";
 
   const handleResetData = () => {
+    if (isStrictBackend) {
+      alert(
+        "Mode Strict Backend aktif: data disimpan langsung di basis data MySQL backend.\n\nUntuk mereset data ke kondisi awal, silakan jalankan script seeder/migrasi pada server backend."
+      );
+      return;
+    }
     if (
       confirm(
         "Reset ulang seluruh data simulasi (68 Bed, Daftar Tunggu, Rujukan, Rekap Tindakan RME, dan Tagihan Billing) ke kondisi awal?"
@@ -184,15 +190,19 @@ export function Topbar() {
         <div
           className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
             dataSource === "backend"
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-teal-50 text-teal-800 border-teal-200"
+              ? "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]"
+              : isStrictBackend
+              ? "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]"
+              : "bg-[#e7faf7] text-[#0fa18f] border-[#b6eee7]"
           }`}
           title="Status Sumber Data"
         >
           <Database className="w-3.5 h-3.5" />
           <span>
             {dataSource === "backend"
-              ? "Backend API Terhubung"
+              ? "Backend API Terhubung (Real API)"
+              : isStrictBackend
+              ? "Backend Offline (Strict Mode)"
               : "Mode Simulasi Lokal"}
           </span>
         </div>
