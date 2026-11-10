@@ -43,10 +43,6 @@ import { SuratRujukanModal } from "@/components/sistem-antrian/SuratRujukanModal
 export default function RujukanPasienPage() {
   const { user } = useAuth();
 
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Sistem Rujukan Pasien Darurat" />;
-  }
-
   const [hospitals, setHospitals] = useState<ReferralHospitalItem[]>([]);
   const [referrals, setReferrals] = useState<ReferralItem[]>([]);
   const [waitingCount, setWaitingCount] = useState<number>(3);
@@ -260,6 +256,10 @@ export default function RujukanPasienPage() {
       setSubmitting(false);
     }
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Sistem Rujukan Pasien Darurat" />;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">

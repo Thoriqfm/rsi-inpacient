@@ -41,7 +41,7 @@ export const DEMO_USERS: Record<
 
 export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
   {
-    id_pasien: 1,
+    id_pasien: 101,
     no_rm: "RM-2026-00142",
     nama_pasien: "Hendra Wijaya",
     jenis_kelamin_usia: "L, 45 thn",
@@ -55,7 +55,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 120/80 mmHg • Nadi: 84x/m • Suhu: 38.2°C • SpO2: 98%",
   },
   {
-    id_pasien: 2,
+    id_pasien: 102,
     no_rm: "RM-2026-00148",
     nama_pasien: "Siti Aminah",
     jenis_kelamin_usia: "P, 34 thn",
@@ -69,7 +69,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 135/88 mmHg • Nadi: 82x/m • Suhu: 36.8°C • SpO2: 99%",
   },
   {
-    id_pasien: 3,
+    id_pasien: 103,
     no_rm: "RM-2026-00153",
     nama_pasien: "Ahmad Fauzi",
     jenis_kelamin_usia: "L, 58 thn",
@@ -83,7 +83,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 140/90 mmHg • Nadi: 92x/m • Suhu: 37.0°C • SpO2: 96%",
   },
   {
-    id_pasien: 4,
+    id_pasien: 104,
     no_rm: "RM-2026-00161",
     nama_pasien: "Dewi Lestari",
     jenis_kelamin_usia: "P, 27 thn",
@@ -97,7 +97,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 110/70 mmHg • Nadi: 88x/m • Suhu: 38.6°C • SpO2: 98%",
   },
   {
-    id_pasien: 5,
+    id_pasien: 105,
     no_rm: "RM-2026-00175",
     nama_pasien: "Bambang Supriyadi",
     jenis_kelamin_usia: "L, 62 thn",
@@ -111,7 +111,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 165/105 mmHg • Nadi: 114x/m • RR: 28x/m • SpO2: 91% (NRM)",
   },
   {
-    id_pasien: 6,
+    id_pasien: 106,
     no_rm: "RM-2026-00182",
     nama_pasien: "Rina Kartika",
     jenis_kelamin_usia: "P, 29 thn",
@@ -125,7 +125,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 170/110 mmHg • Nadi: 104x/m • RR: 24x/m • SpO2: 95%",
   },
   {
-    id_pasien: 7,
+    id_pasien: 107,
     no_rm: "RM-2026-00189",
     nama_pasien: "Agus Setiawan",
     jenis_kelamin_usia: "L, 51 thn",
@@ -139,7 +139,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 130/85 mmHg • Nadi: 108x/m • Suhu: 39.1°C • SpO2: 97%",
   },
   {
-    id_pasien: 8,
+    id_pasien: 108,
     no_rm: "RM-2026-00194",
     nama_pasien: "Nurul Hidayah",
     jenis_kelamin_usia: "P, 41 thn",
@@ -153,7 +153,7 @@ export const INITIAL_PASIEN_CANDIDATES: PasienCandidate[] = [
     tanda_vital: "TD: 105/70 mmHg • Nadi: 90x/m • Suhu: 36.7°C • SpO2: 98%",
   },
   {
-    id_pasien: 9,
+    id_pasien: 109,
     no_rm: "RM-2026-00201",
     nama_pasien: "Doni Pratama",
     jenis_kelamin_usia: "L, 33 thn",

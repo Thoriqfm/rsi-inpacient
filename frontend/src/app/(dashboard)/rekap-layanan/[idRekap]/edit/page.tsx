@@ -22,9 +22,6 @@ import { fetchHistoryByIdApi, updateHistoryApi } from "@/lib/api-client";
 
 export default function EditRekapPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Edit Rekap Tindakan" />;
-  }
 
   const params = useParams();
   const router = useRouter();
@@ -81,6 +78,10 @@ export default function EditRekapPage() {
       setSaving(false);
     }
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Edit Rekap Tindakan" />;
+  }
 
   if (loading || !rekap) {
     return (

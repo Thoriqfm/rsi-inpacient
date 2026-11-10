@@ -27,9 +27,6 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 export default function MainSimrsDashboardPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
-  }
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [queues, setQueues] = useState<QueueItem[]>([]);
@@ -40,16 +37,17 @@ export default function MainSimrsDashboardPage() {
   const loadOverview = useCallback(async () => {
     setLoading(true);
     try {
-      const [bList, qList, hRes, billRes] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchBedsApi(),
         fetchQueuesApi(),
         fetchHistoriesApi(),
         fetchBillingsApi(),
       ]);
-      setBeds(bList.items);
-      setQueues(qList.items);
-      setHistories(hRes.items);
-      setBillings(billRes.items);
+
+      if (results[0].status === "fulfilled") setBeds(results[0].value.items);
+      if (results[1].status === "fulfilled") setQueues(results[1].value.items);
+      if (results[2].status === "fulfilled") setHistories(results[2].value.items);
+      if (results[3].status === "fulfilled") setBillings(results[3].value.items);
     } finally {
       setLoading(false);
     }
@@ -80,6 +78,10 @@ export default function MainSimrsDashboardPage() {
   const totalRevenue = billings
     .filter((b) => b.status !== "Batal")
     .reduce((acc, b) => acc + b.total_biaya_num, 0);
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 text-[#1e1e1e]">

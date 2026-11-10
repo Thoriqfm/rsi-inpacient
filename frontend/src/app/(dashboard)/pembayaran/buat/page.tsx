@@ -17,9 +17,6 @@ import { fetchHistoriesApi } from "@/lib/api-client";
 
 export default function PilihPasienBillingPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Buat Tagihan Pasien" />;
-  }
 
   const router = useRouter();
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
@@ -59,6 +56,10 @@ export default function PilihPasienBillingPage() {
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Buat Tagihan Pasien" />;
+  }
 
   return (
     <div className="space-y-6 pb-12 font-sans text-[#1e1e1e]">

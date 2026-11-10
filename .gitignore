@@ -13,3 +13,4 @@ frontend/.next/
 .agents/
 skills-lock.json
 .vercel
+.codegraph/

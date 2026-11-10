@@ -58,14 +58,21 @@ export default function BedManagementPage() {
   const [selectedBedForReject, setSelectedBedForReject] =
     useState<BedItem | null>(null);
 
-  // Success Notification
+  // Success Notification & Error State
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const res = await fetchBedsApi();
       setBeds(res.items);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Gagal memuat data tempat tidur.";
+      setLoadError(msg);
+      console.error("[BedManagement] Error loading beds:", err);
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +162,23 @@ export default function BedManagementPage() {
         <div className="fixed bottom-6 right-6 z-50 bg-[#0a2e28] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-teal-500/30 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-[#00b89f]" />
           <span className="text-sm font-medium">{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Backend Connection Error Banner */}
+      {loadError && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-[12px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-[6px] font-medium transition shrink-0 cursor-pointer"
+          >
+            Coba Lagi
+          </button>
         </div>
       )}
 

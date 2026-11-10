@@ -14,7 +14,7 @@ import { UserRole } from "@/types";
 import { resetAllMockData } from "@/lib/mock-fallback";
 
 export default function PengaturanPage() {
-  const { user, switchRole } = useAuth();
+  const { user, switchRole, isStrictBackend, setStrictBackend } = useAuth();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -133,41 +133,101 @@ export default function PengaturanPage() {
         </div>
       </div>
 
-      {/* API & Stateful Mock Storage */}
+      {/* Mode Integrasi API Backend & Strict Mode */}
       <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.02)] space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <Server className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-base font-extrabold text-slate-900">
-              Arsitektur Dual-Source API & Penyimpanan Simulasi
+              Mode Integrasi API Backend
             </h2>
             <p className="text-xs text-slate-500">
-              Frontend otomatis terhubung ke Backend Express dan memiliki
-              fallback stateful di browser jika backend sedang offline.
+              Pilih apakah aplikasi berjalan dalam Mode Strict (100% data nyata dari backend) atau Mode Simulasi Mock.
             </p>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          {/* Opsi 1: Strict Backend Mode */}
+          <button
+            type="button"
+            onClick={() => {
+              setStrictBackend(true);
+              showToast("Mode Strict Backend diaktifkan: Fallback mockup dinonaktifkan total.");
+            }}
+            className={`p-5 rounded-[12px] border text-left transition cursor-pointer ${
+              isStrictBackend
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-2 ring-[#00b89f]"
+                : "border-[#e9ebf0] hover:bg-slate-50"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-bold text-[#1e1e1e]">
+                Mode Strict Backend (Aktif)
+              </div>
+              {isStrictBackend && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f4ef] text-[#016b46]">
+                  Rekomendasi Testing
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
+              Semua data kamar, antrean, rujukan, rekap RME, dan tagihan diambil langsung dari server backend. Jika backend mati atau error, sistem langsung menampilkan pesan error asli tanpa fallback data tiruan.
+            </div>
+          </button>
+
+          {/* Opsi 2: Mock Mode */}
+          <button
+            type="button"
+            onClick={() => {
+              setStrictBackend(false);
+              showToast("Mode Simulasi Mock diaktifkan: Mengizinkan data mock fallback.");
+            }}
+            className={`p-5 rounded-[12px] border text-left transition cursor-pointer ${
+              !isStrictBackend
+                ? "border-[#00b89f] bg-[#e6f4ef]/30 ring-2 ring-[#00b89f]"
+                : "border-[#e9ebf0] hover:bg-slate-50"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-bold text-[#1e1e1e]">
+                Mode Simulasi Mock
+              </div>
+              {!isStrictBackend && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700">
+                  Offline Demo
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-[#666666] mt-1.5 leading-relaxed">
+              Menggunakan data tiruan di memori browser saat server backend offline. Hanya disarankan untuk demo antarmuka saat server backend tidak dapat dijalankan.
+            </div>
+          </button>
+        </div>
+
+        {/* Info & Reset Box */}
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
           <div className="space-y-1 text-xs">
             <div className="font-bold text-slate-800 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-teal-600" />
-              <span>Reset Seluruh Data Simulasi SIMRS</span>
+              <span>Reset Data Simulasi SIMRS</span>
             </div>
             <p className="text-slate-500">
-              Mengembalikan seluruh perubahan kamar, antrean, dokumen rekap
-              tindakan, dan invoice tagihan ke data awal (seed).
+              {isStrictBackend
+                ? "Dalam Mode Strict, data tersimpan di basis data server backend (MySQL). Reset data dilakukan via script seeder/migrasi backend."
+                : "Mengembalikan seluruh perubahan data kamar, antrean, dan tagihan di browser ke kondisi awal."}
             </p>
           </div>
           <button
             type="button"
             onClick={handleResetSimulation}
-            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer transition"
+            disabled={isStrictBackend}
+            className="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer transition"
           >
             <RotateCcw className="w-4 h-4" />
-            <span>Reset Data Sekarang</span>
+            <span>Reset Data Simulasi</span>
           </button>
         </div>
       </div>

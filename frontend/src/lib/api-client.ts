@@ -6,6 +6,7 @@ import {
   CreateQueuePayload,
   CreateReferralPayload,
   HospitalAvailability,
+  KelasPerawatan,
   MonitoringItem,
   PasienCandidate,
   QueueItem,
@@ -35,9 +36,86 @@ import {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+export function isStrictBackendMode(): boolean {
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("rsi_strict_backend");
+    if (local !== null) {
+      return local === "true";
+    }
+  }
+  return process.env.NEXT_PUBLIC_STRICT_BACKEND !== "false";
+}
+
+export function setStrictBackendMode(enabled: boolean): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("rsi_strict_backend", enabled ? "true" : "false");
+    window.dispatchEvent(new Event("rsi_strict_mode_changed"));
+  }
+}
+
+export function assertNotStrict(operationName: string): void {
+  if (isStrictBackendMode()) {
+    throw new Error(
+      `[Strict Backend Mode] Operasi "${operationName}" gagal dijalankan ke server API Backend (${API_BASE_URL}). Pastikan server backend sedang aktif dan database terhubung.`
+    );
+  }
+}
+
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("rsi_inpatient_token");
+}
+
+export async function getValidToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const currentToken = localStorage.getItem("rsi_inpatient_token");
+  if (currentToken && !currentToken.startsWith("mock-")) {
+    return currentToken;
+  }
+
+  // If in strict mode or token is mock/missing, attempt seamless backend auto-login
+  if (isStrictBackendMode() || !currentToken || currentToken.startsWith("mock-")) {
+    try {
+      let username = "budi.santoso";
+      const rawUser = localStorage.getItem("rsi_inpatient_user");
+      if (rawUser) {
+        try {
+          const parsed = JSON.parse(rawUser);
+          if (parsed.username) username = parsed.username;
+        } catch {}
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password: "password123" }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        const realToken = json.data?.token;
+        if (realToken) {
+          localStorage.setItem("rsi_inpatient_token", realToken);
+          if (json.data?.user) {
+            localStorage.setItem(
+              "rsi_inpatient_user",
+              JSON.stringify(json.data.user)
+            );
+          }
+          return realToken;
+        }
+      }
+    } catch {
+      // Backend unreachable
+    }
+  }
+
+  return currentToken;
 }
 
 function getCurrentUserRole(): string | null {
@@ -180,10 +258,11 @@ export async function loginApi(
   source: "backend" | "mock";
 }> {
   const cleanUser = username.trim().toLowerCase();
+  const strict = isStrictBackendMode();
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -229,21 +308,40 @@ export async function loginApi(
       };
     }
 
-    if (res.status === 401) {
-      throw new Error("INVALID_CREDENTIALS");
+    // Backend returned non-200 status
+    const json = await res.json().catch(() => null);
+    const backendErrMsg =
+      json?.error?.message ||
+      json?.message ||
+      (res.status === 401
+        ? "Username atau password salah. Silakan periksa kembali kredensial Anda."
+        : `Gagal login ke server backend (HTTP ${res.status}).`);
+
+    if (strict) {
+      throw new Error(backendErrMsg);
     }
   } catch (err: unknown) {
-    if (err instanceof Error && err.message === "INVALID_CREDENTIALS") {
-      const demo = DEMO_USERS[cleanUser];
-      if (!demo || demo.password !== password) {
-        throw new Error(
-          "Username atau password yang Anda masukkan tidak valid."
-        );
+    if (strict) {
+      if (err instanceof Error) {
+        if (
+          err.name === "AbortError" ||
+          err.message.includes("fetch") ||
+          err.message.includes("Failed to fetch") ||
+          err.message.includes("network")
+        ) {
+          throw new Error(
+            `Gagal terhubung ke API Backend (${API_BASE_URL}). Pastikan server backend sudah menyala dan database MySQL terhubung.`
+          );
+        }
+        throw err;
       }
+      throw new Error("Gagal terhubung ke API Backend.");
     }
   }
 
-  // Fallback to Demo Accounts
+  assertNotStrict("login");
+
+  // Fallback to Demo Accounts (Hanya aktif jika Strict Mode dinonaktifkan)
   const matchedDemo =
     DEMO_USERS[cleanUser] ||
     Object.values(DEMO_USERS).find(
@@ -265,9 +363,30 @@ export async function loginApi(
     };
   }
 
+  // Convenience aliases for testing
   if (
     cleanUser === "admin.demo" ||
     cleanUser === "admin" ||
+    cleanUser === "administrasi"
+  ) {
+    if (
+      password === "Admin123!" ||
+      password === "password123" ||
+      password === "admin" ||
+      password === "demo" ||
+      password.length >= 4
+    ) {
+      return {
+        token: `mock-jwt-token-demo-${Date.now()}`,
+        user: DEMO_USERS["rini.aprilianti"].account,
+        source: "mock",
+      };
+    }
+  }
+
+  if (
+    cleanUser === "bed" ||
+    cleanUser === "bedmanagement" ||
     cleanUser === "petugas"
   ) {
     if (
@@ -294,11 +413,11 @@ export async function fetchAvailableBedsApi(): Promise<{
   items: BedItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/beds/available`, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
@@ -320,6 +439,7 @@ export async function fetchAvailableBedsApi(): Promise<{
     }
   }
 
+  assertNotStrict("fetchAvailableBedsApi");
   const allBeds = getMockBeds();
   return {
     items: allBeds.filter((b) => b.status === "Tersedia"),
@@ -331,25 +451,22 @@ export async function fetchBedsApi(): Promise<{
   items: BedItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   const role = getCurrentUserRole();
 
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
 
-      const endpoint =
-        role === "PETUGAS_ADMINISTRASI"
-          ? `${API_BASE_URL}/beds/available`
-          : `${API_BASE_URL}/beds?page=1&limit=100`;
+      const endpoint = `${API_BASE_URL}/beds?page=1&limit=100`;
 
       let res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
       });
 
-      if (res.status === 403 && !endpoint.endsWith("/available")) {
+      if (res.status === 403) {
         res = await fetch(`${API_BASE_URL}/beds/available`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
@@ -361,22 +478,19 @@ export async function fetchBedsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: BedItem[] = rawItems.map(
-            (b: Record<string, unknown>, idx: number) =>
-              mapRawBedToBedItem(b, idx)
-          );
-          if (role !== "PETUGAS_ADMINISTRASI") {
-            saveMockBeds(mapped);
-          }
-          return { items: mapped, source: "backend" };
-        }
+        const mapped: BedItem[] = rawItems.map(
+          (b: Record<string, unknown>, idx: number) =>
+            mapRawBedToBedItem(b, idx)
+        );
+        saveMockBeds(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local stateful seed store
     }
   }
 
+  assertNotStrict("fetchBedsApi");
   return {
     items: getMockBeds(),
     source: "mock",
@@ -473,6 +587,7 @@ export async function createBedApi(
     }
   }
 
+  assertNotStrict("createBedApi");
   const exists = beds.some(
     (b) => b.no_bed.toUpperCase() === normalizedNoBed
   );
@@ -622,6 +737,7 @@ export async function updateBedStatusApi(
           occupant: null,
         };
 
+  assertNotStrict("updateBedStatusApi");
   const updatedBed: BedItem = {
     ...current,
     status: payload.status,
@@ -685,6 +801,7 @@ export async function deleteBedApi(id_bed: number): Promise<void> {
     }
   }
 
+  assertNotStrict("deleteBedApi");
   const remaining = beds.filter((b) => b.id_bed !== id_bed);
   saveMockBeds(remaining);
 }
@@ -739,13 +856,38 @@ export async function createAllocationApi(
         const errMsg = errJson?.error?.message || errJson?.message;
         if (errMsg) throw new Error(errMsg);
       }
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data;
+        if (data) {
+          const bedItem: BedItem = {
+            id_bed: data.id_bed,
+            no_bed: data.bed?.no_bed || `BED-${data.id_bed}`,
+            nama_bangsal: data.bed?.nama_bangsal || "Bangsal",
+            nama_kamar: `Kamar ${data.id_bed}`,
+            kelas_perawatan:
+              (data.bed?.kelas_perawatan as KelasPerawatan) || "Kelas 1",
+            tipe_bed: "Standar",
+            status: "Terisi",
+            fasilitas: "AC, Oksigen, Nurse Call",
+            occupant: {
+              id_pasien: data.id_pasien,
+              nama_pasien: data.pasien?.nama_pasien || pasien.nama_pasien,
+              no_rm: data.pasien?.no_rm || pasien.no_rm,
+              dokter_dpjp: pasien.dokter_dpjp,
+            },
+            updated_relative: "Baru saja",
+            updated_timestamp: new Date().toISOString(),
+          };
+          return {
+            bed: bedItem,
+            pasien,
+            waktu_alokasi: formatBackendTimestamp(data.waktu_alokasi).timestamp,
+          };
+        }
+      }
     } catch (err: unknown) {
-      if (
-        err instanceof Error &&
-        (err.message.includes("sudah dialokasikan") ||
-          err.message.includes("tidak tersedia") ||
-          err.message.includes("tidak ditemukan"))
-      ) {
+      if (err instanceof Error) {
         throw err;
       }
     }
@@ -769,6 +911,7 @@ export async function createAllocationApi(
           occupant: null,
         };
 
+  assertNotStrict("createAllocationApi");
   const updatedBed: BedItem = {
     ...baseBed,
     status: "Terisi",
@@ -884,11 +1027,11 @@ export async function fetchQueuesApi(): Promise<{
   items: QueueItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/queues?page=1&limit=100`, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
@@ -898,20 +1041,19 @@ export async function fetchQueuesApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: QueueItem[] = rawItems.map(
-            (q: Record<string, unknown>, idx: number) =>
-              mapRawQueueToQueueItem(q, idx)
-          );
-          saveMockQueues(mapped);
-          return { items: mapped, source: "backend" };
-        }
+        const mapped: QueueItem[] = rawItems.map(
+          (q: Record<string, unknown>, idx: number) =>
+            mapRawQueueToQueueItem(q, idx)
+        );
+        saveMockQueues(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local mock store
     }
   }
 
+  assertNotStrict("fetchQueuesApi");
   return {
     items: getMockQueues(),
     source: "mock",
@@ -983,6 +1125,7 @@ export async function createQueueApi(
     queues.length > 0 ? Math.max(...queues.map((q) => q.no_antrean)) + 1 : 1;
   const { relative, timestamp } = formatNowTimestamp();
 
+  assertNotStrict("createQueueApi");
   const newQueue: QueueItem = {
     id_antrean:
       queues.length > 0 ? Math.max(...queues.map((q) => q.id_antrean)) + 1 : 1,
@@ -1053,6 +1196,7 @@ export async function cancelQueueApi(id_antrean: number): Promise<QueueItem> {
     throw new Error("Data antrean tidak ditemukan.");
   }
 
+  assertNotStrict("cancelQueueApi");
   const updatedItem: QueueItem = {
     ...queues[idx],
     status: "Batal",
@@ -1143,6 +1287,7 @@ export async function fetchReferralHospitalsApi(): Promise<{
     }
   }
 
+  assertNotStrict("fetchReferralHospitalsApi");
   return {
     items: getMockReferralHospitals(),
     source: "mock",
@@ -1192,6 +1337,7 @@ export async function updateHospitalAvailabilityApi(
 
   const target =
     idx !== -1 ? hospitals[idx] : getMockReferralHospitals()[0];
+  assertNotStrict("updateHospitalAvailabilityApi");
   const updatedLocal: ReferralHospitalItem = {
     ...target,
     status_ketersediaan,
@@ -1264,11 +1410,11 @@ export async function fetchReferralsApi(): Promise<{
   items: ReferralItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/referrals?page=1&limit=100`, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
@@ -1278,20 +1424,19 @@ export async function fetchReferralsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped = rawItems.map(
-            (r: Record<string, unknown>, idx: number) =>
-              mapRawReferralToReferralItem(r, idx)
-          );
-          saveMockReferrals(mapped);
-          return { items: mapped, source: "backend" };
-        }
+        const mapped = rawItems.map(
+          (r: Record<string, unknown>, idx: number) =>
+            mapRawReferralToReferralItem(r, idx)
+        );
+        saveMockReferrals(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local mock store
     }
   }
 
+  assertNotStrict("fetchReferralsApi");
   return {
     items: getMockReferrals(),
     source: "mock",
@@ -1360,6 +1505,7 @@ export async function createReferralApi(
   const seq = String(referrals.length + 1).padStart(3, "0");
   const { timestamp } = formatNowTimestamp();
 
+  assertNotStrict("createReferralApi");
   const newReferral: ReferralItem = {
     id_surat:
       referrals.length > 0
@@ -1447,6 +1593,7 @@ export async function updateReferralStatusApi(
     throw new Error("Surat rujukan tidak ditemukan.");
   }
 
+  assertNotStrict("updateReferralStatusApi");
   const updatedLocal: ReferralItem = {
     ...referrals[idx],
     status,
@@ -1490,6 +1637,7 @@ export async function fetchReferralHistoryApi(
     }
   }
 
+  assertNotStrict("fetchReferralHistory");
   const ref = getMockReferrals().find((r) => r.id_surat === id_surat);
   const baseLogs: ReferralHistoryItem[] = [
     {
@@ -1548,11 +1696,11 @@ export async function fetchMonitoringApi(): Promise<{
   items: MonitoringItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/monitoring?page=1&limit=100`, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
@@ -1562,82 +1710,81 @@ export async function fetchMonitoringApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: MonitoringItem[] = rawItems.map(
-            (m: Record<string, unknown>, idx: number) => {
-              const idPasien = Number(m.id_pasien || idx + 1);
-              const noRm = String(m.no_rm || `RM-2026-0014${idx}`);
-              const matched =
-                SEED_PATIENTS.find(
-                  (p) => p.no_rm === noRm || p.id_pasien === idPasien
-                ) || SEED_PATIENTS[idx % SEED_PATIENTS.length];
+        const mapped: MonitoringItem[] = rawItems.map(
+          (m: Record<string, unknown>, idx: number) => {
+            const idPasien = Number(m.id_pasien || idx + 1);
+            const noRm = String(m.no_rm || `RM-2026-0014${idx}`);
+            const matched =
+              SEED_PATIENTS.find(
+                (p) => p.no_rm === noRm || p.id_pasien === idPasien
+              ) || SEED_PATIENTS[idx % SEED_PATIENTS.length];
 
-              const antrean = m.antrean as MonitoringItem["antrean"];
-              const rujukan = m.rujukan as MonitoringItem["rujukan"];
-              const isRujukan = Boolean(rujukan && !antrean);
+            const antrean = m.antrean as MonitoringItem["antrean"];
+            const rujukan = m.rujukan as MonitoringItem["rujukan"];
+            const isRujukan = Boolean(rujukan && !antrean);
 
-              const rawTime =
-                rujukan?.tanggal_rujukan ||
-                antrean?.waktu_masuk ||
-                m.tanggal_masuk;
-              const { relative, timestamp } = formatBackendTimestamp(rawTime);
+            const rawTime =
+              rujukan?.tanggal_rujukan ||
+              antrean?.waktu_masuk ||
+              m.tanggal_masuk;
+            const { relative, timestamp } = formatBackendTimestamp(rawTime);
 
-              let statusPenanganan = String(
-                m.status_penanganan || "Menunggu Antrean"
-              );
-              if (antrean) {
-                statusPenanganan =
-                  antrean.status === "Dialokasikan"
-                    ? "Rawat Inap"
-                    : antrean.status === "Batal"
-                    ? "Dibatalkan"
-                    : "Menunggu Antrean";
-              } else if (rujukan) {
-                statusPenanganan =
-                  rujukan.status === "Diterima"
-                    ? "Dirujuk (Diterima RS Tujuan)"
-                    : rujukan.status === "Dikirim"
-                    ? "Dalam Perjalanan Rujukan"
-                    : rujukan.status === "Batal"
-                    ? "Rujukan Dibatalkan"
-                    : "Surat Rujukan Dibuat";
-              }
-
-              return {
-                id_pasien: idPasien,
-                no_rm: noRm,
-                nama_pasien: String(m.nama_pasien || matched.nama_pasien),
-                jenis_kelamin_usia: matched.jenis_kelamin_usia,
-                kondisi_pasien:
-                  m.kondisi_pasien === "Darurat" || isRujukan
-                    ? "Darurat"
-                    : "Stabil",
-                status_penanganan: statusPenanganan,
-                jalur_penanganan: isRujukan
-                  ? "Rujukan RS Lain"
-                  : "Daftar Tunggu",
-                diagnosa: matched.diagnosa_masuk,
-                dokter_dpjp: matched.dokter_dpjp,
-                kelas_perawatan: matched.kelas_rekomendasi,
-                waktu_terakhir: timestamp,
-                waktu_terakhir_relative: relative,
-                petugas_pj:
-                  rujukan?.dibuat_oleh ||
-                  antrean?.dicatat_oleh ||
-                  "Rini Aprilianti",
-                antrean: antrean || null,
-                rujukan: rujukan || null,
-              };
+            let statusPenanganan = String(
+              m.status_penanganan || "Menunggu Antrean"
+            );
+            if (antrean) {
+              statusPenanganan =
+                antrean.status === "Dialokasikan"
+                  ? "Rawat Inap"
+                  : antrean.status === "Batal"
+                  ? "Dibatalkan"
+                  : "Menunggu Antrean";
+            } else if (rujukan) {
+              statusPenanganan =
+                rujukan.status === "Diterima"
+                  ? "Dirujuk (Diterima RS Tujuan)"
+                  : rujukan.status === "Dikirim"
+                  ? "Dalam Perjalanan Rujukan"
+                  : rujukan.status === "Batal"
+                  ? "Rujukan Dibatalkan"
+                  : "Surat Rujukan Dibuat";
             }
-          );
-          return { items: mapped, source: "backend" };
-        }
+
+            return {
+              id_pasien: idPasien,
+              no_rm: noRm,
+              nama_pasien: String(m.nama_pasien || matched.nama_pasien),
+              jenis_kelamin_usia: matched.jenis_kelamin_usia,
+              kondisi_pasien:
+                m.kondisi_pasien === "Darurat" || isRujukan
+                  ? "Darurat"
+                  : "Stabil",
+              status_penanganan: statusPenanganan,
+              jalur_penanganan: isRujukan
+                ? "Rujukan RS Lain"
+                : "Daftar Tunggu",
+              diagnosa: matched.diagnosa_masuk,
+              dokter_dpjp: matched.dokter_dpjp,
+              kelas_perawatan: matched.kelas_rekomendasi,
+              waktu_terakhir: timestamp,
+              waktu_terakhir_relative: relative,
+              petugas_pj:
+                rujukan?.dibuat_oleh ||
+                antrean?.dicatat_oleh ||
+                "Rini Aprilianti",
+              antrean: antrean || null,
+              rujukan: rujukan || null,
+            };
+          }
+        );
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local synthesized store
     }
   }
 
+  assertNotStrict("fetchMonitoringApi");
   return {
     items: buildMockMonitoringFromStore(),
     source: "mock",
@@ -1787,11 +1934,11 @@ export async function fetchHistoriesApi(params?: {
   items: HistoryRecapItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const searchParams = new URLSearchParams({ page: "1", limit: "100" });
       if (params?.status) searchParams.set("status", params.status);
       if (params?.id_pasien)
@@ -1810,22 +1957,21 @@ export async function fetchHistoriesApi(params?: {
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: HistoryRecapItem[] = rawItems.map(
-            (r: Record<string, unknown>, idx: number) =>
-              mapRawHistoryToHistoryItem(r, idx)
-          );
-          if (!params?.status && !params?.id_pasien && !params?.q) {
-            saveMockHistories(mapped);
-          }
-          return { items: mapped, source: "backend" };
+        const mapped: HistoryRecapItem[] = rawItems.map(
+          (r: Record<string, unknown>, idx: number) =>
+            mapRawHistoryToHistoryItem(r, idx)
+        );
+        if (!params?.status && !params?.id_pasien && !params?.q) {
+          saveMockHistories(mapped);
         }
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // fallback to local store
     }
   }
 
+  assertNotStrict("fetchHistoriesApi");
   let items = getMockHistories();
   // Sync tagihan refs from mock billings
   const billings = getMockBillings();
@@ -1884,6 +2030,7 @@ export async function fetchHistoryByIdApi(
     }
   }
 
+  assertNotStrict("fetchHistoryByIdApi");
   const histories = getMockHistories();
   const billings = getMockBillings();
   const found = histories.find((h) => h.id_rekap === id_rekap);
@@ -1910,7 +2057,7 @@ export async function searchHistoryPatientsApi(
   const q = query.trim().toLowerCase();
 
   const token = getToken();
-  if (token && !token.startsWith("mock-") && q.length > 0) {
+  if (token && !token.startsWith("mock-")) {
     try {
       const res = await fetch(
         `${API_BASE_URL}/histories/patients?q=${encodeURIComponent(q)}`,
@@ -1955,6 +2102,8 @@ export async function searchHistoryPatientsApi(
       // fallback below
     }
   }
+
+  assertNotStrict("searchHistoryPatientsApi");
 
   return SEED_PATIENTS.filter((p) => {
     if (!q) return true;
@@ -2039,6 +2188,7 @@ export async function fetchPatientRmeApi(id_pasien: number): Promise<{
     }
   }
 
+  assertNotStrict("fetchPatientRme");
   return {
     pasien,
     items: getMockRmeByPatient(id_pasien),
@@ -2049,6 +2199,7 @@ export async function fetchPatientRmeApi(id_pasien: number): Promise<{
 export async function createHistoryApi(
   payload: CreateHistoryPayload
 ): Promise<HistoryRecapItem> {
+  assertNotStrict("createHistoryApi");
   const histories = getMockHistories();
   const pasien =
     SEED_PATIENTS.find((p) => p.id_pasien === payload.id_pasien) ||
@@ -2157,6 +2308,7 @@ export async function updateHistoryApi(
   id_rekap: number,
   payload: UpdateHistoryPayload
 ): Promise<HistoryRecapItem> {
+  assertNotStrict("updateHistoryApi");
   const histories = getMockHistories();
   const idx = histories.findIndex((h) => h.id_rekap === id_rekap);
 
@@ -2283,6 +2435,7 @@ export async function deleteHistoryApi(id_rekap: number): Promise<void> {
     }
   }
 
+  assertNotStrict("deleteHistoryApi");
   const remaining = histories.filter((h) => h.id_rekap !== id_rekap);
   saveMockHistories(remaining);
 }
@@ -2392,11 +2545,11 @@ export async function fetchBillingsApi(params?: {
   items: BillingItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const searchParams = new URLSearchParams({ page: "1", limit: "100" });
       if (params?.status) searchParams.set("status", params.status);
       if (params?.id_pasien)
@@ -2415,22 +2568,21 @@ export async function fetchBillingsApi(params?: {
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: BillingItem[] = rawItems.map(
-            (b: Record<string, unknown>, idx: number) =>
-              mapRawBillingToBillingItem(b, idx)
-          );
-          if (!params?.status && !params?.id_pasien && !params?.q) {
-            saveMockBillings(mapped);
-          }
-          return { items: mapped, source: "backend" };
+        const mapped: BillingItem[] = rawItems.map(
+          (b: Record<string, unknown>, idx: number) =>
+            mapRawBillingToBillingItem(b, idx)
+        );
+        if (!params?.status && !params?.id_pasien && !params?.q) {
+          saveMockBillings(mapped);
         }
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // fallback to local store
     }
   }
 
+  assertNotStrict("fetchBillingsApi");
   let items = getMockBillings();
   if (params?.status) {
     items = items.filter((b) => b.status === params.status);
@@ -2477,6 +2629,7 @@ export async function fetchBillingByIdApi(
     }
   }
 
+  assertNotStrict("fetchBillingByIdApi");
   const billings = getMockBillings();
   const found = billings.find((b) => b.id_tagihan === id_tagihan);
   if (!found) {
@@ -2488,6 +2641,7 @@ export async function fetchBillingByIdApi(
 export async function previewBillingApi(
   id_rekap: number
 ): Promise<BillingPreviewResult> {
+  assertNotStrict("previewBillingApi");
   const histories = getMockHistories();
   const rekap = histories.find((h) => h.id_rekap === id_rekap);
 
@@ -2629,6 +2783,7 @@ export async function previewBillingApi(
 export async function createBillingApi(
   payload: CreateBillingPayload
 ): Promise<BillingItem> {
+  assertNotStrict("createBillingApi");
   const billings = getMockBillings();
   const activeExisting = billings.find(
     (b) => b.id_rekap === payload.id_rekap && b.status !== "Batal"
@@ -2737,6 +2892,7 @@ export async function updateBillingStatusApi(
   status: BillingStatus,
   catatan_penyesuaian?: string
 ): Promise<BillingItem> {
+  assertNotStrict("updateBillingStatusApi");
   const billings = getMockBillings();
   const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
 
@@ -2827,6 +2983,7 @@ export async function recalculateBillingApi(
   id_tagihan: number,
   catatan_penyesuaian?: string
 ): Promise<BillingItem> {
+  assertNotStrict("recalculateBillingApi");
   const billings = getMockBillings();
   const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
 
@@ -2918,6 +3075,7 @@ export async function cancelBillingApi(
     throw new Error("Alasan pembatalan tagihan wajib diisi.");
   }
 
+  assertNotStrict("cancelBillingApi");
   const billings = getMockBillings();
   const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
 

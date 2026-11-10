@@ -36,10 +36,6 @@ export default function RekapLayananPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Rekap Layanan & Tindakan" />;
-  }
-
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
   const [patients, setPatients] = useState<HistoryPatientSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,6 +167,10 @@ export default function RekapLayananPage() {
     }
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Rekap Layanan & Tindakan" />;
+  }
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 pb-12 text-[#1e1e1e]">
