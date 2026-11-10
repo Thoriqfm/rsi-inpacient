@@ -37,16 +37,17 @@ export default function MainSimrsDashboardPage() {
   const loadOverview = useCallback(async () => {
     setLoading(true);
     try {
-      const [bList, qList, hRes, billRes] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchBedsApi(),
         fetchQueuesApi(),
         fetchHistoriesApi(),
         fetchBillingsApi(),
       ]);
-      setBeds(bList.items);
-      setQueues(qList.items);
-      setHistories(hRes.items);
-      setBillings(billRes.items);
+
+      if (results[0].status === "fulfilled") setBeds(results[0].value.items);
+      if (results[1].status === "fulfilled") setQueues(results[1].value.items);
+      if (results[2].status === "fulfilled") setHistories(results[2].value.items);
+      if (results[3].status === "fulfilled") setBillings(results[3].value.items);
     } finally {
       setLoading(false);
     }

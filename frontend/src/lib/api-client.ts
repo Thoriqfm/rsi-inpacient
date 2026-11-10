@@ -407,17 +407,14 @@ export async function fetchBedsApi(): Promise<{
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 2500);
 
-      const endpoint =
-        role === "PETUGAS_ADMINISTRASI"
-          ? `${API_BASE_URL}/beds/available`
-          : `${API_BASE_URL}/beds?page=1&limit=100`;
+      const endpoint = `${API_BASE_URL}/beds?page=1&limit=100`;
 
       let res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
       });
 
-      if (res.status === 403 && !endpoint.endsWith("/available")) {
+      if (res.status === 403) {
         res = await fetch(`${API_BASE_URL}/beds/available`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
@@ -429,16 +426,12 @@ export async function fetchBedsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: BedItem[] = rawItems.map(
-            (b: Record<string, unknown>, idx: number) =>
-              mapRawBedToBedItem(b, idx)
-          );
-          if (role !== "PETUGAS_ADMINISTRASI") {
-            saveMockBeds(mapped);
-          }
-          return { items: mapped, source: "backend" };
-        }
+        const mapped: BedItem[] = rawItems.map(
+          (b: Record<string, unknown>, idx: number) =>
+            mapRawBedToBedItem(b, idx)
+        );
+        saveMockBeds(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local stateful seed store
@@ -971,14 +964,12 @@ export async function fetchQueuesApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: QueueItem[] = rawItems.map(
-            (q: Record<string, unknown>, idx: number) =>
-              mapRawQueueToQueueItem(q, idx)
-          );
-          saveMockQueues(mapped);
-          return { items: mapped, source: "backend" };
-        }
+        const mapped: QueueItem[] = rawItems.map(
+          (q: Record<string, unknown>, idx: number) =>
+            mapRawQueueToQueueItem(q, idx)
+        );
+        saveMockQueues(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local mock store
@@ -1356,14 +1347,12 @@ export async function fetchReferralsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped = rawItems.map(
-            (r: Record<string, unknown>, idx: number) =>
-              mapRawReferralToReferralItem(r, idx)
-          );
-          saveMockReferrals(mapped);
-          return { items: mapped, source: "backend" };
-        }
+        const mapped = rawItems.map(
+          (r: Record<string, unknown>, idx: number) =>
+            mapRawReferralToReferralItem(r, idx)
+        );
+        saveMockReferrals(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local mock store
@@ -1644,76 +1633,74 @@ export async function fetchMonitoringApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: MonitoringItem[] = rawItems.map(
-            (m: Record<string, unknown>, idx: number) => {
-              const idPasien = Number(m.id_pasien || idx + 1);
-              const noRm = String(m.no_rm || `RM-2026-0014${idx}`);
-              const matched =
-                SEED_PATIENTS.find(
-                  (p) => p.no_rm === noRm || p.id_pasien === idPasien
-                ) || SEED_PATIENTS[idx % SEED_PATIENTS.length];
+        const mapped: MonitoringItem[] = rawItems.map(
+          (m: Record<string, unknown>, idx: number) => {
+            const idPasien = Number(m.id_pasien || idx + 1);
+            const noRm = String(m.no_rm || `RM-2026-0014${idx}`);
+            const matched =
+              SEED_PATIENTS.find(
+                (p) => p.no_rm === noRm || p.id_pasien === idPasien
+              ) || SEED_PATIENTS[idx % SEED_PATIENTS.length];
 
-              const antrean = m.antrean as MonitoringItem["antrean"];
-              const rujukan = m.rujukan as MonitoringItem["rujukan"];
-              const isRujukan = Boolean(rujukan && !antrean);
+            const antrean = m.antrean as MonitoringItem["antrean"];
+            const rujukan = m.rujukan as MonitoringItem["rujukan"];
+            const isRujukan = Boolean(rujukan && !antrean);
 
-              const rawTime =
-                rujukan?.tanggal_rujukan ||
-                antrean?.waktu_masuk ||
-                m.tanggal_masuk;
-              const { relative, timestamp } = formatBackendTimestamp(rawTime);
+            const rawTime =
+              rujukan?.tanggal_rujukan ||
+              antrean?.waktu_masuk ||
+              m.tanggal_masuk;
+            const { relative, timestamp } = formatBackendTimestamp(rawTime);
 
-              let statusPenanganan = String(
-                m.status_penanganan || "Menunggu Antrean"
-              );
-              if (antrean) {
-                statusPenanganan =
-                  antrean.status === "Dialokasikan"
-                    ? "Rawat Inap"
-                    : antrean.status === "Batal"
-                    ? "Dibatalkan"
-                    : "Menunggu Antrean";
-              } else if (rujukan) {
-                statusPenanganan =
-                  rujukan.status === "Diterima"
-                    ? "Dirujuk (Diterima RS Tujuan)"
-                    : rujukan.status === "Dikirim"
-                    ? "Dalam Perjalanan Rujukan"
-                    : rujukan.status === "Batal"
-                    ? "Rujukan Dibatalkan"
-                    : "Surat Rujukan Dibuat";
-              }
-
-              return {
-                id_pasien: idPasien,
-                no_rm: noRm,
-                nama_pasien: String(m.nama_pasien || matched.nama_pasien),
-                jenis_kelamin_usia: matched.jenis_kelamin_usia,
-                kondisi_pasien:
-                  m.kondisi_pasien === "Darurat" || isRujukan
-                    ? "Darurat"
-                    : "Stabil",
-                status_penanganan: statusPenanganan,
-                jalur_penanganan: isRujukan
-                  ? "Rujukan RS Lain"
-                  : "Daftar Tunggu",
-                diagnosa: matched.diagnosa_masuk,
-                dokter_dpjp: matched.dokter_dpjp,
-                kelas_perawatan: matched.kelas_rekomendasi,
-                waktu_terakhir: timestamp,
-                waktu_terakhir_relative: relative,
-                petugas_pj:
-                  rujukan?.dibuat_oleh ||
-                  antrean?.dicatat_oleh ||
-                  "Rini Aprilianti",
-                antrean: antrean || null,
-                rujukan: rujukan || null,
-              };
+            let statusPenanganan = String(
+              m.status_penanganan || "Menunggu Antrean"
+            );
+            if (antrean) {
+              statusPenanganan =
+                antrean.status === "Dialokasikan"
+                  ? "Rawat Inap"
+                  : antrean.status === "Batal"
+                  ? "Dibatalkan"
+                  : "Menunggu Antrean";
+            } else if (rujukan) {
+              statusPenanganan =
+                rujukan.status === "Diterima"
+                  ? "Dirujuk (Diterima RS Tujuan)"
+                  : rujukan.status === "Dikirim"
+                  ? "Dalam Perjalanan Rujukan"
+                  : rujukan.status === "Batal"
+                  ? "Rujukan Dibatalkan"
+                  : "Surat Rujukan Dibuat";
             }
-          );
-          return { items: mapped, source: "backend" };
-        }
+
+            return {
+              id_pasien: idPasien,
+              no_rm: noRm,
+              nama_pasien: String(m.nama_pasien || matched.nama_pasien),
+              jenis_kelamin_usia: matched.jenis_kelamin_usia,
+              kondisi_pasien:
+                m.kondisi_pasien === "Darurat" || isRujukan
+                  ? "Darurat"
+                  : "Stabil",
+              status_penanganan: statusPenanganan,
+              jalur_penanganan: isRujukan
+                ? "Rujukan RS Lain"
+                : "Daftar Tunggu",
+              diagnosa: matched.diagnosa_masuk,
+              dokter_dpjp: matched.dokter_dpjp,
+              kelas_perawatan: matched.kelas_rekomendasi,
+              waktu_terakhir: timestamp,
+              waktu_terakhir_relative: relative,
+              petugas_pj:
+                rujukan?.dibuat_oleh ||
+                antrean?.dicatat_oleh ||
+                "Rini Aprilianti",
+              antrean: antrean || null,
+              rujukan: rujukan || null,
+            };
+          }
+        );
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local synthesized store
@@ -1893,16 +1880,14 @@ export async function fetchHistoriesApi(params?: {
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: HistoryRecapItem[] = rawItems.map(
-            (r: Record<string, unknown>, idx: number) =>
-              mapRawHistoryToHistoryItem(r, idx)
-          );
-          if (!params?.status && !params?.id_pasien && !params?.q) {
-            saveMockHistories(mapped);
-          }
-          return { items: mapped, source: "backend" };
+        const mapped: HistoryRecapItem[] = rawItems.map(
+          (r: Record<string, unknown>, idx: number) =>
+            mapRawHistoryToHistoryItem(r, idx)
+        );
+        if (!params?.status && !params?.id_pasien && !params?.q) {
+          saveMockHistories(mapped);
         }
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // fallback to local store
@@ -1992,11 +1977,10 @@ export async function searchHistoryPatientsApi(
   query = ""
 ): Promise<HistoryPatientSummary[]> {
   const histories = getMockHistories();
-  assertNotStrict("searchHistoryPatientsApi");
   const q = query.trim().toLowerCase();
 
   const token = getToken();
-  if (token && !token.startsWith("mock-") && q.length > 0) {
+  if (token && !token.startsWith("mock-")) {
     try {
       const res = await fetch(
         `${API_BASE_URL}/histories/patients?q=${encodeURIComponent(q)}`,
@@ -2041,6 +2025,8 @@ export async function searchHistoryPatientsApi(
       // fallback below
     }
   }
+
+  assertNotStrict("searchHistoryPatientsApi");
 
   return SEED_PATIENTS.filter((p) => {
     if (!q) return true;
@@ -2505,16 +2491,14 @@ export async function fetchBillingsApi(params?: {
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: BillingItem[] = rawItems.map(
-            (b: Record<string, unknown>, idx: number) =>
-              mapRawBillingToBillingItem(b, idx)
-          );
-          if (!params?.status && !params?.id_pasien && !params?.q) {
-            saveMockBillings(mapped);
-          }
-          return { items: mapped, source: "backend" };
+        const mapped: BillingItem[] = rawItems.map(
+          (b: Record<string, unknown>, idx: number) =>
+            mapRawBillingToBillingItem(b, idx)
+        );
+        if (!params?.status && !params?.id_pasien && !params?.q) {
+          saveMockBillings(mapped);
         }
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // fallback to local store
