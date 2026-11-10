@@ -17,8 +17,15 @@ import { resetAllMockData } from "@/lib/mock-fallback";
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, switchRole, dataSource, isStrictBackend, setStrictBackend } =
-    useAuth();
+  const {
+    user,
+    logout,
+    login,
+    switchRole,
+    dataSource,
+    isStrictBackend,
+    setStrictBackend,
+  } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -93,8 +100,16 @@ export function Topbar() {
     router.push("/login");
   };
 
-  const handleToggleMock = () => {
+  const handleToggleMock = async () => {
     const nextStrict = !isStrictBackend;
+    if (nextStrict) {
+      try {
+        const username = user?.username || "budi.santoso";
+        await login(username, "password123");
+      } catch (e) {
+        console.warn("Auto-login backend on toggle failed:", e);
+      }
+    }
     setStrictBackend(nextStrict);
     window.location.reload();
   };

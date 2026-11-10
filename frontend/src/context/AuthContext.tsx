@@ -66,11 +66,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // In Strict Backend Mode: do not auto-login with fake mock credentials!
+        // Instead, attempt automatic backend login with real credentials
         if (strict) {
-          setUser(null);
-          setToken(null);
-          setDataSource("backend");
-          return;
+          const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+          const targetUsername = parsedUser?.username || "budi.santoso";
+          try {
+            const result = await loginApi(targetUsername, "password123");
+            setUser(result.user);
+            setToken(result.token);
+            setDataSource("backend");
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(result.user));
+            localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
+            return;
+          } catch {
+            setUser(null);
+            setToken(null);
+            setDataSource("backend");
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            return;
+          }
         }
 
         // Only in Mock Mode (offline prototype): fallback to local demo user

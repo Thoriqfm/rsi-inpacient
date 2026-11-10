@@ -5,8 +5,12 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BedItem, KelasPerawatan, PasienCandidate } from "@/types";
-import { fetchAvailableBedsApi, createAllocationApi } from "@/lib/api-client";
+import { BedItem, KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
+import {
+  fetchAvailableBedsApi,
+  fetchQueuesApi,
+  createAllocationApi,
+} from "@/lib/api-client";
 import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
 import {
   ArrowLeft,
@@ -41,6 +45,9 @@ export default function AlokasiBedPage() {
 
   // Selected Patient (Default Hendra Wijaya RM-2026-00142 as in Figma 193:9909)
   const [selectedPatientId, setSelectedPatientId] = useState<number>(101);
+  const [candidates, setCandidates] =
+    useState<PasienCandidate[]>(INITIAL_PASIEN_CANDIDATES);
+  const [waitingQueues, setWaitingQueues] = useState<QueueItem[]>([]);
 
   // Countdown timer for Row-Level Lock (5 minutes = 300 seconds)
   const [lockSeconds, setLockSeconds] = useState(288); // 04:48s initially as shown in Figma
@@ -54,13 +61,52 @@ export default function AlokasiBedPage() {
   } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Load beds
+  // Load beds and waiting queue patients
   useEffect(() => {
     async function load() {
       setIsLoading(true);
       try {
-        const res = await fetchAvailableBedsApi();
-        setBeds(res.items);
+        const [bedsRes, queueRes] = await Promise.allSettled([
+          fetchAvailableBedsApi(),
+          fetchQueuesApi(),
+        ]);
+
+        if (bedsRes.status === "fulfilled") {
+          setBeds(bedsRes.value.items);
+        }
+
+        if (queueRes.status === "fulfilled" && queueRes.value.items.length > 0) {
+          const waiting = queueRes.value.items.filter(
+            (q) => q.status === "Menunggu"
+          );
+          setWaitingQueues(waiting);
+
+          if (waiting.length > 0) {
+            const mappedPatients: PasienCandidate[] = waiting.map((q) => ({
+              id_pasien: q.id_pasien,
+              no_rm: q.no_rm,
+              nama_pasien: q.nama_pasien,
+              jenis_kelamin_usia: q.jenis_kelamin_usia || "L/P",
+              dokter_dpjp: q.dokter_dpjp || "dr. DPJP",
+              hak_kelas_jaminan: q.hak_kelas_jaminan || "BPJS Kesehatan",
+              kelas_rekomendasi: q.kelas_perawatan || "Kelas 1",
+              diagnosa_masuk: q.diagnosa || "Rawat Inap",
+              kondisi_pasien: q.kondisi_pasien,
+              status_penanganan: "Menunggu",
+              asal_instalasi: q.asal_instalasi || "IGD / Poli",
+              tanda_vital: "TD: 120/80 mmHg",
+            }));
+
+            const merged = [...mappedPatients];
+            for (const p of INITIAL_PASIEN_CANDIDATES) {
+              if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
+                merged.push(p);
+              }
+            }
+            setCandidates(merged);
+            setSelectedPatientId(merged[0].id_pasien);
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -122,10 +168,14 @@ export default function AlokasiBedPage() {
 
   const selectedPatient = useMemo(() => {
     return (
-      INITIAL_PASIEN_CANDIDATES.find((p) => p.id_pasien === selectedPatientId) ||
-      INITIAL_PASIEN_CANDIDATES[0]
+      candidates.find((p) => p.id_pasien === selectedPatientId) ||
+      candidates[0]
     );
-  }, [selectedPatientId]);
+  }, [candidates, selectedPatientId]);
+
+  const selectedQueue = useMemo(() => {
+    return waitingQueues.find((q) => q.id_pasien === selectedPatientId) || null;
+  }, [waitingQueues, selectedPatientId]);
 
   const handleSelectBed = (bed: BedItem) => {
     setSelectedBedId(bed.id_bed);
@@ -150,6 +200,7 @@ export default function AlokasiBedPage() {
       const result = await createAllocationApi({
         id_pasien: selectedPatient.id_pasien,
         id_bed: selectedBed.id_bed,
+        id_antrean: selectedQueue?.id_antrean,
       });
 
       setSuccessResult({
@@ -399,7 +450,7 @@ export default function AlokasiBedPage() {
                 onChange={(e) => setSelectedPatientId(Number(e.target.value))}
                 className="w-full px-3 py-2 bg-white border border-[#e2e8f0] rounded-[8px] text-xs text-[#1e1e1e] focus:outline-none focus:border-[#00b89f] cursor-pointer"
               >
-                {INITIAL_PASIEN_CANDIDATES.map((p) => (
+                {candidates.map((p) => (
                   <option key={p.id_pasien} value={p.id_pasien}>
                     {p.nama_pasien} ({p.no_rm}) - DPJP: {p.dokter_dpjp}
                   </option>
