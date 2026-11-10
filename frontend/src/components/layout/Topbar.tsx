@@ -318,6 +318,24 @@ export function Topbar() {
                   <button
                     type="button"
                     onClick={() => {
+                      switchRole("SUPER_ADMIN");
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs text-left flex items-center justify-between ${
+                      user?.role === "SUPER_ADMIN"
+                        ? "bg-purple-50 text-purple-800 font-semibold"
+                        : "hover:bg-slate-50 text-slate-600"
+                    }`}
+                  >
+                    <span>Super Admin (Akses Penuh)</span>
+                    {user?.role === "SUPER_ADMIN" && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
                       switchRole("PETUGAS_BED_MANAGEMENT");
                       setDropdownOpen(false);
                     }}

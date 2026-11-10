@@ -34,6 +34,10 @@ import {
 
 export default function BedManagementPage() {
   const { user } = useAuth();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const canManageMasterBed =
+    user?.role === "PETUGAS_BED_MANAGEMENT" || isSuperAdmin;
+  const canAllocateBed = user?.role === "PETUGAS_ADMINISTRASI" || isSuperAdmin;
   const isBedManager = user?.role === "PETUGAS_BED_MANAGEMENT";
 
   const [beds, setBeds] = useState<BedItem[]>([]);
@@ -198,7 +202,7 @@ export default function BedManagementPage() {
 
         {/* Action Buttons with RBAC */}
         <div className="flex items-center gap-3 shrink-0 pt-1">
-          {!isBedManager && (
+          {canAllocateBed && (
             <Link
               href="/bed-management/alokasi"
               className="px-4 py-2.5 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs sm:text-sm font-medium flex items-center gap-2 shadow-2xs transition"
@@ -208,7 +212,7 @@ export default function BedManagementPage() {
             </Link>
           )}
 
-          {isBedManager && (
+          {canManageMasterBed && (
             <button
               type="button"
               onClick={() => setIsTambahOpen(true)}
@@ -221,8 +225,23 @@ export default function BedManagementPage() {
         </div>
       </div>
 
-      {/* RBAC Notice Banner for Petugas Administrasi */}
-      {!isBedManager && (
+      {/* RBAC Notice Banner */}
+      {isSuperAdmin ? (
+        <div className="p-3.5 rounded-[12px] bg-purple-50 border border-purple-200 text-xs text-purple-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert className="w-4 h-4 text-purple-600 shrink-0" />
+            <span>
+              <strong>Peran Akun: Super Admin (Akses Penuh)</strong> — Anda memiliki hak akses menyeluruh untuk mengelola inventaris tempat tidur (tambah, edit, hapus) serta melakukan alokasi kamar pasien.
+            </span>
+          </div>
+          <Link
+            href="/bed-management/alokasi"
+            className="px-3.5 py-1.5 rounded-[8px] bg-purple-700 hover:bg-purple-800 text-white text-xs font-medium shrink-0 transition"
+          >
+            Form Alokasi &rarr;
+          </Link>
+        </div>
+      ) : !canManageMasterBed && (
         <div className="p-3.5 rounded-[12px] bg-teal-900/5 border border-teal-800/15 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-4 h-4 text-[#0fa18f] shrink-0" />
@@ -549,8 +568,16 @@ export default function BedManagementPage() {
 
                       {/* Aksi Berbasis Role */}
                       <td className="py-3.5 px-4 text-center">
-                        {isBedManager ? (
+                        {canManageMasterBed ? (
                           <div className="flex items-center justify-center gap-3">
+                            {isSuperAdmin && bed.status === "Tersedia" && (
+                              <Link
+                                href="/bed-management/alokasi"
+                                className="px-2 py-0.5 rounded-[6px] text-xs font-semibold text-[#00b89f] bg-[#e7faf7] hover:bg-[#d8f5ef] transition"
+                              >
+                                Alokasikan
+                              </Link>
+                            )}
                             <button
                               type="button"
                               onClick={() => setSelectedBedForStatus(bed)}
