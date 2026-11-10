@@ -1,8 +1,14 @@
-# Setup MySQL lokal
+# Setup database
 
-Konfigurasi default sementara memakai MySQL lokal sesuai keputusan 30 Oktober
-2026. PostgreSQL/Supabase disimpan sebagai konfigurasi terpisah, tidak dihapus.
-Tidak ada data Supabase yang dipindahkan atau diubah.
+**Aktif sejak 10 November 2026: Supabase PostgreSQL.** `prisma.config.js` default
+memakai `prisma/postgresql/schema.prisma` dan `prisma/migrations`, jadi perintah
+Prisma dijalankan tanpa `--config`. Panduan MySQL di bawah dipertahankan untuk
+rollback memakai `--config prisma.mysql.config.js`.
+
+## Setup MySQL lokal (nonaktif)
+
+Konfigurasi MySQL lama sesuai keputusan 30 Oktober 2026. Tidak dihapus agar
+rollback tetap mungkin. Tidak ada data Supabase yang dipindahkan atau diubah.
 
 ## 1. Jalankan server database
 
@@ -67,8 +73,8 @@ npx prisma generate
 npx prisma migrate status
 ```
 
-migrate deploy mengubah database lokal yang ditunjuk .env. Konfigurasi default
-prisma.config.js memakai prisma/schema.prisma dan prisma/mysql/migrations.
+migrate deploy mengubah database lokal yang ditunjuk .env. Untuk MySQL, gunakan
+`--config prisma.mysql.config.js` karena konfigurasi default sekarang PostgreSQL.
 Migration PostgreSQL tidak dijalankan. Hasil awal: 15 tabel aplikasi dan
 _prisma_migrations, tanpa seed data atau akun login.
 
