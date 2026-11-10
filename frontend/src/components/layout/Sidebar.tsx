@@ -108,7 +108,11 @@ export function Sidebar() {
                         pathname === "/bed-management" ? "text-[#00b89f]" : "text-teal-400/70"
                       }`}
                     />
-                    <span>Ketersediaan Bed</span>
+                    <span>
+                      {user?.role === "PETUGAS_ADMINISTRASI"
+                        ? "Ketersediaan Bed"
+                        : "Bed Management"}
+                    </span>
                   </Link>
 
                   {/* Alokasi Kamar */}

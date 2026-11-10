@@ -57,8 +57,8 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const loggedInUser = await login(username, password);
-      if (loggedInUser.role === "PETUGAS_ADMINISTRASI") {
-        router.push("/bed-management/alokasi");
+      if (loggedInUser.role === "PETUGAS_ADMINISTRASI" || loggedInUser.role === "SUPER_ADMIN") {
+        router.push("/dashboard");
       } else {
         router.push("/bed-management");
       }
@@ -342,6 +342,25 @@ export default function LoginPage() {
               Pilihan Akun Uji Coba Cepat:
             </p>
             <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => handleSelectDemo("admin.demo")}
+                className="w-full p-2 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
+              >
+                <div>
+                  <div className="font-semibold text-slate-800 group-hover:text-purple-900 flex items-center gap-1.5">
+                    <span>Super Admin</span>
+                    <span className="text-[9px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded">Akses Penuh</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    Akses Semua Modul & Fitur (admin.demo)
+                  </div>
+                </div>
+                <span className="text-[10px] bg-purple-700 text-white font-medium px-2 py-0.5 rounded-full">
+                  Pilih
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleSelectDemo("budi.santoso")}

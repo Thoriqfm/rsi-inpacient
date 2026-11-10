@@ -36,6 +36,17 @@ export const DEMO_USERS: Record<
       role: "PETUGAS_ADMINISTRASI",
     },
   },
+  "admin.demo": {
+    password: "password123",
+    account: {
+      id_akun: 23,
+      username: "admin.demo",
+      nama_petugas: "Budi Santoso (Super Admin)",
+      jabatan_label: "Super Admin (Akses Penuh)",
+      inisial: "SA",
+      role: "SUPER_ADMIN",
+    },
+  },
 
 };
 

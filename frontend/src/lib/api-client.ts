@@ -282,17 +282,17 @@ export async function loginApi(
         .slice(0, 2)
         .toUpperCase();
 
-      const rawRole = String(backendUser?.role || "");
-      const mappedRole: UserRole = rawRole
-        .toLowerCase()
-        .includes("administrasi")
-        ? "PETUGAS_ADMINISTRASI"
-        : "PETUGAS_BED_MANAGEMENT";
+      const rawRole = String(backendUser?.role || "").trim().toLowerCase();
+      let mappedRole: UserRole = "PETUGAS_BED_MANAGEMENT";
+      let roleLabel = "Petugas Bed Management";
 
-      const roleLabel =
-        mappedRole === "PETUGAS_ADMINISTRASI"
-          ? "Petugas Administrasi"
-          : "Petugas Bed Management";
+      if (rawRole.includes("super") || rawRole === "super admin") {
+        mappedRole = "SUPER_ADMIN";
+        roleLabel = "Super Admin (Akses Penuh)";
+      } else if (rawRole.includes("administrasi")) {
+        mappedRole = "PETUGAS_ADMINISTRASI";
+        roleLabel = "Petugas Administrasi";
+      }
 
       return {
         token: json.data.token,
@@ -366,6 +366,26 @@ export async function loginApi(
   // Convenience aliases for testing
   if (
     cleanUser === "admin.demo" ||
+    cleanUser === "superadmin" ||
+    cleanUser === "super.admin"
+  ) {
+    if (
+      password === "Admin123!" ||
+      password === "password123" ||
+      password === "admin" ||
+      password === "demo" ||
+      password.length >= 4
+    ) {
+      return {
+        token: `mock-jwt-token-demo-${Date.now()}`,
+        user: DEMO_USERS["admin.demo"].account,
+        source: "mock",
+      };
+    }
+  }
+
+  if (
+    cleanUser === "rini" ||
     cleanUser === "admin" ||
     cleanUser === "administrasi"
   ) {

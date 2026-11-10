@@ -11,7 +11,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        if (user.role === "PETUGAS_ADMINISTRASI") {
+        if (user.role === "PETUGAS_ADMINISTRASI" || user.role === "SUPER_ADMIN") {
           router.replace("/dashboard");
         } else {
           router.replace("/bed-management");
