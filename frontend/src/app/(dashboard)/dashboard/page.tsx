@@ -27,9 +27,6 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 export default function MainSimrsDashboardPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
-  }
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [queues, setQueues] = useState<QueueItem[]>([]);
@@ -80,6 +77,10 @@ export default function MainSimrsDashboardPage() {
   const totalRevenue = billings
     .filter((b) => b.status !== "Batal")
     .reduce((acc, b) => acc + b.total_biaya_num, 0);
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 text-[#1e1e1e]">

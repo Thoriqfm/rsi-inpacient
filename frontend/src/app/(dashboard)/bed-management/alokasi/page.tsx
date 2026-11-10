@@ -28,10 +28,6 @@ import {
 export default function AlokasiBedPage() {
   const router = useRouter();
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Alokasi Kamar Pasien" />;
-  }
-
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -176,6 +172,10 @@ export default function AlokasiBedPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Alokasi Kamar Pasien" />;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 text-[#1e1e1e]">

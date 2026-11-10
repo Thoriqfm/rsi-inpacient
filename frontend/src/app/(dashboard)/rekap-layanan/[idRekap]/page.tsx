@@ -28,9 +28,6 @@ import {
 
 export default function DetailRekapPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Detail Rekap Layanan & Tindakan" />;
-  }
 
   const params = useParams();
   const router = useRouter();
@@ -129,6 +126,10 @@ export default function DetailRekapPage() {
     setShowBillingModal(false);
     router.push(`/pembayaran/buat/${rekap.id_pasien}?id_rekap=${rekap.id_rekap}`);
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Detail Rekap Layanan & Tindakan" />;
+  }
 
   if (loading) {
     return (

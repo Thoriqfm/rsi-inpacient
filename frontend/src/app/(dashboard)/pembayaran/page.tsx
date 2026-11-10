@@ -35,9 +35,6 @@ import {
 
 export default function PembayaranDashboardPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Pembayaran & Billing" />;
-  }
 
   const [billings, setBillings] = useState<BillingItem[]>([]);
   const [readyRecaps, setReadyRecaps] = useState<HistoryRecapItem[]>([]);
@@ -180,6 +177,10 @@ export default function PembayaranDashboardPage() {
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pembayaran & Billing" />;
+  }
 
   return (
     <div className="space-y-6 pb-12 font-sans text-[#1e1e1e]">

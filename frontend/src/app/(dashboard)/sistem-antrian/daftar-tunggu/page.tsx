@@ -35,10 +35,6 @@ import { DetailAntreanModal } from "@/components/sistem-antrian/DetailAntreanMod
 export default function DaftarTungguPage() {
   const { user } = useAuth();
 
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Sistem Antrean (Daftar Tunggu)" />;
-  }
-
   const [queues, setQueues] = useState<QueueItem[]>([]);
   const [availableBeds, setAvailableBeds] = useState<BedItem[]>([]);
   const [referralCount, setReferralCount] = useState<number>(2);
@@ -134,6 +130,10 @@ export default function DaftarTungguPage() {
       );
     }
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Sistem Antrean (Daftar Tunggu)" />;
+  }
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">

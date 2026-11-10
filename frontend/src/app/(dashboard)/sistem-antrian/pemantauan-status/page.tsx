@@ -27,10 +27,6 @@ import { DetailPenangananModal } from "@/components/sistem-antrian/DetailPenanga
 export default function PemantauanStatusPage() {
   const { user } = useAuth();
 
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Pemantauan Status Penanganan" />;
-  }
-
   const [items, setItems] = useState<MonitoringItem[]>([]);
   const [availableBeds, setAvailableBeds] = useState<BedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +114,10 @@ export default function PemantauanStatusPage() {
       return true;
     });
   }, [items, jalurFilter, kondisiFilter, searchQuery]);
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pemantauan Status Penanganan" />;
+  }
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">

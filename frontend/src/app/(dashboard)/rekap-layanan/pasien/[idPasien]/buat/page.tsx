@@ -21,9 +21,6 @@ import { createHistoryApi, fetchPatientRmeApi } from "@/lib/api-client";
 
 export default function BuatRekapBaruPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Buat Rekap Tindakan Baru" />;
-  }
 
   const params = useParams();
   const router = useRouter();
@@ -76,6 +73,10 @@ export default function BuatRekapBaruPage() {
       setSubmitting(false);
     }
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Buat Rekap Tindakan Baru" />;
+  }
 
   if (loading || !pasien) {
     return (

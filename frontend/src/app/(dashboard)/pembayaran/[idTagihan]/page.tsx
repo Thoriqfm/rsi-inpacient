@@ -24,9 +24,6 @@ import {
 
 export default function DetailTagihanPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Detail Tagihan Pasien" />;
-  }
 
   const params = useParams();
   const idTagihan = Number(params?.idTagihan || 1);
@@ -125,6 +122,10 @@ export default function DetailTagihanPage() {
       currency: "IDR",
       maximumFractionDigits: 0,
     }).format(val);
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Detail Tagihan Pasien" />;
+  }
 
   if (loading) {
     return (

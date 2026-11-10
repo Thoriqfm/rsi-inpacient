@@ -23,9 +23,6 @@ import { fetchPatientRmeApi } from "@/lib/api-client";
 
 export default function InformasiDataPasienPage() {
   const { user } = useAuth();
-  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
-    return <RoleAccessDenied moduleName="Data Pasien & Riwayat RME" />;
-  }
 
   const params = useParams();
   const idPasien = Number(params?.idPasien || 1);
@@ -58,6 +55,10 @@ export default function InformasiDataPasienPage() {
     }
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Data Pasien & Riwayat RME" />;
+  }
 
   if (loading || !pasien) {
     return (

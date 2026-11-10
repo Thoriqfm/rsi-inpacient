@@ -17,7 +17,8 @@ import { resetAllMockData } from "@/lib/mock-fallback";
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, switchRole, dataSource, isStrictBackend } = useAuth();
+  const { user, logout, switchRole, dataSource, isStrictBackend, setStrictBackend } =
+    useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +91,12 @@ export function Topbar() {
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleToggleMock = () => {
+    const nextStrict = !isStrictBackend;
+    setStrictBackend(nextStrict);
+    window.location.reload();
   };
 
   return (
@@ -186,26 +193,48 @@ export function Topbar() {
 
       {/* Right: Actions & User Info */}
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Data Source Badge */}
-        <div
-          className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-            dataSource === "backend"
-              ? "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]"
-              : isStrictBackend
-              ? "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]"
-              : "bg-[#e7faf7] text-[#0fa18f] border-[#b6eee7]"
+        {/* Mockup Mode On/Off Toggle Button */}
+        <button
+          type="button"
+          onClick={handleToggleMock}
+          title={
+            !isStrictBackend
+              ? "Mockup aktif (Data Simulasi). Klik untuk mematikan mockup dan hanya menggunakan Real Backend API"
+              : "Mockup nonaktif (Pure Backend API). Klik jika ingin mengaktifkan fallback simulasi mockup"
+          }
+          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition shadow-2xs cursor-pointer ${
+            !isStrictBackend
+              ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
+              : "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100"
           }`}
-          title="Status Sumber Data"
         >
-          <Database className="w-3.5 h-3.5" />
-          <span>
-            {dataSource === "backend"
-              ? "Backend API Terhubung (Real API)"
-              : isStrictBackend
-              ? "Backend Offline (Strict Mode)"
-              : "Mode Simulasi Lokal"}
-          </span>
-        </div>
+          <div className="flex items-center gap-1.5">
+            <Database className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Mockup:</span>
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
+                !isStrictBackend
+                  ? "bg-amber-200 text-amber-900"
+                  : "bg-emerald-200 text-emerald-900"
+              }`}
+            >
+              {!isStrictBackend ? "ON (Simulasi)" : "OFF (Backend)"}
+            </span>
+          </div>
+
+          {/* Toggle Switch Graphic */}
+          <div
+            className={`w-7 h-4 flex items-center rounded-full p-0.5 transition duration-200 ${
+              !isStrictBackend ? "bg-amber-500" : "bg-emerald-600"
+            }`}
+          >
+            <div
+              className={`bg-white w-3 h-3 rounded-full shadow-sm transform transition duration-200 ${
+                !isStrictBackend ? "translate-x-3" : "translate-x-0"
+              }`}
+            />
+          </div>
+        </button>
 
         {/* Reset Data Button for Demo Convenience */}
         <button
