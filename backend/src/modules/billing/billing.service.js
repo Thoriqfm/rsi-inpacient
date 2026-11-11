@@ -13,6 +13,7 @@ import {
     buildBillingWhere,
     countBillings,
     createBilling,
+    createTarif,
     findActiveBillingByRekap,
     findBillingById,
     findBillings,
@@ -153,6 +154,24 @@ export async function listBillings(query) {
         items: rows.map(toBillingItem),
         meta: { page, limit, total, total_pages: Math.ceil(total / limit) },
     };
+}
+
+export async function addTariff(data) {
+    try {
+        const tarif = await createTarif(data);
+
+        return { ...tarif, harga: tarif.harga.toFixed(2) };
+    } catch (err) {
+        // Unique (kode_tindakan, tanggal_berlaku): periode yang sama tidak boleh ganda.
+        if (err.code === "P2002") {
+            throw new HttpError(
+                409,
+                "TARIFF_CONFLICT",
+                "Tarif untuk kode dan tanggal berlaku tersebut sudah ada.",
+            );
+        }
+        throw err;
+    }
 }
 
 export async function getBilling(id_tagihan) {

@@ -22,3 +22,11 @@ export const TAGIHAN_OPEN_STATUSES = [TAGIHAN_STATUS.DRAFT, TAGIHAN_STATUS.BELUM
 
 // Nilai log_audit.nama_tabel untuk modul ini.
 export const BILLING_AUDIT_TABLE = "tagihan";
+
+// Nilai kolom tarif.status yang dipakai seed dan test.
+export const TARIF_STATUS = {
+    AKTIF: "Aktif",
+    NONAKTIF: "Nonaktif",
+};
+
+export const TARIF_STATUS_LIST = Object.values(TARIF_STATUS);

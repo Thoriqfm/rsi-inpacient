@@ -10,12 +10,14 @@ import {
     recalculate,
     show,
     store,
+    storeTariff,
     updateStatus,
 } from "../modules/billing/billing.controller.js";
 import {
     billingListQuerySchema,
     cancelBillingSchema,
     createBillingSchema,
+    createTariffSchema,
     previewBillingSchema,
     updateBillingStatusSchema,
 } from "../modules/billing/billing.validation.js";
@@ -27,6 +29,9 @@ const router = Router();
 const billingRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
+
+// Master tarif: hanya Super Admin yang boleh menulis.
+router.post("/tariffs", requireRole(ROLES.SUPER_ADMIN), validate(createTariffSchema), storeTariff);
 
 // Harus sebelum /:id agar tidak tertangkap sebagai id tagihan.
 router.post("/preview", billingRole, validate(previewBillingSchema), preview);
