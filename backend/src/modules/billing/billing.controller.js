@@ -1,5 +1,6 @@
 import { parseId } from "../../shared/utils/parse-id.js";
 import {
+    addTariff,
     cancelBilling,
     changeBillingStatus,
     createInvoice,
@@ -25,6 +26,12 @@ export async function store(req, res) {
     const billing = await createInvoice(req.validated, req.user.id_akun);
 
     res.status(201).json({ data: billing, meta: null });
+}
+
+export async function storeTariff(req, res) {
+    const tarif = await addTariff(req.validated);
+
+    res.status(201).json({ data: tarif, meta: null });
 }
 
 export async function show(req, res) {

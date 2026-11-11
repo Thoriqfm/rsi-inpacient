@@ -115,6 +115,25 @@ export function lockRekapRow(client, id_rekap) {
     return client.$queryRaw`SELECT id_rekap FROM rekap_tindakan WHERE id_rekap = ${id_rekap} FOR UPDATE`;
 }
 
+const tariffSelect = {
+    id_tarif: true,
+    kode_tindakan: true,
+    nama_tindakan: true,
+    harga: true,
+    tanggal_berlaku: true,
+    tanggal_berakhir: true,
+    status: true,
+    created_at: true,
+    updated_at: true,
+};
+
+export function createTarif(data) {
+    return prisma.tarif.create({
+        data: { ...data, created_at: new Date() },
+        select: tariffSelect,
+    });
+}
+
 export function findTariffsForCodes(kode_tindakan_list) {
     return prisma.tarif.findMany({
         where: { kode_tindakan: { in: kode_tindakan_list } },
