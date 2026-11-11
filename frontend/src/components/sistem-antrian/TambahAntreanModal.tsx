@@ -62,9 +62,9 @@ export function TambahAntreanModal({
           hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
           kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
           diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
-          kondisi_pasien: p.status_penanganan?.includes("Darurat")
-            ? "Darurat"
-            : "Stabil",
+          kondisi_pasien:
+            p.kondisi_pasien ||
+            (p.status_penanganan?.includes("Darurat") ? "Darurat" : "Stabil"),
           status_penanganan:
             (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
             "Menunggu",
@@ -72,11 +72,21 @@ export function TambahAntreanModal({
           tanda_vital: "TD: 120/80 mmHg",
         }));
         for (const seed of INITIAL_PASIEN_CANDIDATES) {
-          if (!mapped.some((m) => m.id_pasien === seed.id_pasien)) {
+          if (
+            !mapped.some(
+              (m) => m.id_pasien === seed.id_pasien || m.no_rm === seed.no_rm
+            )
+          ) {
             mapped.push(seed);
           }
         }
         setCandidateList(mapped);
+        const preferred =
+          mapped.find((m) => m.kondisi_pasien === "Stabil") || mapped[0];
+        if (preferred) {
+          setSelectedPasien(preferred);
+          setKelasTarget(preferred.kelas_rekomendasi);
+        }
       })
       .catch(() => {});
     return () => {

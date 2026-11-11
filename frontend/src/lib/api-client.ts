@@ -444,10 +444,69 @@ export async function fetchBedsApi(): Promise<{
       });
 
       if (res.status === 403) {
-        res = await fetch(`${API_BASE_URL}/beds/available`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
+        const [availRes, allocRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/beds/available`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }),
+          fetch(`${API_BASE_URL}/allocations?status_alokasi=Aktif&limit=100`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }).catch(() => null),
+        ]);
+        clearTimeout(timer);
+
+        if (availRes.ok) {
+          const availJson = await availRes.json();
+          const rawAvail = availJson.data?.items || [];
+          const mappedAvail: BedItem[] = rawAvail.map(
+            (b: Record<string, unknown>, idx: number) =>
+              mapRawBedToBedItem({ ...b, status: "Tersedia" }, idx)
+          );
+
+          const mappedOccupied: BedItem[] = [];
+          if (allocRes && allocRes.ok) {
+            const allocJson = await allocRes.json().catch(() => null);
+            const rawAllocs = allocJson?.data?.items || [];
+            for (let i = 0; i < rawAllocs.length; i++) {
+              const a = rawAllocs[i] as Record<string, unknown>;
+              const rawBed = (a.bed || {}) as Record<string, unknown>;
+              const rawPasien = (a.pasien || {}) as Record<string, unknown>;
+              const idBed = Number(a.id_bed || rawBed.id_bed || 0);
+              if (
+                idBed > 0 &&
+                !mappedAvail.some((item) => item.id_bed === idBed) &&
+                !mappedOccupied.some((item) => item.id_bed === idBed)
+              ) {
+                mappedOccupied.push(
+                  mapRawBedToBedItem(
+                    {
+                      id_bed: idBed,
+                      no_bed: rawBed.no_bed,
+                      nama_bangsal: rawBed.nama_bangsal,
+                      kelas_perawatan: rawBed.kelas_perawatan,
+                      status: "Terisi",
+                      updated_at: a.waktu_alokasi || a.created_at,
+                      occupant: {
+                        id_pasien: a.id_pasien,
+                        no_rm: rawPasien.no_rm,
+                        nama_pasien: rawPasien.nama_pasien,
+                      },
+                    },
+                    mappedAvail.length + i
+                  )
+                );
+              }
+            }
+          }
+
+          const combined = [...mappedAvail, ...mappedOccupied].sort((a, b) =>
+            a.no_bed.localeCompare(b.no_bed)
+          );
+          saveMockBeds(combined);
+          return { items: combined, source: "backend" };
+        }
+        res = availRes;
       }
 
       clearTimeout(timer);
@@ -619,7 +678,7 @@ export async function updateBedStatusApi(
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
-      const res = await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
+      let res = await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -627,6 +686,48 @@ export async function updateBedStatusApi(
         },
         body: JSON.stringify({ status: payload.status }),
       });
+
+      // Jika bed masih memiliki alokasi aktif (409 BED_IN_USE), selesaikan alokasi aktif terlebih dahulu
+      if (res.status === 409) {
+        const allocListRes = await fetch(
+          `${API_BASE_URL}/allocations?id_bed=${payload.id_bed}&status_alokasi=Aktif&limit=5`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).catch(() => null);
+
+        if (allocListRes && allocListRes.ok) {
+          const allocListJson = await allocListRes.json().catch(() => null);
+          const activeAllocs = allocListJson?.data?.items || [];
+          for (const alloc of activeAllocs) {
+            if (alloc?.id_alokasi) {
+              await fetch(`${API_BASE_URL}/allocations/${alloc.id_alokasi}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status_alokasi: "Selesai" }),
+              });
+            }
+          }
+
+          if (activeAllocs.length > 0) {
+            if (payload.status === "Tersedia") {
+              res = await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+            } else {
+              res = await fetch(`${API_BASE_URL}/beds/${payload.id_bed}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: payload.status }),
+              });
+            }
+          }
+        }
+      }
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
@@ -1037,16 +1138,6 @@ export async function createQueueApi(
     SEED_PATIENTS.find((p) => p.id_pasien === payload.id_pasien) ||
     SEED_PATIENTS[0];
 
-  // Check if patient already has active waiting queue locally
-  const activeExisting = queues.find(
-    (q) => q.id_pasien === payload.id_pasien && q.status === "Menunggu"
-  );
-  if (activeExisting) {
-    throw new Error(
-      `Pasien ${pasien.nama_pasien} (${pasien.no_rm}) sudah terdaftar dalam daftar tunggu aktif (${activeExisting.no_antrean_formatted}).`
-    );
-  }
-
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
@@ -1097,6 +1188,16 @@ export async function createQueueApi(
     }
   }
 
+  // Check if patient already has active waiting queue locally (mock fallback)
+  const activeExisting = queues.find(
+    (q) => q.id_pasien === payload.id_pasien && q.status === "Menunggu"
+  );
+  if (activeExisting) {
+    throw new Error(
+      `Pasien ${pasien.nama_pasien} (${pasien.no_rm}) sudah terdaftar dalam daftar tunggu aktif (${activeExisting.no_antrean_formatted}).`
+    );
+  }
+
   const nextNo =
     queues.length > 0 ? Math.max(...queues.map((q) => q.no_antrean)) + 1 : 1;
   const { relative, timestamp } = formatNowTimestamp();
@@ -1137,10 +1238,6 @@ export async function createQueueApi(
 export async function cancelQueueApi(id_antrean: number): Promise<QueueItem> {
   const queues = getMockQueues();
   const idx = queues.findIndex((q) => q.id_antrean === id_antrean);
-
-  if (idx !== -1 && queues[idx].status !== "Menunggu") {
-    throw new Error("Hanya antrean berstatus Menunggu yang dapat dibatalkan.");
-  }
 
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
@@ -1188,6 +1285,10 @@ export async function cancelQueueApi(id_antrean: number): Promise<QueueItem> {
         throw err;
       }
     }
+  }
+
+  if (idx !== -1 && queues[idx].status !== "Menunggu") {
+    throw new Error("Hanya antrean berstatus Menunggu yang dapat dibatalkan.");
   }
 
   if (idx === -1) {
@@ -2148,18 +2249,26 @@ export async function searchHistoryPatientsApi(
         const rawItems = json.data?.items || json.data || [];
         return rawItems.map((row: Record<string, unknown>, idx: number) => {
           const idPasien = Number(row.id_pasien || idx + 1);
+          const noRmStr = String(row.no_rm || "");
           const matched =
-            SEED_PATIENTS.find((p) => p.id_pasien === idPasien) ||
-            SEED_PATIENTS[idx % SEED_PATIENTS.length];
+            SEED_PATIENTS.find(
+              (p) => p.no_rm === noRmStr || p.id_pasien === idPasien
+            ) || SEED_PATIENTS[idx % SEED_PATIENTS.length];
           return {
             id_pasien: idPasien,
-            no_rm: String(row.no_rm || matched.no_rm),
+            no_rm: noRmStr || matched.no_rm,
             nama_pasien: String(row.nama_pasien || matched.nama_pasien),
             jenis_kelamin_usia: matched.jenis_kelamin_usia,
             kelas_perawatan: matched.kelas_rekomendasi,
             hak_kelas_jaminan: matched.hak_kelas_jaminan,
             dokter_dpjp: matched.dokter_dpjp,
             diagnosa_masuk: matched.diagnosa_masuk,
+            kondisi_pasien:
+              row.kondisi_pasien === "Darurat"
+                ? "Darurat"
+                : row.kondisi_pasien === "Stabil"
+                ? "Stabil"
+                : matched.kondisi_pasien || "Stabil",
             status_penanganan: String(
               row.status_penanganan || "Rawat Inap"
             ),
@@ -3116,18 +3225,6 @@ export async function updateBillingStatusApi(
   const billings = getMockBillings();
   const idx = billings.findIndex((b) => b.id_tagihan === id_tagihan);
 
-  if (idx !== -1) {
-    const current = billings[idx];
-    if (status !== current.status) {
-      const allowed = BILLING_VALID_TRANSITIONS[current.status] || [];
-      if (!allowed.includes(status)) {
-        throw new Error(
-          `Transisi status tidak diizinkan: Status "${current.status}" tidak dapat berubah menjadi "${status}".`
-        );
-      }
-    }
-  }
-
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
@@ -3176,6 +3273,17 @@ export async function updateBillingStatusApi(
   }
 
   assertNotStrict("updateBillingStatusApi");
+  if (idx !== -1) {
+    const current = billings[idx];
+    if (status !== current.status) {
+      const allowed = BILLING_VALID_TRANSITIONS[current.status] || [];
+      if (!allowed.includes(status)) {
+        throw new Error(
+          `Transisi status tidak diizinkan: Status "${current.status}" tidak dapat berubah menjadi "${status}".`
+        );
+      }
+    }
+  }
   if (idx === -1) {
     throw new Error("Tagihan tidak ditemukan.");
   }

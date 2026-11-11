@@ -106,11 +106,33 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
         await prisma.$disconnect();
     });
 
-    test("master bed ditolak untuk Petugas Administrasi", async () => {
-        const res = await api("GET", "/beds", { token: adminToken });
+    test("mutasi master bed ditolak untuk Petugas Administrasi namun pemantauan diizinkan", async () => {
+        const bed = await createBed("Tersedia");
 
-        assert.equal(res.status, 403);
-        assert.equal(res.body.error.code, "FORBIDDEN");
+        const listRes = await api("GET", "/beds", { token: adminToken });
+        assert.equal(listRes.status, 200);
+
+        const createRes = await api("POST", "/beds", {
+            token: adminToken,
+            body: {
+                no_bed: `B-${suffix.slice(-5)}-ADM`,
+                nama_bangsal: "Bangsal Uji",
+                kelas_perawatan: "Kelas 1",
+            },
+        });
+        assert.equal(createRes.status, 403);
+        assert.equal(createRes.body.error.code, "FORBIDDEN");
+
+        const updateRes = await api("PATCH", `/beds/${bed.id_bed}`, {
+            token: adminToken,
+            body: { status: "Pembersihan" },
+        });
+        assert.equal(updateRes.status, 403);
+
+        const deleteRes = await api("DELETE", `/beds/${bed.id_bed}`, {
+            token: adminToken,
+        });
+        assert.equal(deleteRes.status, 403);
     });
 
     test("Petugas Administrasi hanya melihat bed Tersedia", async () => {

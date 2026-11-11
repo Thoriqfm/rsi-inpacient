@@ -8,15 +8,17 @@ import { ROLES } from "../shared/constants/roles.js";
 
 const router = Router();
 
-// Master bed: Super Admin (auto-lolos) + Petugas Bed Management.
+// Master bed mutasi: Super Admin (auto-lolos) + Petugas Bed Management.
 const masterBed = requireRole(ROLES.BED_MANAGEMENT);
+// Pemantauan daftar & detail bed: terbuka untuk Petugas Administrasi dan Petugas Bed Management.
+const viewBed = requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT);
 
 router.use(authenticateToken);
 
-// Petugas Administrasi dan Petugas Bed Management dapat melihat bed tersedia untuk alokasi.
-router.get("/available", requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT), available);
-router.get("/", masterBed, validateQuery(bedListQuerySchema), index);
-router.get("/:id", masterBed, show);
+// Petugas Administrasi dan Petugas Bed Management dapat melihat bed tersedia maupun memantau status seluruh bed.
+router.get("/available", viewBed, available);
+router.get("/", viewBed, validateQuery(bedListQuerySchema), index);
+router.get("/:id", viewBed, show);
 
 // Mutasi data master bed: Khusus Petugas Bed Management dan Super Admin.
 router.post("/", masterBed, validate(createBedSchema), store);

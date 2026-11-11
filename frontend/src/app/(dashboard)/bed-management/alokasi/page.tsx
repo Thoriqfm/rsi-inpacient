@@ -109,7 +109,11 @@ export default function AlokasiBedPage() {
           patientsRes.value.length > 0
         ) {
           for (const p of patientsRes.value) {
-            if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
+            if (
+              !merged.some(
+                (m) => m.id_pasien === p.id_pasien || m.no_rm === p.no_rm
+              )
+            ) {
               merged.push({
                 id_pasien: p.id_pasien,
                 no_rm: p.no_rm,
@@ -119,7 +123,7 @@ export default function AlokasiBedPage() {
                 hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
                 kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
                 diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
-                kondisi_pasien: "Stabil",
+                kondisi_pasien: p.kondisi_pasien || "Stabil",
                 status_penanganan:
                   (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
                   "Menunggu",
@@ -131,7 +135,11 @@ export default function AlokasiBedPage() {
         }
 
         for (const p of INITIAL_PASIEN_CANDIDATES) {
-          if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
+          if (
+            !merged.some(
+              (m) => m.id_pasien === p.id_pasien || m.no_rm === p.no_rm
+            )
+          ) {
             merged.push(p);
           }
         }

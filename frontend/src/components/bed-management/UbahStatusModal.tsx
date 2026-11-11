@@ -167,7 +167,7 @@ export function UbahStatusModal({
               <div>
                 <p className="font-bold text-amber-900">Tempat Tidur Sedang Terisi Pasien Aktif</p>
                 <p className="mt-0.5 text-amber-700 leading-relaxed">
-                  Tempat tidur ini sedang ditempati oleh <strong>{bed.occupant?.nama_pasien || "Pasien Rawat Inap"}</strong> ({bed.occupant?.no_rm || "RM"}). Perubahan status manual dikunci demi integritas data SIMRS. Untuk mengosongkan tempat tidur, selesaikan alokasi di modul Alokasi atau proses kepulangan di Pembayaran & Billing.
+                  Tempat tidur ini sedang ditempati oleh <strong>{bed.occupant?.nama_pasien || "Pasien Rawat Inap"}</strong> ({bed.occupant?.no_rm || "RM"}). Mengubah status ke Pembersihan, Tersedia, atau Pemeliharaan akan otomatis menyelesaikan masa alokasi aktif kamar ini.
                 </p>
               </div>
             </div>

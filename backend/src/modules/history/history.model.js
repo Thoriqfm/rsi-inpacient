@@ -171,6 +171,7 @@ export function searchPatientsForHistory(q) {
             jenis_kelamin: true,
             tanggal_lahir: true,
             tanggal_masuk: true,
+            kondisi_pasien: true,
             status_penanganan: true,
             _count: {
                 select: {
