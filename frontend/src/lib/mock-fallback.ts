@@ -239,7 +239,7 @@ function buildSeedBeds(): BedItem[] {
       updated_relative: "2 jam lalu",
       updated_timestamp: "Hari ini, 12:15 WIB",
       occupant: {
-        id_pasien: 1,
+        id_pasien: 101,
         nama_pasien: "Hendra Wijaya",
         no_rm: "RM-2026-00142",
         dokter_dpjp: "dr. Nanda Putra, Sp.PD",
@@ -406,7 +406,7 @@ function buildSeedQueues(): QueueItem[] {
       id_antrean: 1,
       no_antrean: 1,
       no_antrean_formatted: "#01",
-      id_pasien: 1,
+      id_pasien: 101,
       no_rm: "RM-2026-00142",
       nama_pasien: "Hendra Wijaya",
       jenis_kelamin_usia: "L, 45 thn",
@@ -429,7 +429,7 @@ function buildSeedQueues(): QueueItem[] {
       id_antrean: 2,
       no_antrean: 2,
       no_antrean_formatted: "#02",
-      id_pasien: 2,
+      id_pasien: 102,
       no_rm: "RM-2026-00148",
       nama_pasien: "Siti Aminah",
       jenis_kelamin_usia: "P, 34 thn",
@@ -452,7 +452,7 @@ function buildSeedQueues(): QueueItem[] {
       id_antrean: 3,
       no_antrean: 3,
       no_antrean_formatted: "#03",
-      id_pasien: 3,
+      id_pasien: 103,
       no_rm: "RM-2026-00153",
       nama_pasien: "Ahmad Fauzi",
       jenis_kelamin_usia: "L, 58 thn",
@@ -475,8 +475,8 @@ function buildSeedQueues(): QueueItem[] {
       id_antrean: 4,
       no_antrean: 4,
       no_antrean_formatted: "#04",
-      id_pasien: 8,
-      no_rm: "RM-2026-00194",
+      id_pasien: 108,
+      no_rm: "RM-2026-00124",
       nama_pasien: "Nurul Hidayah",
       jenis_kelamin_usia: "P, 41 thn",
       kondisi_pasien: "Stabil",
@@ -591,8 +591,8 @@ function buildSeedReferrals(): ReferralItem[] {
     {
       id_surat: 1,
       no_rujukan: "RUJ-20261106-001",
-      id_pasien: 5,
-      no_rm: "RM-2026-00175",
+      id_pasien: 105,
+      no_rm: "RM-2026-00110",
       nama_pasien: "Bambang Supriyadi",
       jenis_kelamin_usia: "L, 62 thn",
       kondisi_pasien: "Darurat",
@@ -615,8 +615,8 @@ function buildSeedReferrals(): ReferralItem[] {
     {
       id_surat: 2,
       no_rujukan: "RUJ-20261106-002",
-      id_pasien: 6,
-      no_rm: "RM-2026-00182",
+      id_pasien: 106,
+      no_rm: "RM-2026-00115",
       nama_pasien: "Rina Kartika",
       jenis_kelamin_usia: "P, 29 thn",
       kondisi_pasien: "Darurat",
@@ -996,10 +996,10 @@ export const SEED_TARIFFS: TarifItem[] = [
 ];
 
 export const SEED_RME_RECORDS: RmeRecordItem[] = [
-  // Pasien 1: Hendra Wijaya (DBD Derajat II - Kelas 1)
+  // Pasien 101: Hendra Wijaya (DBD Derajat II - Kelas 1)
   {
     id_riwayat: 101,
-    id_pasien: 1,
+    id_pasien: 101,
     kode_tindakan: "TDK-KMR-01",
     nama_tindakan: "Akomodasi Kamar Rawat Inap Kelas 1 (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1011,7 +1011,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 102,
-    id_pasien: 1,
+    id_pasien: 101,
     kode_tindakan: "TDK-VIS-01",
     nama_tindakan: "Visite & Konsultasi Dokter Spesialis (DPJP)",
     kategori: "Jasa Medis",
@@ -1023,7 +1023,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 103,
-    id_pasien: 1,
+    id_pasien: 101,
     kode_tindakan: "TDK-LAB-01",
     nama_tindakan: "Pemeriksaan Darah Lengkap & Hematologi Serial",
     kategori: "Laboratorium",
@@ -1035,7 +1035,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 104,
-    id_pasien: 1,
+    id_pasien: 101,
     kode_tindakan: "TDK-INF-01",
     nama_tindakan: "Pemasangan & Pemeliharaan Terapi Infus Kristaloid",
     kategori: "Tindakan Keperawatan",
@@ -1047,7 +1047,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 105,
-    id_pasien: 1,
+    id_pasien: 101,
     kode_tindakan: "TDK-FAR-01",
     nama_tindakan: "Paket Injeksi Medikamentosa & Farmasi Harian",
     kategori: "Farmasi & Obat",
@@ -1058,10 +1058,10 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
     harga_estimasi: 285000,
   },
 
-  // Pasien 2: Siti Aminah (Post-Partum & Hipertensi Gestasional - VIP)
+  // Pasien 102: Siti Aminah (Post-Partum & Hipertensi Gestasional - VIP)
   {
     id_riwayat: 201,
-    id_pasien: 2,
+    id_pasien: 102,
     kode_tindakan: "TDK-KMR-VIP",
     nama_tindakan: "Akomodasi Suite Paviliun VIP Utama (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1073,7 +1073,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 202,
-    id_pasien: 2,
+    id_pasien: 102,
     kode_tindakan: "TDK-VIS-01",
     nama_tindakan: "Visite & Konsultasi Dokter Spesialis (DPJP)",
     kategori: "Jasa Medis",
@@ -1085,7 +1085,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 203,
-    id_pasien: 2,
+    id_pasien: 102,
     kode_tindakan: "TDK-USG-01",
     nama_tindakan: "Pemeriksaan USG Obstetri & Evaluasi Klinis",
     kategori: "Penunjang Diagnostik",
@@ -1097,7 +1097,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 204,
-    id_pasien: 2,
+    id_pasien: 102,
     kode_tindakan: "TDK-FAR-01",
     nama_tindakan: "Paket Injeksi Medikamentosa & Farmasi Harian",
     kategori: "Farmasi & Obat",
@@ -1108,10 +1108,10 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
     harga_estimasi: 285000,
   },
 
-  // Pasien 3: Ahmad Fauzi (CHF NYHA II - Kelas 2)
+  // Pasien 103: Ahmad Fauzi (CHF NYHA II - Kelas 2)
   {
     id_riwayat: 301,
-    id_pasien: 3,
+    id_pasien: 103,
     kode_tindakan: "TDK-KMR-02",
     nama_tindakan: "Akomodasi Kamar Rawat Inap Kelas 2 (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1123,7 +1123,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 302,
-    id_pasien: 3,
+    id_pasien: 103,
     kode_tindakan: "TDK-VIS-01",
     nama_tindakan: "Visite & Konsultasi Dokter Spesialis (DPJP)",
     kategori: "Jasa Medis",
@@ -1135,7 +1135,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 303,
-    id_pasien: 3,
+    id_pasien: 103,
     kode_tindakan: "TDK-EKG-01",
     nama_tindakan: "Pemeriksaan Elektrokardiografi (EKG) 12 Lead",
     kategori: "Penunjang Diagnostik",
@@ -1147,7 +1147,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 304,
-    id_pasien: 3,
+    id_pasien: 103,
     kode_tindakan: "TDK-OKS-01",
     nama_tindakan: "Terapi Oksigenasi Sentral & Monitoring SpO2",
     kategori: "Tindakan Keperawatan",
@@ -1158,10 +1158,10 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
     harga_estimasi: 150000,
   },
 
-  // Pasien 4: Dewi Lestari (Demam Tifoid Akut - Kelas 3)
+  // Pasien 104: Dewi Lestari (Demam Tifoid Akut - Kelas 3)
   {
     id_riwayat: 401,
-    id_pasien: 4,
+    id_pasien: 104,
     kode_tindakan: "TDK-KMR-03",
     nama_tindakan: "Akomodasi Kamar Rawat Inap Kelas 3 (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1173,7 +1173,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 402,
-    id_pasien: 4,
+    id_pasien: 104,
     kode_tindakan: "TDK-VIS-01",
     nama_tindakan: "Visite & Konsultasi Dokter Spesialis (DPJP)",
     kategori: "Jasa Medis",
@@ -1185,7 +1185,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 403,
-    id_pasien: 4,
+    id_pasien: 104,
     kode_tindakan: "TDK-INF-01",
     nama_tindakan: "Pemasangan & Pemeliharaan Terapi Infus Kristaloid",
     kategori: "Tindakan Keperawatan",
@@ -1196,10 +1196,10 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
     harga_estimasi: 120000,
   },
 
-  // Pasien 8: Nurul Hidayah (Gastritis Erosif + Anemia - Kelas 2)
+  // Pasien 108: Nurul Hidayah (Gastritis Erosif + Anemia - Kelas 2)
   {
     id_riwayat: 801,
-    id_pasien: 8,
+    id_pasien: 108,
     kode_tindakan: "TDK-KMR-02",
     nama_tindakan: "Akomodasi Kamar Rawat Inap Kelas 2 (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1211,7 +1211,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 802,
-    id_pasien: 8,
+    id_pasien: 108,
     kode_tindakan: "TDK-LAB-01",
     nama_tindakan: "Pemeriksaan Darah Lengkap & Hematologi Serial",
     kategori: "Laboratorium",
@@ -1223,7 +1223,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 803,
-    id_pasien: 8,
+    id_pasien: 108,
     kode_tindakan: "TDK-FAR-01",
     nama_tindakan: "Paket Injeksi Medikamentosa & Farmasi Harian",
     kategori: "Farmasi & Obat",
@@ -1234,10 +1234,10 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
     harga_estimasi: 285000,
   },
 
-  // Pasien 9: Doni Pratama (Fraktur Klavikula - VIP)
+  // Pasien 109: Doni Pratama (Fraktur Klavikula - VIP)
   {
     id_riwayat: 901,
-    id_pasien: 9,
+    id_pasien: 109,
     kode_tindakan: "TDK-KMR-VIP",
     nama_tindakan: "Akomodasi Suite Paviliun VIP Utama (Per Hari)",
     kategori: "Akomodasi Kamar",
@@ -1249,7 +1249,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 902,
-    id_pasien: 9,
+    id_pasien: 109,
     kode_tindakan: "TDK-ORT-01",
     nama_tindakan: "Tindakan Imobilisasi & Perawatan Luka Ortopedi",
     kategori: "Tindakan Medis",
@@ -1261,7 +1261,7 @@ export const SEED_RME_RECORDS: RmeRecordItem[] = [
   },
   {
     id_riwayat: 903,
-    id_pasien: 9,
+    id_pasien: 109,
     kode_tindakan: "TDK-VIS-01",
     nama_tindakan: "Visite & Konsultasi Dokter Spesialis (DPJP)",
     kategori: "Jasa Medis",
@@ -1307,18 +1307,18 @@ export function getMockRmeByPatient(id_pasien: number): RmeRecordItem[] {
 }
 
 function buildSeedHistories(): HistoryRecapItem[] {
-  const p1Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 1);
-  const p2Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 2);
-  const p3Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 3);
-  const p8Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 8);
-  const p9Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 9);
-  const p4Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 4);
+  const p1Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 101);
+  const p2Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 102);
+  const p3Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 103);
+  const p8Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 108);
+  const p9Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 109);
+  const p4Rme = SEED_RME_RECORDS.filter((r) => r.id_pasien === 104);
 
   return [
     {
       id_rekap: 1,
       kode_rekap: "RKP-20261106-001",
-      id_pasien: 1,
+      id_pasien: 101,
       no_rm: "RM-2026-00142",
       nama_pasien: "Hendra Wijaya",
       jenis_kelamin_usia: "L, 45 thn",
@@ -1358,7 +1358,7 @@ function buildSeedHistories(): HistoryRecapItem[] {
     {
       id_rekap: 2,
       kode_rekap: "RKP-20261106-002",
-      id_pasien: 2,
+      id_pasien: 102,
       no_rm: "RM-2026-00148",
       nama_pasien: "Siti Aminah",
       jenis_kelamin_usia: "P, 34 thn",
@@ -1392,7 +1392,7 @@ function buildSeedHistories(): HistoryRecapItem[] {
     {
       id_rekap: 3,
       kode_rekap: "RKP-20261106-003",
-      id_pasien: 3,
+      id_pasien: 103,
       no_rm: "RM-2026-00153",
       nama_pasien: "Ahmad Fauzi",
       jenis_kelamin_usia: "L, 58 thn",
@@ -1426,8 +1426,8 @@ function buildSeedHistories(): HistoryRecapItem[] {
     {
       id_rekap: 4,
       kode_rekap: "RKP-20261106-004",
-      id_pasien: 8,
-      no_rm: "RM-2026-00194",
+      id_pasien: 108,
+      no_rm: "RM-2026-00124",
       nama_pasien: "Nurul Hidayah",
       jenis_kelamin_usia: "P, 41 thn",
       kelas_perawatan: "Kelas 2",
@@ -1460,8 +1460,8 @@ function buildSeedHistories(): HistoryRecapItem[] {
     {
       id_rekap: 5,
       kode_rekap: "RKP-20261106-005",
-      id_pasien: 9,
-      no_rm: "RM-2026-00201",
+      id_pasien: 109,
+      no_rm: "RM-2026-00131",
       nama_pasien: "Doni Pratama",
       jenis_kelamin_usia: "L, 33 thn",
       kelas_perawatan: "VIP",
@@ -1500,7 +1500,7 @@ function buildSeedHistories(): HistoryRecapItem[] {
     {
       id_rekap: 6,
       kode_rekap: "RKP-20261105-001",
-      id_pasien: 4,
+      id_pasien: 104,
       no_rm: "RM-2026-00161",
       nama_pasien: "Dewi Lestari",
       jenis_kelamin_usia: "P, 27 thn",
@@ -1543,7 +1543,7 @@ function buildSeedBillings(): BillingItem[] {
   return [
     {
       id_tagihan: 1,
-      id_pasien: 1,
+      id_pasien: 101,
       id_rekap: 1,
       kode_rekap: "RKP-20261106-001",
       no_tagihan: "TGH-20261106-001",
@@ -1643,11 +1643,11 @@ function buildSeedBillings(): BillingItem[] {
     },
     {
       id_tagihan: 2,
-      id_pasien: 9,
+      id_pasien: 109,
       id_rekap: 5,
       kode_rekap: "RKP-20261106-005",
       no_tagihan: "TGH-20261106-002",
-      no_rm: "RM-2026-00201",
+      no_rm: "RM-2026-00131",
       nama_pasien: "Doni Pratama",
       jenis_kelamin_usia: "L, 33 thn",
       kelas_perawatan: "VIP",
@@ -1715,7 +1715,7 @@ function buildSeedBillings(): BillingItem[] {
     },
     {
       id_tagihan: 3,
-      id_pasien: 4,
+      id_pasien: 104,
       id_rekap: 6,
       kode_rekap: "RKP-20261105-001",
       no_tagihan: "TGH-20261105-001",

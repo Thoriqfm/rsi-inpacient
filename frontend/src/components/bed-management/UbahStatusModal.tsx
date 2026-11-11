@@ -30,15 +30,17 @@ export function UbahStatusModal({
 }: UbahStatusModalProps) {
   const { user } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<BedStatus>(
-    bed?.status || "Tersedia"
+    bed?.status === "Terisi" ? "Pembersihan" : bed?.status || "Tersedia"
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const isOccupied = bed?.status === "Terisi";
+
   // Sync state whenever bed changes
   React.useEffect(() => {
     if (bed) {
-      setSelectedStatus(bed.status);
+      setSelectedStatus(bed.status === "Terisi" ? "Pembersihan" : bed.status);
       setErrorMsg(null);
     }
   }, [bed]);
@@ -85,14 +87,6 @@ export function UbahStatusModal({
       badgeBg: "bg-emerald-50 border-emerald-200",
       badgeText: "text-emerald-800",
       dotColor: "bg-emerald-500",
-    },
-    {
-      status: "Terisi",
-      title: "Terisi (Occupied)",
-      desc: "Sedang ditempati pasien rawat inap aktif.",
-      badgeBg: "bg-blue-50 border-blue-200",
-      badgeText: "text-blue-800",
-      dotColor: "bg-blue-500",
     },
     {
       status: "Pembersihan",
@@ -167,6 +161,18 @@ export function UbahStatusModal({
             </div>
           </div>
 
+          {isOccupied && (
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <p className="font-bold text-amber-900">Tempat Tidur Sedang Terisi Pasien Aktif</p>
+                <p className="mt-0.5 text-amber-700 leading-relaxed">
+                  Tempat tidur ini sedang ditempati oleh <strong>{bed.occupant?.nama_pasien || "Pasien Rawat Inap"}</strong> ({bed.occupant?.no_rm || "RM"}). Perubahan status manual dikunci demi integritas data SIMRS. Untuk mengosongkan tempat tidur, selesaikan alokasi di modul Alokasi atau proses kepulangan di Pembayaran & Billing.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 4 Status Option Radio Cards */}
           <div className="space-y-2.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
@@ -236,7 +242,7 @@ export function UbahStatusModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isOccupied}
               className="px-6 py-2.5 rounded-xl bg-[#13c9b3] hover:bg-[#0fb39f] active:bg-[#0c9d8c] text-[#0d332f] text-sm font-bold shadow-md shadow-teal-500/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
@@ -244,6 +250,8 @@ export function UbahStatusModal({
                   <div className="w-4 h-4 border-2 border-[#0d332f]/30 border-t-[#0d332f] rounded-full animate-spin" />
                   <span>Memperbarui...</span>
                 </>
+              ) : isOccupied ? (
+                <span>Terkunci (Pasien Aktif)</span>
               ) : (
                 <span>Simpan Pembaruan</span>
               )}
