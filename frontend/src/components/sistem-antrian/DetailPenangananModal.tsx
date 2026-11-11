@@ -47,11 +47,21 @@ export function DetailPenangananModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (item?.rujukan?.id_surat) {
-      fetchReferralHistoryApi(item.rujukan.id_surat).then(setHistoryLogs);
-    } else {
+    if (!item?.rujukan?.id_surat) {
       setHistoryLogs([]);
+      return;
     }
+    let cancelled = false;
+    fetchReferralHistoryApi(item.rujukan.id_surat)
+      .then((logs) => {
+        if (!cancelled) setHistoryLogs(logs);
+      })
+      .catch(() => {
+        if (!cancelled) setHistoryLogs([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [item]);
 
   if (!item) return null;
