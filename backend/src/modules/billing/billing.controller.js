@@ -6,6 +6,7 @@ import {
     createInvoice,
     getBilling,
     listBillings,
+    listTariffs,
     previewBillingCost,
     recalculateBilling,
 } from "./billing.service.js";
@@ -14,6 +15,12 @@ export async function index(req, res) {
     const result = await listBillings(req.validatedQuery);
 
     res.status(200).json({ data: { items: result.items }, meta: result.meta });
+}
+
+export async function indexTariffs(req, res) {
+    const items = await listTariffs();
+
+    res.status(200).json({ data: { items }, meta: null });
 }
 
 export async function preview(req, res) {
@@ -51,7 +58,11 @@ export async function updateStatus(req, res) {
 }
 
 export async function recalculate(req, res) {
-    const billing = await recalculateBilling(parseId(req.params.id), req.user.id_akun);
+    const billing = await recalculateBilling(
+        parseId(req.params.id),
+        req.validated ?? {},
+        req.user.id_akun,
+    );
 
     res.status(200).json({ data: billing, meta: null });
 }

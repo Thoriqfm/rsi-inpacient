@@ -82,7 +82,7 @@ async function createTarif({ kode, harga, mulai, berakhir = null, status = "Akti
 async function createRecap({ status = "Siap Billing", details = [] } = {}) {
     const pasien = await prisma.pasien.create({
         data: {
-            no_rm: `RM${suffix.slice(-8)}${Math.floor(Math.random() * 10000)}`.slice(0, 20),
+            no_rm: `RMB${suffix.slice(-8)}${String(pasienIds.length + 1).padStart(4, "0")}`.slice(0, 20),
             nama_pasien: `Pasien Billing ${suffix}`,
             kondisi_pasien: "Stabil",
         },
@@ -185,8 +185,9 @@ describe("Billing (UC-08/UC-09)", { skip: !RUN }, () => {
         await createTarif({ kode: kodeA, harga: "999.99", mulai: "2025-01-01", berakhir: "2025-12-31" });
         await createTarif({ kode: kodeA, harga: "1234.56", mulai: "2026-01-01" });
         await createTarif({ kode: kodeA, harga: "5000.00", mulai: "2026-03-01" });
-        // Tarif nonaktif tetap dipakai bila periodenya berlaku (BILL-D06).
-        await createTarif({ kode: kodeB, harga: "2000.00", mulai: "2026-01-01", status: "Nonaktif" });
+        // PC-17: Tarif Nonaktif diabaikan; hanya tarif berstatus Aktif yang dipakai.
+        await createTarif({ kode: kodeB, harga: "9999.00", mulai: "2026-02-01", status: "Nonaktif" });
+        await createTarif({ kode: kodeB, harga: "2000.00", mulai: "2026-01-01", status: "Aktif" });
 
         const res = await api("POST", "/billing/preview", {
             token: adminToken,
@@ -336,9 +337,13 @@ describe("Billing (UC-08/UC-09)", { skip: !RUN }, () => {
             data: { jumlah: 4 },
         });
 
-        const recalculated = await api("POST", `/billing/${id}/recalculate`, { token: adminToken });
+        const recalculated = await api("POST", `/billing/${id}/recalculate`, {
+            token: adminToken,
+            body: { catatan_penyesuaian: "Koreksi jumlah tindakan" },
+        });
         assert.equal(recalculated.status, 200);
         assert.equal(recalculated.body.data.total_biaya, "1000.00");
+        assert.equal(recalculated.body.data.catatan_penyesuaian, "Koreksi jumlah tindakan");
         assert.equal(recalculated.body.data.detail_tagihan_list[0].jumlah, 4);
 
         const audit = await prisma.logAudit.findFirst({

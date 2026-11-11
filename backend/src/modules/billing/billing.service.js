@@ -8,13 +8,15 @@ import {
     TAGIHAN_TRANSITIONS,
 } from "../../shared/constants/billing.js";
 import { HISTORY_STATUS } from "../../shared/constants/history.js";
-import { createAuditLog } from "../../shared/utils/audit.js";
+import { createAuditLog, parseAuditData } from "../../shared/utils/audit.js";
 import {
     buildBillingWhere,
     countBillings,
     createBilling,
     createTarif,
     findActiveBillingByRekap,
+    findAllTariffs,
+    findBillingAuditTrail,
     findBillingById,
     findBillings,
     findNextTagihanNumber,
@@ -43,7 +45,7 @@ function toBillingItem(row) {
     return baseFields(row);
 }
 
-function toBillingDetail(row) {
+function toBillingDetail(row, auditTrail = null) {
     return {
         ...baseFields(row),
         detail_tagihan_list: row.detail_tagihan_list.map((detail) => ({
@@ -51,6 +53,7 @@ function toBillingDetail(row) {
             harga_satuan: detail.harga_satuan.toFixed(2),
             subtotal: detail.subtotal.toFixed(2),
         })),
+        ...(auditTrail ? { audit_trail: auditTrail } : {}),
     };
 }
 
@@ -59,11 +62,13 @@ function dateOnly(value) {
     return Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
 }
 
-// DECISION REQUIRED (BILL-D05/D06/D17): tarif dipilih dari tanggal tindakan,
-// periode terbaru yang berlaku menang, dan status master tidak menyaring tarif historis.
+// PC-17: tarif dipilih dari tanggal tindakan, status = "Aktif", dan periode terbaru yang berlaku menang.
 function resolveTariff(tariffsByCode, detail) {
     const reference = dateOnly(detail.tanggal_tindakan);
     const candidates = (tariffsByCode.get(detail.kode_tindakan) ?? []).filter((tarif) => {
+        if (tarif.status !== "Aktif") {
+            return false;
+        }
         const mulai = dateOnly(tarif.tanggal_berlaku);
         const selesai = tarif.tanggal_berakhir ? dateOnly(tarif.tanggal_berakhir) : null;
 
@@ -74,14 +79,15 @@ function resolveTariff(tariffsByCode, detail) {
     return candidates[0] ?? null;
 }
 
-async function calculateRekap(rekap) {
+async function calculateRekap(rekap, client = prisma) {
     if (rekap.detail_rekap_tindakan_list.length === 0) {
         throw new HttpError(422, "BILLING_NO_DETAILS", "Rekap belum memiliki tindakan.");
     }
 
-    const tariffs = await findTariffsForCodes([
-        ...new Set(rekap.detail_rekap_tindakan_list.map((detail) => detail.kode_tindakan)),
-    ]);
+    const tariffs = await findTariffsForCodes(
+        [...new Set(rekap.detail_rekap_tindakan_list.map((detail) => detail.kode_tindakan))],
+        client,
+    );
 
     const tariffsByCode = new Map();
     for (const tarif of tariffs) {
@@ -156,6 +162,14 @@ export async function listBillings(query) {
     };
 }
 
+export async function listTariffs() {
+    const rows = await findAllTariffs();
+    return rows.map((row) => ({
+        ...row,
+        harga: row.harga.toFixed(2),
+    }));
+}
+
 export async function addTariff(data) {
     try {
         const tarif = await createTarif(data);
@@ -181,7 +195,17 @@ export async function getBilling(id_tagihan) {
         throw new HttpError(404, "BILLING_NOT_FOUND", "Tagihan tidak ditemukan.");
     }
 
-    return toBillingDetail(row);
+    const logs = await findBillingAuditTrail(id_tagihan);
+    const auditTrail = logs.map((log) => ({
+        id_log: log.id_log,
+        aksi: log.aksi,
+        data_sebelum: parseAuditData(log.data_sebelum),
+        data_sesudah: parseAuditData(log.data_sesudah),
+        waktu_aksi: log.waktu_aksi,
+        nama_petugas: log.akun?.nama_petugas ?? null,
+    }));
+
+    return toBillingDetail(row, auditTrail);
 }
 
 export async function previewBillingCost(id_rekap) {
@@ -222,7 +246,7 @@ export async function createInvoice({ id_rekap, catatan }, id_akun) {
                     );
                 }
 
-                const calculation = await calculateRekap(rekap);
+                const calculation = await calculateRekap(rekap, tx);
 
                 const created = await createBilling(
                     tx,
@@ -314,7 +338,13 @@ export async function changeBillingStatus(id_tagihan, status_baru, id_akun) {
     });
 }
 
-export async function recalculateBilling(id_tagihan, id_akun) {
+export async function recalculateBilling(id_tagihan, payload = {}, id_akun) {
+    // Kompatibilitas pemanggilan lama recalculateBilling(id_tagihan, id_akun)
+    if (typeof payload === "number") {
+        id_akun = payload;
+        payload = {};
+    }
+
     return prisma.$transaction(async (tx) => {
         const current = await findBillingById(id_tagihan, tx);
 
@@ -335,10 +365,15 @@ export async function recalculateBilling(id_tagihan, id_akun) {
         const rekap = await findRekapForBilling(current.id_rekap, tx);
         ensureRekapReady(rekap);
 
-        const calculation = await calculateRekap(rekap);
+        const calculation = await calculateRekap(rekap, tx);
+        const hasCatatanUpdate = payload && payload.catatan_penyesuaian !== undefined;
+        const nextCatatan = hasCatatanUpdate
+            ? payload.catatan_penyesuaian
+            : current.catatan_penyesuaian;
 
         const updated = await updateBillingStatus(tx, id_tagihan, TAGIHAN_STATUS.DRAFT, {
             total_biaya: calculation.total,
+            ...(hasCatatanUpdate ? { catatan_penyesuaian: payload.catatan_penyesuaian } : {}),
             tanggal_diperbarui: new Date(),
         });
 
@@ -364,8 +399,14 @@ export async function recalculateBilling(id_tagihan, id_akun) {
             nama_tabel: BILLING_AUDIT_TABLE,
             id_referensi: id_tagihan,
             aksi: "UPDATE",
-            data_sebelum: { total_biaya: current.total_biaya.toFixed(2) },
-            data_sesudah: { total_biaya: calculation.total_biaya },
+            data_sebelum: {
+                total_biaya: current.total_biaya.toFixed(2),
+                catatan_penyesuaian: current.catatan_penyesuaian,
+            },
+            data_sesudah: {
+                total_biaya: calculation.total_biaya,
+                catatan_penyesuaian: nextCatatan,
+            },
         });
 
         return toBillingDetail(await findBillingById(id_tagihan, tx));

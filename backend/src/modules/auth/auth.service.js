@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { HttpError } from "../../shared/errors/http-error.js";
@@ -7,6 +8,9 @@ import { findAkunById, findAkunByUsername, createAkun as insertAkun } from "./au
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
 const BCRYPT_ROUNDS = 10;
+
+// Penyimpanan token/sesi yang telah di-logout untuk mencegah pemakaian ulang sesi lama (PC-03).
+const revokedTokens = new Set();
 
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
     throw new Error("JWT_SECRET wajib diisi minimal 32 karakter pada environment.");
@@ -24,16 +28,31 @@ export function toPublicAkun(akun) {
     };
 }
 
+export function revokeAccessToken(token) {
+    if (!token) return;
+    revokedTokens.add(token);
+    const decoded = jwt.decode(token);
+    if (decoded && typeof decoded === "object" && decoded.jti) {
+        revokedTokens.add(decoded.jti);
+    }
+}
+
 export function verifyAccessToken(token) {
     try {
+        if (revokedTokens.has(token)) {
+            throw new Error("Token sudah dicabut (logged out).");
+        }
         const payload = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
+        if (payload.jti && revokedTokens.has(payload.jti)) {
+            throw new Error("Sesi sudah diakhiri.");
+        }
         const id_akun = Number(payload.sub);
 
         if (!Number.isInteger(id_akun) || !payload.username || !ROLE_LIST.includes(payload.role)) {
             throw new Error("Claim wajib tidak lengkap atau role tidak dikenali.");
         }
 
-        return { id_akun, username: payload.username, role: payload.role };
+        return { id_akun, username: payload.username, role: payload.role, jti: payload.jti ?? null };
     } catch {
         throw new HttpError(401, "UNAUTHENTICATED", "Token tidak valid atau sudah kedaluwarsa.");
     }
@@ -52,15 +71,23 @@ export async function authenticate(username, password) {
         throw new HttpError(403, "FORBIDDEN", "Role akun tidak dikenali. Hubungi Backend Lead.");
     }
 
+    // Regenerasi ID sesi unik (jti) pada setiap login untuk mencegah session fixation (PC-03).
+    const sessionId = crypto.randomUUID();
     const token = jwt.sign(
         { username: akun.username, role: akun.role },
         JWT_SECRET,
-        { subject: String(akun.id_akun), algorithm: "HS256", expiresIn: JWT_EXPIRES_IN },
+        {
+            subject: String(akun.id_akun),
+            jwtid: sessionId,
+            algorithm: "HS256",
+            expiresIn: JWT_EXPIRES_IN,
+        },
     );
     const { iat, exp } = jwt.decode(token);
 
     return {
         token,
+        session_id: sessionId,
         token_type: "Bearer",
         expires_in: exp - iat,
         user: toPublicAkun(akun),

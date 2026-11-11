@@ -379,7 +379,9 @@ function DetailTagihanContent() {
                     <span className="font-semibold text-slate-900">
                       Lunas
                     </span>
-                    <span className="text-[10px] text-slate-400">19 Feb 2026</span>
+                    <span className="text-[10px] text-slate-400">
+                      {billing.tanggal_diperbarui_formatted || billing.tanggal_dibuat_formatted}
+                    </span>
                   </div>
                   <div className="text-[11px] text-emerald-700 mt-0.5 font-medium">
                     Pembayaran diterima oleh kasir
@@ -398,7 +400,11 @@ function DetailTagihanContent() {
                     <span className="font-semibold text-rose-700">
                       Tagihan Dibatalkan
                     </span>
-                    <span className="text-[10px] text-slate-400">13 Feb 2026</span>
+                    <span className="text-[10px] text-slate-400">
+                      {billing.tanggal_dibatalkan_formatted ||
+                        billing.tanggal_diperbarui_formatted ||
+                        billing.tanggal_dibuat_formatted}
+                    </span>
                   </div>
                   <div className="text-[11px] text-slate-600 mt-0.5">
                     Alasan: {billing.alasan_pembatalan || "Pembatalan tagihan"}

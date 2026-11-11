@@ -101,7 +101,7 @@ export function Topbar({ onToggleMenu }: TopbarProps) {
   const handleResetData = () => {
     if (isStrictBackend) {
       alert(
-        "Mode Strict Backend aktif: data disimpan langsung di basis data MySQL backend.\n\nUntuk mereset data ke kondisi awal, silakan jalankan script seeder/migrasi pada server backend."
+        "Mode Strict Backend aktif: data disimpan langsung di basis data PostgreSQL backend.\n\nUntuk mereset data ke kondisi awal, silakan jalankan script seeder/migrasi pada server backend."
       );
       return;
     }

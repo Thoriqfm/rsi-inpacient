@@ -295,6 +295,7 @@ export interface HistoryRecapItem {
   tanggal_diperbarui: string | null;
   tanggal_diperbarui_formatted: string;
   dibuat_oleh: string;
+  diperbarui_oleh?: string;
   jumlah_tindakan: number;
   detail_tindakan: DetailRekapItem[];
   tagihan: HistoryTagihanRef[];

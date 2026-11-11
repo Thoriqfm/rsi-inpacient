@@ -8,8 +8,8 @@ import { ROLES } from "../shared/constants/roles.js";
 
 const router = Router();
 
-// DECISION REQUIRED: matriks role UC-05 belum ditetapkan; sementara samakan dengan Allocation.
-const referralRole = requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT);
+// Pengelolaan ketersediaan & rujukan RS rujukan adalah wewenang Petugas Administrasi (UC-05).
+const referralRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
 

@@ -12,7 +12,7 @@ import { ROLES } from "../shared/constants/roles.js";
 
 const router = Router();
 
-const referralRole = requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT);
+const referralRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
 

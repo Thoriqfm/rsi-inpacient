@@ -73,7 +73,7 @@ async function createBed(status = "Tersedia") {
 async function createPasien() {
     const pasien = await prisma.pasien.create({
         data: {
-            no_rm: `RM${suffix.slice(-8)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+            no_rm: `RMA${suffix.slice(-8)}${String(pasienIds.length + 1).padStart(4, "0")}`.slice(0, 20),
             nama_pasien: "Pasien Uji",
         },
     });
@@ -92,6 +92,8 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
     });
 
     after(async () => {
+        await prisma.logAudit.deleteMany({ where: { id_akun: { in: akunIds } } });
+        await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });
         await prisma.rekamAlokasi.deleteMany({ where: { id_akun: { in: akunIds } } });
         await prisma.daftarTunggu.deleteMany({ where: { id_antrean: { in: antreanIds } } });
         await prisma.bed.deleteMany({ where: { id_bed: { in: bedIds } } });
@@ -145,6 +147,9 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
 
         const bedAfter = await prisma.bed.findUnique({ where: { id_bed: bed.id_bed } });
         assert.equal(bedAfter.status, "Terisi");
+
+        const pasienAfter = await prisma.pasien.findUnique({ where: { id_pasien: pasien.id_pasien } });
+        assert.equal(pasienAfter.status_penanganan, "Rawat Inap");
 
         const second = await api("POST", "/allocations", {
             token: adminToken,

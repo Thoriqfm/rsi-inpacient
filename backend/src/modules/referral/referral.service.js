@@ -12,11 +12,13 @@ import {
     buildReferralWhere,
     countReferrals,
     createReferral,
+    createRiwayatStatusForReferral,
     findNextReferralNumber,
     findPasienForReferral,
     findReferralById,
     findReferralHistory,
     findReferrals,
+    updatePasienStatusForReferral,
     updateReferralStatus,
 } from "./referral.model.js";
 
@@ -67,9 +69,27 @@ export async function registerReferral({ id_pasien, id_rs, alasan_rujukan }, id_
         throw new HttpError(404, "PASIEN_NOT_FOUND", "Pasien tidak ditemukan.");
     }
 
+    // PC-21: Rujukan ke RS rujukan diperuntukkan bagi pasien kondisi Darurat.
+    if (pasien.kondisi_pasien && pasien.kondisi_pasien !== "Darurat") {
+        throw new HttpError(
+            422,
+            "REFERRAL_PATIENT_NOT_EMERGENCY",
+            "Surat rujukan darurat hanya dapat diterbitkan untuk pasien dengan kondisi Darurat.",
+        );
+    }
+
     const hospital = await findHospitalById(id_rs);
     if (!hospital) {
         throw new HttpError(404, "REFERRAL_HOSPITAL_NOT_FOUND", "Rumah sakit rujukan tidak ditemukan.");
+    }
+
+    // PC-27 & UC-05 Alt Flow 1: Tolak bila RS rujukan sedang tidak tersedia.
+    if (hospital.status_ketersediaan !== "Tersedia") {
+        throw new HttpError(
+            409,
+            "REFERRAL_HOSPITAL_UNAVAILABLE",
+            `Rumah sakit rujukan sedang tidak tersedia (status: ${hospital.status_ketersediaan}).`,
+        );
     }
 
     // No_rujukan unik; request bersamaan bisa memperoleh nomor yang sama.
@@ -77,6 +97,16 @@ export async function registerReferral({ id_pasien, id_rs, alasan_rujukan }, id_
     for (let attempt = 1; attempt <= MAX_REFERRAL_NUMBER_ATTEMPTS; attempt += 1) {
         try {
             return await prisma.$transaction(async (tx) => {
+                // UC-05 Alt Flow 2: Pastikan ketersediaan RS masih Tersedia saat transaksi dieksekusi.
+                const freshHospital = await findHospitalById(id_rs, tx);
+                if (!freshHospital || freshHospital.status_ketersediaan !== "Tersedia") {
+                    throw new HttpError(
+                        409,
+                        "REFERRAL_HOSPITAL_UNAVAILABLE",
+                        "Status rumah sakit rujukan berubah menjadi tidak tersedia sebelum konfirmasi.",
+                    );
+                }
+
                 const created = await createReferral(tx, {
                     no_rujukan: await findNextReferralNumber(tx),
                     id_pasien,
@@ -87,6 +117,15 @@ export async function registerReferral({ id_pasien, id_rs, alasan_rujukan }, id_
                     status: REFERRAL_STATUS.DIBUAT,
                 });
 
+                // PC-28: Simpan status penanganan & riwayat_status_pasien serta log_audit.
+                await updatePasienStatusForReferral(tx, id_pasien, "Dirujuk");
+                await createRiwayatStatusForReferral(tx, {
+                    id_pasien,
+                    id_akun,
+                    status_sebelumnya: pasien.status_penanganan,
+                    status_baru: REFERRAL_STATUS.DIBUAT,
+                    keterangan: `Surat rujukan ${created.no_rujukan} diterbitkan ke ${freshHospital.nama_rs}`,
+                });
                 await createAuditLog(tx, {
                     id_akun,
                     nama_tabel: AUDIT_TABLE.REFERRAL,
@@ -95,7 +134,7 @@ export async function registerReferral({ id_pasien, id_rs, alasan_rujukan }, id_
                     data_sesudah: { status: created.status, no_rujukan: created.no_rujukan },
                 });
 
-                return created;
+                return findReferralById(created.id_surat, tx);
             });
         } catch (err) {
             if (err.code !== "P2002") {
@@ -126,6 +165,13 @@ export async function changeReferralStatus(id_surat, status_baru, id_akun) {
             throw new HttpError(409, "REFERRAL_STATUS_INVALID", "Status rujukan sudah diubah petugas lain.");
         }
 
+        await createRiwayatStatusForReferral(tx, {
+            id_pasien: referral.id_pasien,
+            id_akun,
+            status_sebelumnya: referral.status,
+            status_baru,
+            keterangan: `Status rujukan ${referral.no_rujukan} diubah menjadi ${status_baru}`,
+        });
         await createAuditLog(tx, {
             id_akun,
             nama_tabel: AUDIT_TABLE.REFERRAL,

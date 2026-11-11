@@ -13,16 +13,16 @@ export const createHistorySchema = z
             .min(1)
             .max(500)
             .optional(),
-        catatan: z.string().trim().max(5000).optional(),
-        keterangan: z.string().trim().max(5000).optional(),
+        catatan: z.string().trim().max(1000, "Catatan maksimal 1000 karakter.").optional(),
+        keterangan: z.string().trim().max(1000, "Keterangan maksimal 1000 karakter.").optional(),
     })
     .strict();
 
 export const updateHistorySchema = z
     .object({
         status: z.enum(HISTORY_STATUS_LIST).optional(),
-        catatan: z.string().trim().max(5000).nullable().optional(),
-        keterangan: z.string().trim().max(5000).nullable().optional(),
+        catatan: z.string().trim().max(1000, "Catatan maksimal 1000 karakter.").nullable().optional(),
+        keterangan: z.string().trim().max(1000, "Keterangan maksimal 1000 karakter.").nullable().optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {

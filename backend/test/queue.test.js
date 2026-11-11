@@ -57,7 +57,7 @@ async function createAkun(role, tag) {
 async function createPasien(nama = "Pasien Antrean") {
     const pasien = await prisma.pasien.create({
         data: {
-            no_rm: `RM${suffix.slice(-8)}${Math.floor(Math.random() * 10000)}`.slice(0, 20),
+            no_rm: `RMQ${suffix.slice(-8)}${String(pasienIds.length + 1).padStart(4, "0")}`.slice(0, 20),
             nama_pasien: nama,
         },
     });
@@ -82,6 +82,8 @@ describe("Queue management (UC-04)", { skip: !RUN }, () => {
     });
 
     after(async () => {
+        await prisma.logAudit.deleteMany({ where: { id_akun: { in: akunIds } } });
+        await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });
         await prisma.rekamAlokasi.deleteMany({ where: { id_akun: { in: akunIds } } });
         await prisma.daftarTunggu.deleteMany({ where: { id_akun: { in: akunIds } } });
         await prisma.bed.deleteMany({ where: { id_bed: { in: bedIds } } });
@@ -255,5 +257,18 @@ describe("Queue management (UC-04)", { skip: !RUN }, () => {
         const missingDetail = await api("GET", "/queues/99999999", { token: adminToken });
         assert.equal(missingDetail.status, 404);
         assert.equal(missingDetail.body.error.code, "QUEUE_NOT_FOUND");
+
+        const daruratPasien = await prisma.pasien.create({
+            data: {
+                no_rm: `RMD${suffix.slice(-7)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+                nama_pasien: "Pasien Darurat",
+                kondisi_pasien: "Darurat",
+            },
+        });
+        pasienIds.push(daruratPasien.id_pasien);
+
+        const emergencyQueue = await enqueue(adminToken, daruratPasien);
+        assert.equal(emergencyQueue.status, 422);
+        assert.equal(emergencyQueue.body.error.code, "QUEUE_PATIENT_EMERGENCY");
     });
 });

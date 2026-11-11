@@ -96,8 +96,35 @@ export async function findNextQueueNumber(client = prisma) {
     return (result._max.no_antrean ?? 0) + 1;
 }
 
-export function createQueue(data) {
-    return prisma.daftarTunggu.create({ data, select: queueSelect });
+export function createQueue(data, client = prisma) {
+    return client.daftarTunggu.create({ data, select: queueSelect });
+}
+
+export function lockPasienForQueue(client, id_pasien) {
+    return client.$queryRaw`SELECT id_pasien FROM pasien WHERE id_pasien = ${id_pasien} FOR UPDATE`;
+}
+
+export function updatePasienStatusForQueue(client, id_pasien, status_penanganan) {
+    return client.pasien.update({
+        where: { id_pasien },
+        data: { status_penanganan, updated_at: new Date() },
+    });
+}
+
+export function createRiwayatStatusForQueue(
+    client,
+    { id_pasien, id_akun, status_sebelumnya, status_baru, keterangan },
+) {
+    return client.riwayatStatusPasien.create({
+        data: {
+            id_pasien,
+            id_akun,
+            status_sebelumnya: status_sebelumnya ?? null,
+            status_baru,
+            keterangan: keterangan ?? null,
+            waktu_perubahan: new Date(),
+        },
+    });
 }
 
 // Conditional update: hanya antrean Menunggu yang boleh dibatalkan.

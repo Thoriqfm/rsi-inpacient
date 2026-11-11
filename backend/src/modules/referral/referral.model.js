@@ -66,10 +66,39 @@ export function findReferralById(id_surat, client = prisma) {
     });
 }
 
-export function findPasienForReferral(id_pasien) {
-    return prisma.pasien.findUnique({
+export function findPasienForReferral(id_pasien, client = prisma) {
+    return client.pasien.findUnique({
         where: { id_pasien },
-        select: { id_pasien: true, no_rm: true, nama_pasien: true },
+        select: {
+            id_pasien: true,
+            no_rm: true,
+            nama_pasien: true,
+            kondisi_pasien: true,
+            status_penanganan: true,
+        },
+    });
+}
+
+export function updatePasienStatusForReferral(client, id_pasien, status_penanganan) {
+    return client.pasien.update({
+        where: { id_pasien },
+        data: { status_penanganan, updated_at: new Date() },
+    });
+}
+
+export function createRiwayatStatusForReferral(
+    client,
+    { id_pasien, id_akun, status_sebelumnya, status_baru, keterangan },
+) {
+    return client.riwayatStatusPasien.create({
+        data: {
+            id_pasien,
+            id_akun,
+            status_sebelumnya: status_sebelumnya ?? null,
+            status_baru,
+            keterangan: keterangan ?? null,
+            waktu_perubahan: new Date(),
+        },
     });
 }
 

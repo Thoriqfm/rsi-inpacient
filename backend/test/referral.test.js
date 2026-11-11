@@ -59,7 +59,7 @@ async function createAkun(role, tag) {
 async function createPasien(nama = "Pasien Rujukan") {
     const pasien = await prisma.pasien.create({
         data: {
-            no_rm: `RM${suffix.slice(-8)}${Math.floor(Math.random() * 10000)}`.slice(0, 20),
+            no_rm: `RMR${suffix.slice(-8)}${String(pasienIds.length + 1).padStart(4, "0")}`.slice(0, 20),
             nama_pasien: nama,
             kondisi_pasien: "Darurat",
         },
@@ -106,6 +106,7 @@ describe("Referral management (UC-05)", { skip: !RUN }, () => {
 
     after(async () => {
         await prisma.logAudit.deleteMany({ where: { id_akun: { in: akunIds } } });
+        await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });
         await prisma.suratRujukan.deleteMany({ where: { id_surat: { in: referralIds } } });
         await prisma.rumahSakitRujukan.deleteMany({ where: { id_rs: { in: hospitalIds } } });
         await prisma.pasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });
@@ -370,5 +371,23 @@ describe("Referral management (UC-05)", { skip: !RUN }, () => {
         const missingHistory = await api("GET", "/referrals/99999999/history", { token: adminToken });
         assert.equal(missingHistory.status, 404);
         assert.equal(missingHistory.body.error.code, "REFERRAL_NOT_FOUND");
+
+        const fullHospital = await createHospital({ status_ketersediaan: "Tidak Tersedia" });
+        const unavailableRes = await createReferral(pasien, fullHospital);
+        assert.equal(unavailableRes.status, 409);
+        assert.equal(unavailableRes.body.error.code, "REFERRAL_HOSPITAL_UNAVAILABLE");
+
+        const stablePasien = await prisma.pasien.create({
+            data: {
+                no_rm: `RMS${suffix.slice(-7)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+                nama_pasien: "Pasien Stabil",
+                kondisi_pasien: "Stabil",
+            },
+        });
+        pasienIds.push(stablePasien.id_pasien);
+
+        const stableReferral = await createReferral(stablePasien, hospital);
+        assert.equal(stableReferral.status, 422);
+        assert.equal(stableReferral.body.error.code, "REFERRAL_PATIENT_NOT_EMERGENCY");
     });
 });

@@ -1,3 +1,5 @@
+import prisma from "../../config/prisma.js";
+import { BED_STATUS } from "../../shared/constants/bed.js";
 import { HttpError } from "../../shared/errors/http-error.js";
 import {
     buildBedWhere,
@@ -58,15 +60,24 @@ export async function addBed(data) {
 }
 
 export async function editBed(id_bed, data) {
-    await getBed(id_bed);
-
-    // Status Terisi adalah turunan proses alokasi; perubahan manual bisa membuat data tidak konsisten.
-    if (data.status && (await countActiveAllocationsByBed(id_bed)) > 0) {
-        throw new HttpError(409, "BED_IN_USE", "Status bed tidak dapat diubah selama masih ada alokasi aktif.");
-    }
-
     try {
-        return toBedResponse(await updateBed(id_bed, data));
+        return await prisma.$transaction(async (tx) => {
+            const bed = await findBedById(id_bed, tx);
+            if (!bed) {
+                throw new HttpError(404, "BED_NOT_FOUND", "Bed tidak ditemukan.");
+            }
+
+            // Status Terisi adalah turunan proses alokasi; perubahan manual bisa membuat data tidak konsisten.
+            if (data.status && (await countActiveAllocationsByBed(id_bed, tx)) > 0) {
+                throw new HttpError(
+                    409,
+                    "BED_IN_USE",
+                    "Status bed tidak dapat diubah selama masih ada alokasi aktif.",
+                );
+            }
+
+            return toBedResponse(await updateBed(id_bed, data, tx));
+        });
     } catch (err) {
         if (err.code === "P2002") {
             throw new HttpError(409, "BED_NO_CONFLICT", "Nomor bed sudah digunakan.");
@@ -76,15 +87,32 @@ export async function editBed(id_bed, data) {
 }
 
 export async function removeBed(id_bed) {
-    await getBed(id_bed);
+    await prisma.$transaction(async (tx) => {
+        const bed = await findBedById(id_bed, tx);
+        if (!bed) {
+            throw new HttpError(404, "BED_NOT_FOUND", "Bed tidak ditemukan.");
+        }
 
-    if ((await countActiveAllocationsByBed(id_bed)) > 0) {
-        throw new HttpError(409, "BED_IN_USE", "Bed masih memiliki alokasi aktif dan tidak dapat dihapus.");
-    }
+        if (
+            bed.status === BED_STATUS.TERISI ||
+            (await countActiveAllocationsByBed(id_bed, tx)) > 0
+        ) {
+            throw new HttpError(
+                409,
+                "BED_IN_USE",
+                "Bed berstatus Terisi atau masih memiliki alokasi aktif dan tidak dapat dihapus.",
+            );
+        }
 
-    await softDeleteBed(id_bed);
+        const deleted = await softDeleteBed(id_bed, tx);
+        if (deleted.count === 0) {
+            throw new HttpError(
+                409,
+                "BED_IN_USE",
+                "Bed sedang digunakan atau sudah dihapus oleh petugas lain.",
+            );
+        }
+    });
 
-    // shortcut: nomor bed tetap terpakai baris soft-delete karena uq_bed_no_bed tidak parsial.
-    // Upgrade bila nomor bed harus bisa dipakai ulang.
     return { id_bed, deleted: true };
 }
