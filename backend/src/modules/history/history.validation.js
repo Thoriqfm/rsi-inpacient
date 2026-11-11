@@ -41,7 +41,7 @@ export const historyListQuerySchema = z
 
 export const patientSearchQuerySchema = z
     .object({
-        q: z.string().trim().min(1, "Kata kunci wajib diisi.").max(100),
+        q: z.string().trim().max(100).optional().default(""),
     })
     .strict();
 

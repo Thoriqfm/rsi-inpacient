@@ -2119,44 +2119,48 @@ export async function searchHistoryPatientsApi(
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const queryStr = q ? `?q=${encodeURIComponent(q)}` : "";
       const res = await fetch(
-        `${API_BASE_URL}/histories/patients?q=${encodeURIComponent(q)}`,
+        `${API_BASE_URL}/histories/patients${queryStr}`,
         {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         }
       );
+      clearTimeout(timer);
+
       if (res.ok) {
         const json = await res.json();
-        const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          return rawItems.map((row: Record<string, unknown>, idx: number) => {
-            const idPasien = Number(row.id_pasien || idx + 1);
-            const matched =
-              SEED_PATIENTS.find((p) => p.id_pasien === idPasien) ||
-              SEED_PATIENTS[idx % SEED_PATIENTS.length];
-            return {
-              id_pasien: idPasien,
-              no_rm: String(row.no_rm || matched.no_rm),
-              nama_pasien: String(row.nama_pasien || matched.nama_pasien),
-              jenis_kelamin_usia: matched.jenis_kelamin_usia,
-              kelas_perawatan: matched.kelas_rekomendasi,
-              hak_kelas_jaminan: matched.hak_kelas_jaminan,
-              dokter_dpjp: matched.dokter_dpjp,
-              diagnosa_masuk: matched.diagnosa_masuk,
-              status_penanganan: String(
-                row.status_penanganan || "Rawat Inap"
-              ),
-              tanggal_masuk_formatted: "04 Nov 2026",
-              jumlah_rme: Number(
-                row.jumlah_rme ?? getMockRmeByPatient(idPasien).length
-              ),
-              jumlah_rekap: Number(
-                row.jumlah_rekap ??
-                  histories.filter((h) => h.id_pasien === idPasien).length
-              ),
-            };
-          });
-        }
+        const rawItems = json.data?.items || json.data || [];
+        return rawItems.map((row: Record<string, unknown>, idx: number) => {
+          const idPasien = Number(row.id_pasien || idx + 1);
+          const matched =
+            SEED_PATIENTS.find((p) => p.id_pasien === idPasien) ||
+            SEED_PATIENTS[idx % SEED_PATIENTS.length];
+          return {
+            id_pasien: idPasien,
+            no_rm: String(row.no_rm || matched.no_rm),
+            nama_pasien: String(row.nama_pasien || matched.nama_pasien),
+            jenis_kelamin_usia: matched.jenis_kelamin_usia,
+            kelas_perawatan: matched.kelas_rekomendasi,
+            hak_kelas_jaminan: matched.hak_kelas_jaminan,
+            dokter_dpjp: matched.dokter_dpjp,
+            diagnosa_masuk: matched.diagnosa_masuk,
+            status_penanganan: String(
+              row.status_penanganan || "Rawat Inap"
+            ),
+            tanggal_masuk_formatted: "04 Nov 2026",
+            jumlah_rme: Number(
+              row.jumlah_rme ?? getMockRmeByPatient(idPasien).length
+            ),
+            jumlah_rekap: Number(
+              row.jumlah_rekap ??
+                histories.filter((h) => h.id_pasien === idPasien).length
+            ),
+          };
+        });
       }
     } catch {
       // fallback below
