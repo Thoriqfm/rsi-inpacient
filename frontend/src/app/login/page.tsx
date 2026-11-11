@@ -3,10 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { DEMO_USERS } from "@/lib/mock-fallback";
 import {
   Bed,
-  CheckCircle2,
   Eye,
   EyeOff,
   Lock,
@@ -14,13 +12,11 @@ import {
   User,
   Activity,
   AlertCircle,
-  Info,
-  KeyRound,
 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isStrictBackend } = useAuth();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -74,16 +70,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleSelectDemo = (usernameKey: string) => {
-    const demo = DEMO_USERS[usernameKey];
-    if (demo) {
-      setUsername(demo.account.username);
-      setPassword(demo.password);
-      setAlertError(null);
-      setUsernameError(null);
-      setPasswordError(null);
-    }
-  };
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 lg:bg-[#064e3b]">
@@ -296,70 +282,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Select Demo Accounts for Instant Testing */}
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
-              Pilihan Akun Uji Coba Cepat:
-            </p>
-            <div className="space-y-1.5">
-              <button
-                type="button"
-                onClick={() => handleSelectDemo("admin.demo")}
-                className="w-full p-2.5 rounded-lg border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
-              >
-                <div>
-                  <div className="font-semibold text-slate-800 group-hover:text-purple-900 flex items-center gap-1.5">
-                    <span>Super Admin</span>
-                    <span className="text-[9px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded">Akses Penuh</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    admin.demo
-                  </div>
-                </div>
-                <span className="text-[10px] bg-purple-700 text-white font-medium px-2 py-0.5 rounded-full">
-                  Pilih
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSelectDemo("budi.santoso")}
-                className="w-full p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
-              >
-                <div>
-                  <div className="font-semibold text-slate-800 group-hover:text-emerald-900 flex items-center gap-1.5">
-                    <span>Budi Santoso</span>
-                    <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.2 rounded">Bed Mgmt</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    budi.santoso
-                  </div>
-                </div>
-                <span className="text-[10px] bg-emerald-700 text-white font-medium px-2 py-0.5 rounded-full">
-                  Pilih
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSelectDemo("petugas.admin")}
-                className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
-              >
-                <div>
-                  <div className="font-semibold text-slate-800 group-hover:text-slate-900 flex items-center gap-1.5">
-                    <span>Rina Aprilianti</span>
-                    <span className="text-[9px] bg-slate-200 text-slate-700 font-bold px-1.5 py-0.2 rounded">Admin Ranap</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    petugas.admin
-                  </div>
-                </div>
-                <span className="text-[10px] bg-slate-700 text-white font-medium px-2 py-0.5 rounded-full">
-                  Pilih
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
