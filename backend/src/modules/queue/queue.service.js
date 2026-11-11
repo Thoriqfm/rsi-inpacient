@@ -1,15 +1,20 @@
+import prisma from "../../config/prisma.js";
 import { HttpError } from "../../shared/errors/http-error.js";
 import { QUEUE_STATUS } from "../../shared/constants/queue.js";
+import { createAuditLog } from "../../shared/utils/audit.js";
 import {
     buildQueueWhere,
     cancelQueue,
     countQueues,
     createQueue,
+    createRiwayatStatusForQueue,
     findActiveQueueByPatient,
     findNextQueueNumber,
     findPasienForQueue,
     findQueueById,
     findQueues,
+    lockPasienForQueue,
+    updatePasienStatusForQueue,
 } from "./queue.model.js";
 
 const MAX_QUEUE_NUMBER_ATTEMPTS = 5;
@@ -44,22 +49,58 @@ export async function registerQueue({ id_pasien }, id_akun) {
         throw new HttpError(404, "PASIEN_NOT_FOUND", "Pasien tidak ditemukan.");
     }
 
-    // Satu pasien hanya boleh memiliki satu antrean aktif (Menunggu).
-    // DECISION REQUIRED: cakupan antrean per unit belum ditetapkan.
-    if (await findActiveQueueByPatient(id_pasien)) {
-        throw new HttpError(409, "QUEUE_ALREADY_ACTIVE", "Pasien sudah memiliki antrean aktif.");
+    // UC-04 Alt Flow 1 & PC-20..22: Pasien kondisi Darurat harus diarahkan ke rujukan (UC-05).
+    if (pasien.kondisi_pasien === "Darurat") {
+        throw new HttpError(
+            422,
+            "QUEUE_PATIENT_EMERGENCY",
+            "Pasien dalam kondisi Darurat tidak dapat masuk daftar tunggu dan harus dirujuk (UC-05).",
+        );
     }
 
     // No_antrean unik; dua request bersamaan bisa memperoleh nomor yang sama.
-    // Nomor dihitung ulang dan create diulang saat unique constraint menolak.
+    // Validasi antrean aktif ganda & pembuatan baris dibungkus transaksi dengan row lock pada pasien.
     for (let attempt = 1; attempt <= MAX_QUEUE_NUMBER_ATTEMPTS; attempt += 1) {
         try {
-            return await createQueue({
-                id_pasien,
-                id_akun,
-                waktu_masuk: new Date(),
-                no_antrean: await findNextQueueNumber(),
-                status: QUEUE_STATUS.MENUNGGU,
+            return await prisma.$transaction(async (tx) => {
+                await lockPasienForQueue(tx, id_pasien);
+
+                if (await findActiveQueueByPatient(id_pasien, tx)) {
+                    throw new HttpError(409, "QUEUE_ALREADY_ACTIVE", "Pasien sudah memiliki antrean aktif.");
+                }
+
+                const created = await createQueue(
+                    {
+                        id_pasien,
+                        id_akun,
+                        waktu_masuk: new Date(),
+                        no_antrean: await findNextQueueNumber(tx),
+                        status: QUEUE_STATUS.MENUNGGU,
+                    },
+                    tx,
+                );
+
+                await updatePasienStatusForQueue(tx, id_pasien, "Menunggu");
+                await createRiwayatStatusForQueue(tx, {
+                    id_pasien,
+                    id_akun,
+                    status_sebelumnya: pasien.status_penanganan,
+                    status_baru: "Menunggu",
+                    keterangan: `Masuk daftar tunggu FIFO (No. Antrean ${created.no_antrean})`,
+                });
+                await createAuditLog(tx, {
+                    id_akun,
+                    nama_tabel: "daftar_tunggu",
+                    id_referensi: created.id_antrean,
+                    aksi: "CREATE",
+                    data_sesudah: {
+                        id_pasien,
+                        no_antrean: created.no_antrean,
+                        status: created.status,
+                    },
+                });
+
+                return findQueueById(created.id_antrean, tx);
             });
         } catch (err) {
             if (err.code !== "P2002" || attempt === MAX_QUEUE_NUMBER_ATTEMPTS) {
@@ -72,13 +113,33 @@ export async function registerQueue({ id_pasien }, id_akun) {
     }
 }
 
-export async function cancelQueueById(id_antrean) {
-    await getQueue(id_antrean);
+export async function cancelQueueById(id_antrean, id_akun) {
+    const current = await getQueue(id_antrean);
 
-    const cancelled = await cancelQueue(id_antrean);
-    if (cancelled.count === 0) {
-        throw new HttpError(409, "QUEUE_NOT_WAITING", "Hanya antrean Menunggu yang dapat dibatalkan.");
-    }
+    return prisma.$transaction(async (tx) => {
+        const cancelled = await cancelQueue(id_antrean, tx);
+        if (cancelled.count === 0) {
+            throw new HttpError(409, "QUEUE_NOT_WAITING", "Hanya antrean Menunggu yang dapat dibatalkan.");
+        }
 
-    return getQueue(id_antrean);
+        if (id_akun) {
+            await createRiwayatStatusForQueue(tx, {
+                id_pasien: current.id_pasien,
+                id_akun,
+                status_sebelumnya: current.status,
+                status_baru: QUEUE_STATUS.BATAL,
+                keterangan: `Antrean No. ${current.no_antrean} dibatalkan`,
+            });
+            await createAuditLog(tx, {
+                id_akun,
+                nama_tabel: "daftar_tunggu",
+                id_referensi: id_antrean,
+                aksi: "STATUS_CHANGE",
+                data_sebelum: { status: current.status },
+                data_sesudah: { status: QUEUE_STATUS.BATAL },
+            });
+        }
+
+        return findQueueById(id_antrean, tx);
+    });
 }

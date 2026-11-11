@@ -8,8 +8,8 @@ import { ROLES } from "../shared/constants/roles.js";
 
 const router = Router();
 
-// DECISION REQUIRED: matriks role UC-06 belum ditetapkan; sementara samakan dengan modul sumber.
-const monitoringRole = requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT);
+// Pemantauan status penanganan pasien adalah wewenang Petugas Administrasi (UC-06).
+const monitoringRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
 

@@ -12,9 +12,11 @@ import {
     createHistoryRecap,
     findHistories,
     findHistoryById,
+    findLatestHistoryUpdateActor,
     findNextRekapCode,
     findPasienForHistory,
     findRmeByPatient,
+    lockHistoryRow,
     searchPatientsForHistory,
     softDeleteHistoryRecap,
     updateHistoryRecap,
@@ -32,12 +34,13 @@ function toHistoryItem(row) {
     };
 }
 
-function toHistoryDetail(row) {
+function toHistoryDetail(row, diperbaruiOleh = null) {
     const { akun, _count, detail_rekap_tindakan_list, tagihan_list, ...rest } = row;
 
     return {
         ...rest,
         dibuat_oleh: akun?.nama_petugas ?? null,
+        diperbarui_oleh: diperbaruiOleh ?? akun?.nama_petugas ?? null,
         jumlah_tindakan: _count?.detail_rekap_tindakan_list ?? 0,
         detail_tindakan: detail_rekap_tindakan_list,
         tagihan: tagihan_list,
@@ -65,7 +68,8 @@ export async function getHistoryRecap(id_rekap) {
         throw new HttpError(404, "HISTORY_NOT_FOUND", "Rekap tidak ditemukan.");
     }
 
-    return toHistoryDetail(row);
+    const latestUpdate = await findLatestHistoryUpdateActor(id_rekap);
+    return toHistoryDetail(row, latestUpdate?.akun?.nama_petugas ?? null);
 }
 
 export async function searchPatients(q) {
@@ -227,27 +231,31 @@ export async function updateHistoryRecapById(id_rekap, payload, id_akun) {
             },
         });
 
-        return toHistoryDetail(await findHistoryById(id_rekap, tx));
+        const latestUpdate = await findLatestHistoryUpdateActor(id_rekap, tx);
+        return toHistoryDetail(
+            await findHistoryById(id_rekap, tx),
+            latestUpdate?.akun?.nama_petugas ?? null,
+        );
     });
 }
 
 export async function removeHistoryRecap(id_rekap, id_akun) {
-    const current = await findHistoryById(id_rekap);
-
-    if (!current) {
-        throw new HttpError(404, "HISTORY_NOT_FOUND", "Rekap tidak ditemukan.");
-    }
-
-    // Tidak boleh menghapus rekap yang sudah menjadi dasar tagihan.
-    if (current.tagihan_list.length > 0) {
-        throw new HttpError(409, "HISTORY_HAS_INVOICE", "Rekap sudah digunakan pada tagihan.");
-    }
-
-    // shortcut: cek tagihan dan soft delete tidak atomik lintas modul.
-    // Upgrade bila Billing sudah menerbitkan tagihan secara bersamaan.
     const deleted_at = new Date();
 
     await prisma.$transaction(async (tx) => {
+        await lockHistoryRow(tx, id_rekap);
+
+        const current = await findHistoryById(id_rekap, tx);
+        if (!current) {
+            throw new HttpError(404, "HISTORY_NOT_FOUND", "Rekap tidak ditemukan.");
+        }
+
+        // Tidak boleh menghapus rekap yang sudah menjadi dasar tagihan aktif (non-Batal).
+        const hasActiveInvoice = current.tagihan_list.some((tagihan) => tagihan.status !== "Batal");
+        if (hasActiveInvoice) {
+            throw new HttpError(409, "HISTORY_HAS_INVOICE", "Rekap sudah digunakan pada tagihan.");
+        }
+
         const updated = await softDeleteHistoryRecap(tx, id_rekap, deleted_at);
         if (updated.count === 0) {
             throw new HttpError(409, "HISTORY_CONFLICT", "Rekap sudah dihapus petugas lain.");

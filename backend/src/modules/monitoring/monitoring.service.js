@@ -71,6 +71,14 @@ function toMonitoringItem(pasien, now) {
                   rumah_sakit: toHospitalMonitoring(rujukan.rumah_sakit_rujukan, now),
               }
             : null,
+        riwayat_status: (pasien.riwayat_status_pasien_list ?? []).map((item) => ({
+            id_riwayat_status: item.id_riwayat_status,
+            status_sebelumnya: item.status_sebelumnya,
+            status_baru: item.status_baru,
+            keterangan: item.keterangan,
+            waktu_perubahan: item.waktu_perubahan,
+            diubah_oleh: item.akun?.nama_petugas ?? null,
+        })),
     };
 }
 

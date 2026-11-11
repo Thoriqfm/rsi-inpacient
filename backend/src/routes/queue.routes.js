@@ -8,8 +8,8 @@ import { ROLES } from "../shared/constants/roles.js";
 
 const router = Router();
 
-// DECISION REQUIRED: matriks role UC-04 belum ditetapkan; sementara samakan dengan Allocation.
-const queueRole = requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT);
+// Pengelolaan daftar tunggu rawat inap adalah wewenang Petugas Administrasi (UC-04).
+const queueRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
 

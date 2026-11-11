@@ -10,6 +10,8 @@ import {
   fetchAvailableBedsApi,
   fetchQueuesApi,
   createAllocationApi,
+  createQueueApi,
+  searchHistoryPatientsApi,
 } from "@/lib/api-client";
 import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
 import {
@@ -66,14 +68,17 @@ export default function AlokasiBedPage() {
     async function load() {
       setIsLoading(true);
       try {
-        const [bedsRes, queueRes] = await Promise.allSettled([
+        const [bedsRes, queueRes, patientsRes] = await Promise.allSettled([
           fetchAvailableBedsApi(),
           fetchQueuesApi(),
+          searchHistoryPatientsApi(""),
         ]);
 
         if (bedsRes.status === "fulfilled") {
           setBeds(bedsRes.value.items);
         }
+
+        const merged: PasienCandidate[] = [];
 
         if (queueRes.status === "fulfilled" && queueRes.value.items.length > 0) {
           const waiting = queueRes.value.items.filter(
@@ -81,8 +86,8 @@ export default function AlokasiBedPage() {
           );
           setWaitingQueues(waiting);
 
-          if (waiting.length > 0) {
-            const mappedPatients: PasienCandidate[] = waiting.map((q) => ({
+          for (const q of waiting) {
+            merged.push({
               id_pasien: q.id_pasien,
               no_rm: q.no_rm,
               nama_pasien: q.nama_pasien,
@@ -95,17 +100,45 @@ export default function AlokasiBedPage() {
               status_penanganan: "Menunggu",
               asal_instalasi: q.asal_instalasi || "IGD / Poli",
               tanda_vital: "TD: 120/80 mmHg",
-            }));
-
-            const merged = [...mappedPatients];
-            for (const p of INITIAL_PASIEN_CANDIDATES) {
-              if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
-                merged.push(p);
-              }
-            }
-            setCandidates(merged);
-            setSelectedPatientId(merged[0].id_pasien);
+            });
           }
+        }
+
+        if (
+          patientsRes.status === "fulfilled" &&
+          patientsRes.value.length > 0
+        ) {
+          for (const p of patientsRes.value) {
+            if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
+              merged.push({
+                id_pasien: p.id_pasien,
+                no_rm: p.no_rm,
+                nama_pasien: p.nama_pasien,
+                jenis_kelamin_usia: p.jenis_kelamin_usia || "L/P",
+                dokter_dpjp: p.dokter_dpjp || "dr. DPJP",
+                hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
+                kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
+                diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
+                kondisi_pasien: "Stabil",
+                status_penanganan:
+                  (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
+                  "Menunggu",
+                asal_instalasi: "IGD / Poli",
+                tanda_vital: "TD: 120/80 mmHg",
+              });
+            }
+          }
+        }
+
+        for (const p of INITIAL_PASIEN_CANDIDATES) {
+          if (!merged.some((m) => m.id_pasien === p.id_pasien)) {
+            merged.push(p);
+          }
+        }
+
+        if (merged.length > 0) {
+          setCandidates(merged);
+          setSelectedPatientId(merged[0].id_pasien);
         }
       } finally {
         setIsLoading(false);
@@ -530,6 +563,35 @@ export default function AlokasiBedPage() {
                     <span>Tetapkan Alokasi & Kunci Kamar</span>
                   </>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!selectedPatient) {
+                    router.push("/bed-management");
+                    return;
+                  }
+                  const alreadyInQueue = waitingQueues.some(
+                    (q) => q.id_pasien === selectedPatient.id_pasien
+                  );
+                  if (!alreadyInQueue && selectedPatient.kondisi_pasien !== "Darurat") {
+                    try {
+                      await createQueueApi({
+                        id_pasien: selectedPatient.id_pasien,
+                        kelas_perawatan: selectedPatient.kelas_rekomendasi,
+                        catatan_tunggu: "Penundaan alokasi kamar rawat inap (UC-03 Alt Flow 1)",
+                      });
+                    } catch {
+                      // jika sudah ada antrean aktif, lanjutkan ke halaman daftar tunggu
+                    }
+                  }
+                  router.push("/sistem-antrian/daftar-tunggu");
+                }}
+                disabled={isSubmitting}
+                className="w-full py-2 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-medium transition cursor-pointer"
+              >
+                Tunda Alokasi & Masuk Daftar Tunggu
               </button>
 
               <button

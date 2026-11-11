@@ -80,18 +80,18 @@ export function createBed(data) {
     return prisma.bed.create({ data, select: bedSelect });
 }
 
-export function updateBed(id_bed, data) {
-    return prisma.bed.update({
+export function updateBed(id_bed, data, client = prisma) {
+    return client.bed.update({
         where: { id_bed },
         data: { ...data, updated_at: new Date() },
         select: bedSelect,
     });
 }
 
-// Sekaligus penjaga double delete: hanya baris yang belum soft-delete yang terpengaruh.
-export function softDeleteBed(id_bed) {
-    return prisma.bed.updateMany({
-        where: { id_bed, deleted_at: null },
+// Sekaligus penjaga double delete & race condition terhadap alokasi: hanya baris non-Terisi yang belum soft-delete yang terpengaruh.
+export function softDeleteBed(id_bed, client = prisma) {
+    return client.bed.updateMany({
+        where: { id_bed, deleted_at: null, status: { not: BED_STATUS.TERISI } },
         data: { deleted_at: new Date(), updated_at: new Date() },
     });
 }

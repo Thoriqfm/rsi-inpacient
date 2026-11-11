@@ -1,4 +1,4 @@
-import { authenticate, createAkun, getCurrentUser } from "./auth.service.js";
+import { authenticate, createAkun, getCurrentUser, revokeAccessToken } from "./auth.service.js";
 
 export async function login(req, res) {
     const { username, password } = req.validated;
@@ -20,6 +20,8 @@ export async function me(req, res) {
 }
 
 export function logout(req, res) {
-    // Stateless JWT: server keeps no session, the client discards the token.
+    const header = req.get("authorization") ?? "";
+    const [, token] = header.split(" ");
+    revokeAccessToken(token);
     res.status(200).json({ data: { message: "Logout berhasil." }, meta: null });
 }

@@ -25,7 +25,11 @@ export async function store(req, res) {
 }
 
 export async function update(req, res) {
-    const alokasi = await closeAllocationById(parseId(req.params.id), req.validated.status_alokasi);
+    const alokasi = await closeAllocationById(
+        parseId(req.params.id),
+        req.validated.status_alokasi,
+        req.user.id_akun,
+    );
 
     res.status(200).json({ data: alokasi, meta: null });
 }

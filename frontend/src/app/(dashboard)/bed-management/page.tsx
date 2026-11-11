@@ -84,6 +84,17 @@ export default function BedManagementPage() {
 
   useEffect(() => {
     loadData();
+    // NFR-SRS-13 / BM-SRS-01: Sinkronisasi status bed secara real-time (maksimal setiap 2 detik).
+    const interval = setInterval(async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      try {
+        const res = await fetchBedsApi();
+        setBeds(res.items);
+      } catch {
+        // abaikan error polling latar belakang agar tidak mengganggu interaksi petugas
+      }
+    }, 2000);
+    return () => clearInterval(interval);
   }, [user?.role]);
 
   const showToast = (msg: string) => {

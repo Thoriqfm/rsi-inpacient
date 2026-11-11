@@ -134,9 +134,19 @@ export function createTarif(data) {
     });
 }
 
-export function findTariffsForCodes(kode_tindakan_list) {
+export function findAllTariffs() {
     return prisma.tarif.findMany({
-        where: { kode_tindakan: { in: kode_tindakan_list } },
+        select: tariffSelect,
+        orderBy: [{ kode_tindakan: "asc" }, { tanggal_berlaku: "desc" }, { id_tarif: "desc" }],
+    });
+}
+
+export function findTariffsForCodes(kode_tindakan_list, client = prisma) {
+    return client.tarif.findMany({
+        where: {
+            kode_tindakan: { in: kode_tindakan_list },
+            status: "Aktif",
+        },
         select: {
             id_tarif: true,
             kode_tindakan: true,
@@ -146,6 +156,21 @@ export function findTariffsForCodes(kode_tindakan_list) {
             status: true,
         },
         orderBy: [{ tanggal_berlaku: "desc" }, { id_tarif: "desc" }],
+    });
+}
+
+export function findBillingAuditTrail(id_tagihan, client = prisma) {
+    return client.logAudit.findMany({
+        where: { nama_tabel: "tagihan", id_referensi: id_tagihan },
+        select: {
+            id_log: true,
+            aksi: true,
+            data_sebelum: true,
+            data_sesudah: true,
+            waktu_aksi: true,
+            akun: { select: { nama_petugas: true } },
+        },
+        orderBy: [{ waktu_aksi: "asc" }, { id_log: "asc" }],
     });
 }
 

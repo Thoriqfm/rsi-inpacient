@@ -74,47 +74,6 @@ export async function getValidToken(): Promise<string | null> {
     return currentToken;
   }
 
-  // If in strict mode or token is mock/missing, attempt seamless backend auto-login
-  if (isStrictBackendMode() || !currentToken || currentToken.startsWith("mock-")) {
-    try {
-      let username = "budi.santoso";
-      const rawUser = localStorage.getItem("rsi_inpatient_user");
-      if (rawUser) {
-        try {
-          const parsed = JSON.parse(rawUser);
-          if (parsed.username) username = parsed.username;
-        } catch {}
-      }
-
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password: "password123" }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-
-      if (res.ok) {
-        const json = await res.json();
-        const realToken = json.data?.token;
-        if (realToken) {
-          localStorage.setItem("rsi_inpatient_token", realToken);
-          if (json.data?.user) {
-            localStorage.setItem(
-              "rsi_inpatient_user",
-              JSON.stringify(json.data.user)
-            );
-          }
-          return realToken;
-        }
-      }
-    } catch {
-      // Backend unreachable
-    }
-  }
-
   return currentToken;
 }
 
@@ -2026,6 +1985,9 @@ function mapRawHistoryToHistoryItem(
       : null,
     tanggal_diperbarui_formatted: diperbaruiFormatted,
     dibuat_oleh: String(row.dibuat_oleh || "Rini Aprilianti"),
+    diperbarui_oleh: String(
+      row.diperbarui_oleh || row.dibuat_oleh || "Rini Aprilianti"
+    ),
     jumlah_tindakan: Number(row.jumlah_tindakan || detailTindakan.length),
     detail_tindakan: detailTindakan,
     tagihan: rawTagihan.map((t) => ({
@@ -2640,6 +2602,46 @@ export async function deleteHistoryApi(id_rekap: number): Promise<void> {
 // UC-08 & UC-09: Perhitungan Biaya & Pengelolaan Tagihan (Billing) APIs
 // ==========================================
 export async function fetchTariffsApi(): Promise<TarifItem[]> {
+  const token = await getValidToken();
+  if (token && !token.startsWith("mock-")) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API_BASE_URL}/billing/tariffs`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawItems = json.data?.items || [];
+        if (Array.isArray(rawItems) && rawItems.length > 0) {
+          return rawItems.map((t: Record<string, unknown>, idx: number) => {
+            const hargaNum = Number(t.harga || 0);
+            const matchedSeed = SEED_TARIFFS.find(
+              (s) => s.kode_tindakan === String(t.kode_tindakan)
+            );
+            return {
+              id_tarif: Number(t.id_tarif || idx + 1),
+              kode_tindakan: String(t.kode_tindakan || `TDK-0${idx + 1}`),
+              nama_tindakan: String(t.nama_tindakan || "Tindakan Medis"),
+              kategori: matchedSeed?.kategori || "Pelayanan Medis",
+              harga: hargaNum.toFixed(2),
+              harga_num: hargaNum,
+              tanggal_berlaku: String(t.tanggal_berlaku || "2026-01-01"),
+              tanggal_berakhir: t.tanggal_berakhir
+                ? String(t.tanggal_berakhir)
+                : null,
+              status: (t.status as "Aktif" | "Nonaktif") || "Aktif",
+            };
+          });
+        }
+      }
+    } catch {
+      // fallback to seed tariffs below
+    }
+  }
   return SEED_TARIFFS;
 }
 
@@ -3211,7 +3213,13 @@ export async function recalculateBillingApi(
         `${API_BASE_URL}/billing/${id_tagihan}/recalculate`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            catatan_penyesuaian !== undefined ? { catatan_penyesuaian } : {}
+          ),
           signal: controller.signal,
         }
       );

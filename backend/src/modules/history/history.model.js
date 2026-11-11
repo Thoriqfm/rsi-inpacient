@@ -140,6 +140,25 @@ export function softDeleteHistoryRecap(client, id_rekap, deleted_at) {
     });
 }
 
+export function lockHistoryRow(client, id_rekap) {
+    return client.$queryRaw`SELECT id_rekap FROM rekap_tindakan WHERE id_rekap = ${id_rekap} FOR UPDATE`;
+}
+
+export function findLatestHistoryUpdateActor(id_rekap, client = prisma) {
+    return client.logAudit.findFirst({
+        where: {
+            nama_tabel: "rekap_tindakan",
+            id_referensi: id_rekap,
+            aksi: { in: ["UPDATE", "STATUS_CHANGE"] },
+        },
+        select: {
+            waktu_aksi: true,
+            akun: { select: { nama_petugas: true } },
+        },
+        orderBy: [{ waktu_aksi: "desc" }, { id_log: "desc" }],
+    });
+}
+
 export function searchPatientsForHistory(q) {
     return prisma.pasien.findMany({
         where: {

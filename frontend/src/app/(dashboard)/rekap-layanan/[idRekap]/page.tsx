@@ -463,7 +463,7 @@ function DetailRekapContent() {
                   {rekap.tanggal_diperbarui_formatted || "Baru saja"}
                 </span>
                 <span className="text-[11px] text-slate-500 block">
-                  oleh {rekap.dibuat_oleh || "Petugas Administrasi"}
+                  oleh {rekap.diperbarui_oleh || rekap.dibuat_oleh || "Petugas Administrasi"}
                 </span>
               </div>
             </div>

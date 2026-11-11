@@ -6,6 +6,7 @@ import { ROLES } from "../shared/constants/roles.js";
 import {
     cancel,
     index,
+    indexTariffs,
     preview,
     recalculate,
     show,
@@ -19,6 +20,7 @@ import {
     createBillingSchema,
     createTariffSchema,
     previewBillingSchema,
+    recalculateBillingSchema,
     updateBillingStatusSchema,
 } from "../modules/billing/billing.validation.js";
 
@@ -30,7 +32,8 @@ const billingRole = requireRole(ROLES.ADMINISTRASI);
 
 router.use(authenticateToken);
 
-// Master tarif: hanya Super Admin yang boleh menulis.
+// Master tarif: Petugas Administrasi boleh membaca; hanya Super Admin yang boleh menulis.
+router.get("/tariffs", billingRole, indexTariffs);
 router.post("/tariffs", requireRole(ROLES.SUPER_ADMIN), validate(createTariffSchema), storeTariff);
 
 // Harus sebelum /:id agar tidak tertangkap sebagai id tagihan.
@@ -40,7 +43,7 @@ router.get("/", billingRole, validateQuery(billingListQuerySchema), index);
 router.post("/", billingRole, validate(createBillingSchema), store);
 router.get("/:id", billingRole, show);
 router.patch("/:id/status", billingRole, validate(updateBillingStatusSchema), updateStatus);
-router.post("/:id/recalculate", billingRole, recalculate);
+router.post("/:id/recalculate", billingRole, validate(recalculateBillingSchema), recalculate);
 router.post("/:id/cancel", billingRole, validate(cancelBillingSchema), cancel);
 
 export default router;

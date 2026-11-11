@@ -44,6 +44,19 @@ const latestReferralSelect = {
     take: 1,
 };
 
+const latestStatusHistorySelect = {
+    select: {
+        id_riwayat_status: true,
+        status_sebelumnya: true,
+        status_baru: true,
+        keterangan: true,
+        waktu_perubahan: true,
+        akun: { select: { nama_petugas: true } },
+    },
+    orderBy: [{ waktu_perubahan: "desc" }, { id_riwayat_status: "desc" }],
+    take: 10,
+};
+
 const monitoringSelect = {
     id_pasien: true,
     no_rm: true,
@@ -54,6 +67,7 @@ const monitoringSelect = {
     tanggal_keluar: true,
     daftar_tunggu_list: latestQueueSelect,
     surat_rujukan_list: latestReferralSelect,
+    riwayat_status_pasien_list: latestStatusHistorySelect,
 };
 
 // Cakupan default: pasien yang pernah masuk antrean atau pernah dirujuk (DECISION REQUIRED).

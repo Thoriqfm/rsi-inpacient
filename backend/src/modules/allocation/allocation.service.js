@@ -1,17 +1,20 @@
 import prisma from "../../config/prisma.js";
 import { ALLOCATION_STATUS, BED_STATUS } from "../../shared/constants/bed.js";
 import { HttpError } from "../../shared/errors/http-error.js";
+import { createAuditLog } from "../../shared/utils/audit.js";
 import { claimBedForAllocation, findBedById, releaseBedAfterAllocation } from "../bed/bed.model.js";
 import {
     buildAllocationWhere,
     closeAllocation,
     countAllocations,
     createAllocation,
+    createRiwayatStatusForAllocation,
     findAllocationById,
     findAllocations,
     findPasienForAllocation,
     findQueueById,
     markQueueAllocated,
+    updatePasienStatusForAllocation,
 } from "./allocation.model.js";
 
 export async function listAllocations(query) {
@@ -85,7 +88,7 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
                 }
             }
 
-            return createAllocation(tx, {
+            const created = await createAllocation(tx, {
                 id_pasien,
                 id_bed,
                 id_akun,
@@ -93,6 +96,30 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
                 waktu_alokasi: new Date(),
                 status_alokasi: ALLOCATION_STATUS.AKTIF,
             });
+
+            // PC-06: Perbarui status penanganan pasien menjadi Rawat Inap & catat riwayat/audit.
+            await updatePasienStatusForAllocation(tx, id_pasien, "Rawat Inap");
+            await createRiwayatStatusForAllocation(tx, {
+                id_pasien,
+                id_akun,
+                status_sebelumnya: pasien.status_penanganan,
+                status_baru: "Rawat Inap",
+                keterangan: `Dialokasikan ke bed ${bed.no_bed} (${bed.nama_bangsal})`,
+            });
+            await createAuditLog(tx, {
+                id_akun,
+                nama_tabel: "rekam_alokasi",
+                id_referensi: created.id_alokasi,
+                aksi: "CREATE",
+                data_sesudah: {
+                    id_pasien,
+                    id_bed,
+                    id_antrean: id_antrean ?? null,
+                    status_alokasi: created.status_alokasi,
+                },
+            });
+
+            return created;
         });
     } catch (err) {
         // Guard DB uq_rekam_alokasi_bed_aktif / uq_rekam_alokasi_antrean.
@@ -107,7 +134,7 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
     }
 }
 
-export async function closeAllocationById(id_alokasi, status_alokasi) {
+export async function closeAllocationById(id_alokasi, status_alokasi, id_akun) {
     const alokasi = await getAllocation(id_alokasi);
 
     if (alokasi.status_alokasi !== ALLOCATION_STATUS.AKTIF) {
@@ -121,6 +148,14 @@ export async function closeAllocationById(id_alokasi, status_alokasi) {
         }
 
         await releaseBedAfterAllocation(alokasi.id_bed, tx);
+        await createAuditLog(tx, {
+            id_akun: id_akun ?? alokasi.id_akun,
+            nama_tabel: "rekam_alokasi",
+            id_referensi: id_alokasi,
+            aksi: "STATUS_CHANGE",
+            data_sebelum: { status_alokasi: alokasi.status_alokasi },
+            data_sesudah: { status_alokasi },
+        });
 
         return findAllocationById(id_alokasi, tx);
     });

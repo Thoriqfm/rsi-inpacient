@@ -13,10 +13,10 @@ const masterBed = requireRole(ROLES.BED_MANAGEMENT);
 
 router.use(authenticateToken);
 
-// Petugas Administrasi dan Petugas Bed Management dapat melihat ketersediaan dan seluruh daftar bed (read-only).
+// Petugas Administrasi dan Petugas Bed Management dapat melihat bed tersedia untuk alokasi.
 router.get("/available", requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT), available);
-router.get("/", requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT), validateQuery(bedListQuerySchema), index);
-router.get("/:id", requireRole(ROLES.ADMINISTRASI, ROLES.BED_MANAGEMENT), show);
+router.get("/", masterBed, validateQuery(bedListQuerySchema), index);
+router.get("/:id", masterBed, show);
 
 // Mutasi data master bed: Khusus Petugas Bed Management dan Super Admin.
 router.post("/", masterBed, validate(createBedSchema), store);

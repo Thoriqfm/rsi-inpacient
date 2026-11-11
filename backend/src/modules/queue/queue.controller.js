@@ -20,7 +20,7 @@ export async function store(req, res) {
 }
 
 export async function update(req, res) {
-    const antrean = await cancelQueueById(parseId(req.params.id));
+    const antrean = await cancelQueueById(parseId(req.params.id), req.user.id_akun);
 
     res.status(200).json({ data: antrean, meta: null });
 }

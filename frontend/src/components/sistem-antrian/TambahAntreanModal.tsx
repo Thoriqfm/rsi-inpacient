@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
 import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
-import { createQueueApi } from "@/lib/api-client";
+import { createQueueApi, searchHistoryPatientsApi } from "@/lib/api-client";
 
 interface TambahAntreanModalProps {
   isOpen: boolean;
@@ -32,6 +32,9 @@ export function TambahAntreanModal({
 }: TambahAntreanModalProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [candidateList, setCandidateList] = useState<PasienCandidate[]>(
+    INITIAL_PASIEN_CANDIDATES
+  );
   const [selectedPasien, setSelectedPasien] = useState<PasienCandidate | null>(
     INITIAL_PASIEN_CANDIDATES[3] // Dewi Lestari (Stabil, belum antre)
   );
@@ -43,6 +46,43 @@ export function TambahAntreanModal({
   );
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    searchHistoryPatientsApi("")
+      .then((rows) => {
+        if (!active || rows.length === 0) return;
+        const mapped: PasienCandidate[] = rows.map((p) => ({
+          id_pasien: p.id_pasien,
+          no_rm: p.no_rm,
+          nama_pasien: p.nama_pasien,
+          jenis_kelamin_usia: p.jenis_kelamin_usia || "L/P",
+          dokter_dpjp: p.dokter_dpjp || "dr. DPJP",
+          hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
+          kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
+          diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
+          kondisi_pasien: p.status_penanganan?.includes("Darurat")
+            ? "Darurat"
+            : "Stabil",
+          status_penanganan:
+            (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
+            "Menunggu",
+          asal_instalasi: "IGD / Poli",
+          tanda_vital: "TD: 120/80 mmHg",
+        }));
+        for (const seed of INITIAL_PASIEN_CANDIDATES) {
+          if (!mapped.some((m) => m.id_pasien === seed.id_pasien)) {
+            mapped.push(seed);
+          }
+        }
+        setCandidateList(mapped);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
 
   const activeWaitingIds = useMemo(
     () =>
@@ -56,14 +96,14 @@ export function TambahAntreanModal({
 
   const filteredCandidates = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return INITIAL_PASIEN_CANDIDATES;
-    return INITIAL_PASIEN_CANDIDATES.filter(
+    if (!q) return candidateList;
+    return candidateList.filter(
       (p) =>
         p.nama_pasien.toLowerCase().includes(q) ||
         p.no_rm.toLowerCase().includes(q) ||
         p.diagnosa_masuk.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
+  }, [searchQuery, candidateList]);
 
   if (!isOpen) return null;
 

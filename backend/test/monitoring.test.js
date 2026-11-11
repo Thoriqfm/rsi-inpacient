@@ -66,10 +66,12 @@ async function createAkun(role, tag) {
     return akun;
 }
 
+let pasienSeq = 0;
 async function createPasien(nama) {
+    pasienSeq += 1;
     const pasien = await prisma.pasien.create({
         data: {
-            no_rm: `RM${suffix.slice(-8)}${Math.floor(Math.random() * 10000)}`.slice(0, 20),
+            no_rm: `RMM${suffix.slice(-8)}${String(pasienSeq).padStart(4, "0")}`.slice(0, 20),
             nama_pasien: nama,
             kondisi_pasien: "Stabil",
             status_penanganan: "Menunggu",

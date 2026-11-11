@@ -28,6 +28,18 @@ export const updateBillingStatusSchema = z
     .object({ status: z.enum(TAGIHAN_STATUS_LIST) })
     .strict();
 
+export const recalculateBillingSchema = z
+    .object({
+        catatan_penyesuaian: z
+            .string()
+            .trim()
+            .max(1000, "Catatan penyesuaian maksimal 1000 karakter.")
+            .nullable()
+            .optional(),
+    })
+    .strict()
+    .default({});
+
 export const cancelBillingSchema = z
     .object({ alasan: z.string().trim().min(1, "Alasan pembatalan wajib diisi.").max(5000) })
     .strict();
