@@ -228,13 +228,13 @@ export default function PembayaranDashboardPage() {
             className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Buat Tagihan</span>
+            <span>Buat Tagihan</span>
           </Link>
         </div>
       </div>
 
       {/* 4 Financial & Status KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Total Tagihan */}
         <div
           onClick={() => {

@@ -252,7 +252,7 @@ function InformasiDataPasienContent() {
             className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>+ Buat Rekap Baru</span>
+            <span>Buat Rekap Baru</span>
           </Link>
         )}
       </div>

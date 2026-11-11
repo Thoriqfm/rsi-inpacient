@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -27,12 +27,15 @@ interface SidebarProps {
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const prevPathnameRef = useRef(pathname);
 
-  // Auto close drawer on route change on mobile
+  // Auto close drawer ONLY when route actually changes on mobile
   useEffect(() => {
-    onClose?.();
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      onClose?.();
+    }
   }, [pathname, onClose]);
-
   const isAntrianSection = pathname.startsWith("/sistem-antrian");
   const isRekapSection = pathname.startsWith("/rekap-layanan");
   const isPembayaranSection = pathname.startsWith("/pembayaran");
@@ -78,7 +81,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <button
             type="button"
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-emerald-300/80 hover:text-white hover:bg-emerald-800/60 transition cursor-pointer"
+            className="lg:hidden w-9 h-9 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-800/60 flex items-center justify-center transition cursor-pointer shrink-0"
             title="Tutup Menu"
           >
             <X className="w-5 h-5" />

@@ -135,14 +135,14 @@ export function Topbar({ onToggleMenu }: TopbarProps) {
   };
 
   return (
-    <header className="h-[72px] bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+    <header className="h-16 sm:h-[72px] bg-white border-b border-slate-200/80 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
       {/* Left: Mobile Hamburger & Breadcrumbs */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Hamburger Toggle (Mobile/Tablet < lg) */}
         <button
           type="button"
           onClick={onToggleMenu}
-          className="lg:hidden w-11 h-11 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer shrink-0"
+          className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition cursor-pointer shrink-0 touch-manipulation"
           title="Buka Navigasi"
           aria-label="Toggle navigation menu"
         >
@@ -150,8 +150,8 @@ export function Topbar({ onToggleMenu }: TopbarProps) {
         </button>
 
         {/* Mobile Title View (< sm) */}
-        <div className="sm:hidden flex items-center gap-1.5 truncate">
-          <span className="font-bold text-slate-900 text-sm truncate">
+        <div className="sm:hidden flex items-center gap-1.5 truncate max-w-[145px]">
+          <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
             {activeTitle}
           </span>
         </div>

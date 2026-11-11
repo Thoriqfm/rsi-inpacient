@@ -219,7 +219,7 @@ export default function BedManagementPage() {
               className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium shadow-xs flex items-center gap-2 transition cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>+ Tambah Bed Baru</span>
+              <span>Tambah Bed Baru</span>
             </button>
           )}
         </div>

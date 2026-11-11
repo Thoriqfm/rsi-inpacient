@@ -183,7 +183,7 @@ export default function DaftarTungguPage() {
             className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>+ Tambah Antrean</span>
+            <span>Tambah Antrean</span>
           </button>
         </div>
       </div>
