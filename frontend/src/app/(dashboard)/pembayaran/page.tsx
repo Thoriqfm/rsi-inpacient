@@ -183,78 +183,78 @@ export default function PembayaranDashboardPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-[#1e1e1e]">
+    <div className="space-y-6 pb-12 font-sans text-slate-800 max-w-7xl mx-auto">
       {/* Toast Alert */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0d332f] text-white px-5 py-3 rounded-[10px] shadow-xl border border-[#00b89f]/40 flex items-center gap-3 animate-fadeIn">
-          <Check className="w-5 h-5 text-[#00b89f] shrink-0" />
-          <span className="text-xs font-medium">{toastMsg}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
+          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white px-5 py-3 rounded-[10px] shadow-xl border border-rose-500/40 flex items-center gap-3 animate-fadeIn">
+        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white px-5 py-3.5 rounded-xl shadow-xl border border-rose-500/40 flex items-center gap-3 animate-fadeIn">
           <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-          <span className="text-xs font-medium">{errorMsg}</span>
+          <span className="text-xs sm:text-sm font-medium">{errorMsg}</span>
         </div>
       )}
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-[#0fa18f] text-[10px] font-semibold tracking-[1px] uppercase mb-1">
+          <div className="text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-1">
             MANAJEMEN TAGIHAN RAWAT INAP
           </div>
-          <h1 className="text-[#1e1e1e] text-[27px] font-medium leading-[35px] tracking-[-0.675px]">
-            Pembayaran & Tagihan Pasien
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+            Pembayaran &amp; Tagihan Pasien
           </h1>
-          <p className="text-[#666] text-xs font-normal mt-0.5">
-            Kelola perhitungan biaya, penerbitan invoice, dan status pembayaran pasien rawat inap.
+          <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+            Kelola perhitungan biaya pelayanan, penerbitan invoice kasir, dan status pelunasan pasien rawat inap.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setIsTarifModalOpen(true)}
-            className="px-3.5 py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+            className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
           >
-            <Tag className="w-3.5 h-3.5 text-[#0fa18f]" />
+            <Tag className="w-3.5 h-3.5 text-emerald-600" />
             <span>Master Tarif ({tariffs.length})</span>
           </button>
 
           <Link
             href="/pembayaran/buat"
-            className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Buat Tagihan</span>
+            <span>+ Buat Tagihan</span>
           </Link>
         </div>
       </div>
 
       {/* 4 Financial & Status KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Tagihan */}
         <div
           onClick={() => {
             setActiveTab("Semua");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between cursor-pointer hover:border-[#00b89f]/50 transition shadow-[0px_4px_8px_rgba(26,39,50,0.02)]"
+          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-emerald-500 transition shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] bg-[#e7faf7] flex items-center justify-center text-[#00b89f]">
-              <Receipt className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Receipt className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[#1e1e1e] text-xs font-medium">Total Tagihan</div>
-              <div className="text-[#8c8c8c] text-[10px]">Seluruh invoice</div>
+              <div className="text-slate-800 text-xs font-semibold">Total Tagihan</div>
+              <div className="text-slate-500 text-[11px]">Seluruh invoice</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#1e1e1e] text-lg font-semibold">{counts.semua}</span>
-            <ChevronRight className="w-4 h-4 text-[#bfbfbf]" />
+            <span className="text-slate-900 text-2xl font-bold">{counts.semua}</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </div>
 
@@ -264,20 +264,20 @@ export default function PembayaranDashboardPage() {
             setActiveTab("Belum Dibayar");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between cursor-pointer hover:border-amber-400/50 transition shadow-[0px_4px_8px_rgba(26,39,50,0.02)]"
+          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-amber-400 transition shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] bg-[#fef3e9] flex items-center justify-center text-[#e06a14]">
-              <Clock className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+              <Clock className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[#1e1e1e] text-xs font-medium">Belum Dibayar</div>
-              <div className="text-[#8c8c8c] text-[10px]">Perlu ditindaklanjuti</div>
+              <div className="text-slate-800 text-xs font-semibold">Belum Dibayar</div>
+              <div className="text-slate-500 text-[11px]">Perlu ditindaklanjuti</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#1e1e1e] text-lg font-semibold">{counts.belumDibayar}</span>
-            <ChevronRight className="w-4 h-4 text-[#bfbfbf]" />
+            <span className="text-slate-900 text-2xl font-bold">{counts.belumDibayar}</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </div>
 
@@ -287,20 +287,20 @@ export default function PembayaranDashboardPage() {
             setActiveTab("Lunas");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between cursor-pointer hover:border-emerald-400/50 transition shadow-[0px_4px_8px_rgba(26,39,50,0.02)]"
+          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-emerald-500 transition shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] bg-[#e6f4ef] flex items-center justify-center text-[#016b46]">
-              <Check className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+              <Check className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[#1e1e1e] text-xs font-medium">Lunas</div>
-              <div className="text-[#8c8c8c] text-[10px]">Pembayaran selesai</div>
+              <div className="text-slate-800 text-xs font-semibold">Lunas</div>
+              <div className="text-slate-500 text-[11px]">Pembayaran selesai</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#1e1e1e] text-lg font-semibold">{counts.lunas}</span>
-            <ChevronRight className="w-4 h-4 text-[#bfbfbf]" />
+            <span className="text-slate-900 text-2xl font-bold">{counts.lunas}</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </div>
 
@@ -310,43 +310,43 @@ export default function PembayaranDashboardPage() {
             setActiveTab("Batal");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between cursor-pointer hover:border-rose-400/50 transition shadow-[0px_4px_8px_rgba(26,39,50,0.02)]"
+          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-rose-400 transition shadow-xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] bg-[#fdf0f0] flex items-center justify-center text-[#dc2626]">
-              <X className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+              <X className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[#1e1e1e] text-xs font-medium">Dibatalkan</div>
-              <div className="text-[#8c8c8c] text-[10px]">Soft-delete tagihan</div>
+              <div className="text-slate-800 text-xs font-semibold">Dibatalkan</div>
+              <div className="text-slate-500 text-[11px]">Invoice dibatalkan</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#1e1e1e] text-lg font-semibold">{counts.batal}</span>
-            <ChevronRight className="w-4 h-4 text-[#bfbfbf]" />
+            <span className="text-slate-900 text-2xl font-bold">{counts.batal}</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </div>
       </div>
 
       {/* Main Container Card: Search, Tabs & Table */}
-      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.03)] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Search & Filter Toolbar */}
-        <div className="p-4 border-b border-[#f0f2f5] flex flex-col md:flex-row items-center gap-3">
+        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-[#9ca3af] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama pasien, No. RM, atau No. Invoice..."
-              className="w-full pl-9 pr-4 py-2 rounded-[8px] border border-[#e2e8f0] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 bg-slate-50/60 focus:bg-white transition"
             />
           </div>
 
-          <div className="flex items-center gap-2.5 w-full md:w-auto">
+          <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap sm:flex-nowrap">
             {/* Date Range Box */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-[8px] border border-[#e2e8f0] bg-white text-xs text-[#4b5563] shrink-0">
-              <Calendar className="w-3.5 h-3.5 text-[#9ca3af]" />
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-600 shrink-0 shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span>{dateRange}</span>
             </div>
 
@@ -354,7 +354,7 @@ export default function PembayaranDashboardPage() {
             <select
               value={statusDropdown}
               onChange={(e) => setStatusDropdown(e.target.value)}
-              className="px-3 py-2 rounded-[8px] border border-[#e2e8f0] bg-white text-xs text-[#4b5563] focus:outline-none focus:border-[#00b89f] shrink-0"
+              className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-emerald-500 shrink-0 shadow-2xs"
             >
               <option value="Semua status">Semua status</option>
               <option value="Belum Dibayar">Belum Dibayar</option>
@@ -362,145 +362,87 @@ export default function PembayaranDashboardPage() {
               <option value="Batal">Batal</option>
               <option value="Draft">Draft</option>
             </select>
-
-            {/* Cari Button */}
-            <button
-              type="button"
-              onClick={() => {}}
-              className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium transition cursor-pointer shrink-0"
-            >
-              Cari
-            </button>
           </div>
         </div>
 
         {/* Tab Filters */}
-        <div className="px-5 pt-3 border-b border-[#f0f2f5] flex items-center gap-6 text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setActiveTab("Semua")}
-            className={`pb-2.5 flex items-center gap-1.5 transition cursor-pointer relative ${
-              activeTab === "Semua"
-                ? "text-[#00b89f] font-semibold border-b-2 border-[#00b89f]"
-                : "text-[#6b7280] hover:text-[#1e1e1e]"
-            }`}
-          >
-            <span>Semua</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeTab === "Semua"
-                  ? "bg-[#e7faf7] text-[#00b89f]"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {counts.semua}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("Belum Dibayar")}
-            className={`pb-2.5 flex items-center gap-1.5 transition cursor-pointer relative ${
-              activeTab === "Belum Dibayar"
-                ? "text-[#00b89f] font-semibold border-b-2 border-[#00b89f]"
-                : "text-[#6b7280] hover:text-[#1e1e1e]"
-            }`}
-          >
-            <span>Belum Dibayar</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeTab === "Belum Dibayar"
-                  ? "bg-[#e7faf7] text-[#00b89f]"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {counts.belumDibayar}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("Lunas")}
-            className={`pb-2.5 flex items-center gap-1.5 transition cursor-pointer relative ${
-              activeTab === "Lunas"
-                ? "text-[#00b89f] font-semibold border-b-2 border-[#00b89f]"
-                : "text-[#6b7280] hover:text-[#1e1e1e]"
-            }`}
-          >
-            <span>Lunas</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeTab === "Lunas"
-                  ? "bg-[#e7faf7] text-[#00b89f]"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {counts.lunas}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("Batal")}
-            className={`pb-2.5 flex items-center gap-1.5 transition cursor-pointer relative ${
-              activeTab === "Batal"
-                ? "text-[#00b89f] font-semibold border-b-2 border-[#00b89f]"
-                : "text-[#6b7280] hover:text-[#1e1e1e]"
-            }`}
-          >
-            <span>Batal</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeTab === "Batal"
-                  ? "bg-[#e7faf7] text-[#00b89f]"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {counts.batal}
-            </span>
-          </button>
+        <div className="px-5 pt-3 border-b border-slate-100 flex items-center gap-4 sm:gap-6 text-xs font-medium overflow-x-auto no-scrollbar">
+          {(
+            [
+              { id: "Semua", label: "Semua", count: counts.semua },
+              { id: "Belum Dibayar", label: "Belum Dibayar", count: counts.belumDibayar },
+              { id: "Lunas", label: "Lunas", count: counts.lunas },
+              { id: "Batal", label: "Batal", count: counts.batal },
+            ] as const
+          ).map((t) => {
+            const isActive = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id)}
+                className={`pb-2.5 flex items-center gap-1.5 transition cursor-pointer relative shrink-0 ${
+                  isActive
+                    ? "text-emerald-700 font-semibold border-b-2 border-emerald-600"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <span>{t.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Table Content */}
-        <div className="overflow-x-auto">
+        {/* Desktop Table Content */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[#f0f2f5] text-[10px] font-semibold text-[#8c8c8c] uppercase tracking-wider bg-white">
-                <th className="py-3 px-4 w-12">NO.</th>
+              <tr className="border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
+                <th className="py-3 px-4 w-12 text-center">NO.</th>
                 <th className="py-3 px-4">NO. INVOICE</th>
                 <th className="py-3 px-4">NAMA PASIEN</th>
                 <th className="py-3 px-4">NO. RM</th>
-                <th className="py-3 px-4">PERIODE PERAWATAN</th>
+                <th className="py-3 px-4">PERIODE</th>
                 <th className="py-3 px-4">TOTAL TAGIHAN</th>
-                <th className="py-3 px-4">STATUS PEMBAYARAN</th>
+                <th className="py-3 px-4">STATUS</th>
                 <th className="py-3 px-4">TANGGAL TERBIT</th>
                 <th className="py-3 px-4 text-right">AKSI</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f5f6f8]">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-[#8c8c8c]">
-                    Memuat data tagihan pasien...
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                    <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin mx-auto mb-2" />
+                    <span>Memuat data tagihan pasien...</span>
                   </td>
                 </tr>
               ) : filteredBillings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-[#8c8c8c]">
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
                     Tidak ada data tagihan yang sesuai dengan kriteria filter.
                   </td>
                 </tr>
               ) : (
                 filteredBillings.map((item, idx) => (
-                  <tr key={item.id_tagihan} className="hover:bg-[#fafbfb] transition">
-                    <td className="py-3.5 px-4 text-[#8c8c8c] font-medium">
+                  <tr key={item.id_tagihan} className="hover:bg-slate-50/60 transition">
+                    <td className="py-3.5 px-4 text-slate-400 font-normal text-center">
                       {String(idx + 1).padStart(2, "0")}
                     </td>
 
-                    <td className="py-3.5 px-4 font-medium text-[#1e1e1e]">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
                       <Link
                         href={`/pembayaran/${item.id_tagihan}`}
-                        className="hover:text-[#00b89f] transition"
+                        className="hover:text-emerald-700 transition"
                       >
                         {item.no_tagihan}
                       </Link>
@@ -508,56 +450,56 @@ export default function PembayaranDashboardPage() {
 
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#e6f4ef] text-[#0fa18f] font-semibold text-[11px] flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center justify-center shrink-0">
                           {getInitials(item.nama_pasien)}
                         </div>
-                        <span className="font-medium text-[#1e1e1e]">{item.nama_pasien}</span>
+                        <span className="font-semibold text-slate-900">{item.nama_pasien}</span>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 text-[#4b5563]">{item.no_rm}</td>
+                    <td className="py-3.5 px-4 font-mono text-slate-600">{item.no_rm}</td>
 
-                    <td className="py-3.5 px-4 text-[#4b5563]">
-                      {item.periode_perawatan || "10-14 Feb 2026"}
+                    <td className="py-3.5 px-4 text-slate-600">
+                      {item.periode_perawatan || "-"}
                     </td>
 
-                    <td className="py-3.5 px-4 font-medium text-[#1e1e1e]">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 tabular-nums">
                       {formatRupiah(item.total_biaya_num)}
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       {item.status === "Belum Dibayar" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#fef3e9] text-[#b45309] border border-[#fed7aa]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                           Belum Dibayar
                         </span>
                       ) : item.status === "Lunas" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#e6f4ef] text-[#016b46] border border-[#cbe7dd]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                           Lunas
                         </span>
                       ) : item.status === "Batal" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#fdf0f0] text-[#dc2626] border border-[#fecaca]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
                           Batal
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#e7faf7] text-[#0b796b] border border-[#ccefeb]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0fa18f]" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                           Draft
                         </span>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-[#4b5563]">
-                      {item.tanggal_terbit_formatted || item.tanggal_diperbarui_formatted || "20 Feb 2026"}
+                    <td className="py-3.5 px-4 text-slate-500">
+                      {item.tanggal_terbit_formatted || item.tanggal_diperbarui_formatted || "-"}
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
                       <div className="inline-flex items-center justify-end gap-2 relative">
                         <Link
                           href={`/pembayaran/${item.id_tagihan}`}
-                          className="text-[#00b89f] hover:text-[#00a28c] hover:underline font-medium text-xs"
+                          className="text-emerald-700 hover:text-emerald-800 font-medium text-xs px-2 py-1 rounded-md hover:bg-emerald-50 transition border border-emerald-200"
                         >
                           Lihat Detail
                         </Link>
@@ -573,7 +515,7 @@ export default function PembayaranDashboardPage() {
                                 item.status === "Belum Dibayar" ? "Lunas" : "Belum Dibayar"
                               );
                             }}
-                            className="p-1 rounded text-[#9ca3af] hover:text-[#00b89f] hover:bg-slate-100 transition cursor-pointer"
+                            className="p-1 rounded-md text-slate-400 hover:text-emerald-700 hover:bg-slate-100 transition cursor-pointer"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
                           </button>
@@ -588,16 +530,16 @@ export default function PembayaranDashboardPage() {
                                 openDropdownId === item.id_tagihan ? null : item.id_tagihan
                               )
                             }
-                            className="p-1 rounded text-[#9ca3af] hover:text-[#1e1e1e] hover:bg-slate-100 transition cursor-pointer"
+                            className="p-1 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
                           >
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
 
                           {openDropdownId === item.id_tagihan && (
-                            <div className="absolute right-0 top-7 w-44 bg-white rounded-[8px] shadow-lg border border-[#e9ebf0] py-1 z-30 animate-fadeIn text-left">
+                            <div className="absolute right-0 top-7 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-30 animate-fadeIn text-left text-xs">
                               <Link
                                 href={`/pembayaran/${item.id_tagihan}`}
-                                className="block px-3 py-1.5 text-xs text-[#1e1e1e] hover:bg-[#f7f8f5]"
+                                className="block px-3.5 py-1.5 text-slate-700 hover:bg-slate-50"
                                 onClick={() => setOpenDropdownId(null)}
                               >
                                 Buka Tagihan
@@ -613,7 +555,7 @@ export default function PembayaranDashboardPage() {
                                       item.status === "Belum Dibayar" ? "Lunas" : "Belum Dibayar"
                                     );
                                   }}
-                                  className="w-full text-left px-3 py-1.5 text-xs text-[#1e1e1e] hover:bg-[#f7f8f5]"
+                                  className="w-full text-left px-3.5 py-1.5 text-slate-700 hover:bg-slate-50 cursor-pointer"
                                 >
                                   Ubah Status
                                 </button>
@@ -627,7 +569,7 @@ export default function PembayaranDashboardPage() {
                                     setCancelTarget(item);
                                     setCancelReason("");
                                   }}
-                                  className="w-full text-left px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50"
+                                  className="w-full text-left px-3.5 py-1.5 text-rose-600 hover:bg-rose-50 cursor-pointer"
                                 >
                                   Batalkan Tagihan
                                 </button>
@@ -644,34 +586,122 @@ export default function PembayaranDashboardPage() {
           </table>
         </div>
 
+        {/* Mobile Card View */}
+        <div className="md:hidden p-3.5 space-y-3 divide-y divide-slate-100">
+          {loading ? (
+            <div className="py-10 text-center text-slate-400 text-xs">
+              <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin mx-auto mb-2" />
+              <span>Memuat data tagihan...</span>
+            </div>
+          ) : filteredBillings.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 text-xs">
+              Tidak ada tagihan yang sesuai filter.
+            </div>
+          ) : (
+            filteredBillings.map((item) => (
+              <div
+                key={item.id_tagihan}
+                className="pt-3 first:pt-0 bg-white rounded-xl border border-slate-200 p-4 space-y-2.5 shadow-2xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                    {item.no_tagihan}
+                  </span>
+                  {item.status === "Belum Dibayar" ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Belum Dibayar
+                    </span>
+                  ) : item.status === "Lunas" ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                      Lunas
+                    </span>
+                  ) : item.status === "Batal" ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                      Batal
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      Draft
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="font-semibold text-slate-900 text-xs sm:text-sm">
+                    {item.nama_pasien}
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-mono">
+                    {item.no_rm} • {item.periode_perawatan || "-"}
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-600 flex items-center justify-between">
+                  <span className="font-mono font-bold text-slate-900 text-sm">
+                    {formatRupiah(item.total_biaya_num)}
+                  </span>
+                  <span className="text-[11px] text-slate-400">{item.tanggal_terbit_formatted}</span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <Link
+                    href={`/pembayaran/${item.id_tagihan}`}
+                    className="flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium text-center transition"
+                  >
+                    Buka Tagihan
+                  </Link>
+                  {item.status !== "Batal" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusModalTarget(item);
+                        setSelectedNewStatus(
+                          item.status === "Belum Dibayar" ? "Lunas" : "Belum Dibayar"
+                        );
+                      }}
+                      className="py-1.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition cursor-pointer"
+                    >
+                      Ubah Status
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Footer Pagination */}
-        <div className="p-4 border-t border-[#f0f2f5] flex items-center justify-between text-xs text-[#8c8c8c]">
+        <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <span>
-            Menampilkan {filteredBillings.length} dari {billings.length} tagihan
+            Menampilkan <strong className="text-slate-800">{filteredBillings.length}</strong> dari{" "}
+            <strong className="text-slate-800">{billings.length}</strong> tagihan
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               disabled
-              className="px-2.5 py-1 rounded-[6px] border border-[#e9ebf0] bg-white text-[#bfbfbf] text-xs opacity-50"
+              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-300 flex items-center justify-center text-xs"
             >
               &lt;
             </button>
             <button
               type="button"
-              className="px-2.5 py-1 rounded-[6px] bg-[#e7faf7] text-[#00b89f] font-semibold text-xs border border-[#ccefeb]"
+              className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-medium flex items-center justify-center text-xs shadow-2xs"
             >
               1
             </button>
             <button
               type="button"
-              className="px-2.5 py-1 rounded-[6px] border border-[#e9ebf0] bg-white text-[#4b5563] text-xs hover:bg-slate-50"
+              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 flex items-center justify-center text-xs hover:bg-slate-50"
             >
               2
             </button>
             <button
               type="button"
-              className="px-2.5 py-1 rounded-[6px] border border-[#e9ebf0] bg-white text-[#4b5563] text-xs hover:bg-slate-50"
+              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 flex items-center justify-center text-xs hover:bg-slate-50"
             >
               &gt;
             </button>

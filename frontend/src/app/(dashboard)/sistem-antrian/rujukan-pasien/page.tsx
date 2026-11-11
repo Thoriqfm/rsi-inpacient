@@ -265,109 +265,109 @@ export default function RujukanPasienPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0a2e28] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-teal-500/30 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-[#00b89f]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-sm font-medium">{toastMsg}</span>
         </div>
       )}
 
       {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[1px] text-[#0fa18f] mb-1">
-            SISTEM ANTRIAN
+          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
+            SISTEM ANTREAN & RUJUKAN
           </div>
-          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1e1e1e] tracking-tight leading-tight">
-            Rujukan Pasien Darurat
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+            Rujukan Pasien Darurat (SPGDT)
           </h1>
-          <p className="text-xs sm:text-sm text-[#666666] mt-1.5 max-w-2xl leading-relaxed">
-            Kelola proses rujukan pasien darurat ke rumah sakit jejaring terintegrasi SPGDT.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+            Kelola alur rujukan darurat ke rumah sakit jejaring saat fasilitas atau ruang intensif di RSI penuh.
           </p>
         </div>
 
         <button
           type="button"
           onClick={loadData}
-          className="self-start md:self-auto px-4 py-2 rounded-[8px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#1e1e1e] text-xs font-medium flex items-center gap-2 transition cursor-pointer shrink-0 shadow-2xs"
+          className="self-start sm:self-auto px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-2 transition cursor-pointer shrink-0 shadow-xs"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-[#00b89f] ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? "animate-spin" : ""}`} />
           <span>Segarkan Status RS</span>
         </button>
       </div>
 
-      {/* SUB-NAVIGATION LINE TABS (Figma node 322:13912) */}
+      {/* SUB-NAVIGATION LINE TABS */}
       <AntrianTabs
         waitingCount={waitingCount}
         referralCount={emergencyCandidates.length}
         monitoringCount={waitingCount + referrals.length}
       />
 
-      {/* 3 STAT KPI CARDS (Figma node 322:13924) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 3 STAT KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Card 1: Pasien Menunggu Rujukan */}
-        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)]">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-[10px] bg-[#fdf0f0] text-[#dc2626] flex items-center justify-center shrink-0">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
               <Ambulance className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#1e1e1e]">
+              <div className="text-xs font-semibold text-slate-800">
                 Pasien Menunggu Rujukan
               </div>
-              <div className="text-xs text-[#8c8c8c] mt-0.5">Kondisi darurat</div>
+              <div className="text-[11px] text-slate-500">Kondisi darurat</div>
             </div>
           </div>
-          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
             {emergencyCandidates.length}
           </span>
         </div>
 
         {/* Card 2: RS Tersedia */}
-        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)]">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-[10px] bg-[#e6f4ef] text-[#016b46] flex items-center justify-center shrink-0">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
               <Building2 className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#1e1e1e]">RS Tersedia</div>
-              <div className="text-xs text-[#8c8c8c] mt-0.5">Siap menerima pasien</div>
+              <div className="text-xs font-semibold text-slate-800">RS Tersedia</div>
+              <div className="text-[11px] text-slate-500">Siap menerima</div>
             </div>
           </div>
-          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
             {availableHospitalsCount}
           </span>
         </div>
 
-        {/* Card 3: Rujukan Hari Ini */}
-        <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-4 flex items-center justify-between shadow-[0px_4px_8px_rgba(26,39,50,0.02)]">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-[10px] bg-[#fef3e9] text-[#b45309] flex items-center justify-center shrink-0">
+        {/* Card 3: Rujukan Terbit */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
               <FileText className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#1e1e1e]">
-                Rujukan Hari Ini
+              <div className="text-xs font-semibold text-slate-800">
+                Rujukan Terbit
               </div>
-              <div className="text-xs text-[#8c8c8c] mt-0.5">25 Oktober 2026</div>
+              <div className="text-[11px] text-slate-500">Surat resmi terbit</div>
             </div>
           </div>
-          <span className="text-2xl sm:text-3xl font-medium text-[#1e1e1e]">
+          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
             {referrals.length}
           </span>
         </div>
       </div>
 
-      {/* MIDDLE 2-COLUMN BALANCED LAYOUT (Figma frame 322:13973) */}
+      {/* MIDDLE 2-COLUMN BALANCED LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-        {/* LEFT COLUMN: DAFTAR PASIEN DARURAT (Figma node 322:13974) */}
-        <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] overflow-hidden flex flex-col">
+        {/* LEFT COLUMN: DAFTAR PASIEN DARURAT */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           {/* Header & Search */}
-          <div className="p-5 border-b border-[#f0f2f5] space-y-3">
+          <div className="p-4 sm:p-5 border-b border-slate-100 space-y-3">
             <div>
-              <h2 className="text-base font-bold text-[#1e1e1e]">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Daftar Pasien Darurat
               </h2>
-              <p className="text-xs text-[#666666] mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Pilih pasien kondisi darurat (Triase Merah / IGD / PONEK) untuk dirujuk
               </p>
             </div>
@@ -379,7 +379,7 @@ export default function RujukanPasienPage() {
                 value={patientSearch}
                 onChange={(e) => setPatientSearch(e.target.value)}
                 placeholder="Cari nama pasien atau No. RM..."
-                className="w-full pl-9 pr-4 py-2 bg-white border border-[#e2e8f0] rounded-[8px] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50/60 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition"
               />
             </div>
           </div>
@@ -388,16 +388,15 @@ export default function RujukanPasienPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#fafafa] border-b border-[#f0f2f5] text-[11px] font-bold text-[#666666] uppercase tracking-wider">
-                  <th className="py-2.5 px-4 w-12 text-center">NO.</th>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-2.5 px-3 w-10 text-center">NO.</th>
                   <th className="py-2.5 px-3">NAMA PASIEN</th>
                   <th className="py-2.5 px-3">NO. RM</th>
                   <th className="py-2.5 px-3">KONDISI</th>
-                  <th className="py-2.5 px-3">STATUS</th>
-                  <th className="py-2.5 px-4 text-center w-20">AKSI</th>
+                  <th className="py-2.5 px-3 text-center w-20">AKSI</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0f2f5] text-xs">
+              <tbody className="divide-y divide-slate-100 text-xs">
                 {filteredPatients.map((p, idx) => {
                   const isSelected = selectedPasien.id_pasien === p.id_pasien;
                   const rowNum = String(idx + 1).padStart(2, "0");
@@ -408,47 +407,41 @@ export default function RujukanPasienPage() {
                       onClick={() => setSelectedPasien(p)}
                       className={`transition cursor-pointer ${
                         isSelected
-                          ? "bg-[#f0fdf9] border-l-4 border-l-[#00b89f]"
-                          : "hover:bg-slate-50/70 border-l-4 border-l-transparent"
+                          ? "bg-emerald-50/40 border-l-4 border-l-emerald-600"
+                          : "hover:bg-slate-50/60 border-l-4 border-l-transparent"
                       }`}
                     >
-                      <td className="py-3 px-4 text-center font-mono text-xs text-[#8c8c8c]">
+                      <td className="py-3 px-3 text-center font-mono text-xs text-slate-400">
                         {rowNum}
                       </td>
                       <td className="py-3 px-3">
-                        <div className="font-semibold text-[#1e1e1e]">
+                        <div className="font-semibold text-slate-900">
                           {p.nama_pasien}
                         </div>
-                        <div className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">
+                        <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                           {p.diagnosa_masuk}
                         </div>
                       </td>
-                      <td className="py-3 px-3 font-mono text-[11px] text-[#4b5563] whitespace-nowrap">
+                      <td className="py-3 px-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
                         {p.no_rm}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#fdf0f0] text-[#dc2626] border border-[#fecaca]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
                           Darurat
                         </span>
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#fef3e9] text-[#b45309] border border-[#fed7aa]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
-                          Menunggu
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedPasien(p);
                           }}
-                          className={`px-3 py-1 rounded-[6px] text-xs font-medium transition cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
                             isSelected
-                              ? "bg-[#00b89f] text-white shadow-2xs font-semibold"
-                              : "border border-[#00b89f] text-[#00b89f] hover:bg-[#e7faf7]"
+                              ? "bg-emerald-600 text-white shadow-2xs font-semibold"
+                              : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                           }`}
                         >
                           {isSelected ? "Terpilih" : "Pilih"}
@@ -462,46 +455,46 @@ export default function RujukanPasienPage() {
           </div>
 
           {/* Active Patient Clinical Card Footer */}
-          <div className="p-4 bg-[#f8faf9] border-t border-[#e9ebf0] text-xs space-y-1.5">
+          <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs space-y-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-bold text-[#1e1e1e]">
+              <div className="font-bold text-slate-900">
                 {selectedPasien.nama_pasien} ({selectedPasien.no_rm}) —{" "}
-                <span className="text-[#dc2626] font-semibold">
+                <span className="text-rose-700 font-semibold">
                   {selectedPasien.asal_instalasi}
                 </span>
               </div>
-              <span className="text-[#666666] flex items-center gap-1 text-[11px]">
-                <Stethoscope className="w-3.5 h-3.5 text-[#00b89f]" />
+              <span className="text-slate-600 flex items-center gap-1 text-[11px]">
+                <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
                 {selectedPasien.dokter_dpjp}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#4b5563]">
-              <HeartPulse className="w-3.5 h-3.5 text-[#dc2626] shrink-0" />
+            <div className="flex items-center gap-2 text-[11px] text-slate-700">
+              <HeartPulse className="w-3.5 h-3.5 text-rose-600 shrink-0" />
               <span className="font-medium">{selectedPasien.tanda_vital}</span>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: DAFTAR RUMAH SAKIT RUJUKAN (Figma node 322:14109) */}
-        <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] overflow-hidden flex flex-col">
+        {/* RIGHT COLUMN: DAFTAR RUMAH SAKIT RUJUKAN */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           {/* Header & Filter */}
-          <div className="p-5 border-b border-[#f0f2f5] space-y-3">
+          <div className="p-4 sm:p-5 border-b border-slate-100 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-bold text-[#1e1e1e]">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900">
                   Daftar Rumah Sakit Rujukan
                 </h2>
-                <p className="text-xs text-[#666666] mt-0.5">
-                  Pilih rumah sakit dengan status tersedia.
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Pilih rumah sakit jejaring dengan kapasitas tersedia
                 </p>
               </div>
 
-              <label className="inline-flex items-center gap-2 text-xs font-medium text-[#4b5563] cursor-pointer select-none">
+              <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={onlyAvailable}
                   onChange={(e) => setOnlyAvailable(e.target.checked)}
-                  className="rounded border-[#cbd5e1] text-[#00b89f] focus:ring-[#00b89f]"
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                 />
                 <span>Hanya RS Tersedia</span>
               </label>
@@ -514,15 +507,15 @@ export default function RujukanPasienPage() {
                 value={hospitalSearch}
                 onChange={(e) => setHospitalSearch(e.target.value)}
                 placeholder="Cari nama RS, lokasi, atau fasilitas..."
-                className="w-full pl-9 pr-4 py-2 bg-white border border-[#e2e8f0] rounded-[8px] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50/60 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition"
               />
             </div>
           </div>
 
           {/* Hospital List Items */}
-          <div className="divide-y divide-[#f0f2f5] overflow-y-auto max-h-[460px]">
+          <div className="divide-y divide-slate-100 overflow-y-auto max-h-[460px]">
             {filteredHospitals.length === 0 ? (
-              <div className="py-12 text-center text-xs text-[#8c8c8c]">
+              <div className="py-12 text-center text-xs text-slate-400">
                 Tidak ada rumah sakit yang sesuai pencarian.
               </div>
             ) : (
@@ -536,53 +529,53 @@ export default function RujukanPasienPage() {
                     onClick={() => setSelectedHospitalId(rs.id_rs)}
                     className={`p-4 transition cursor-pointer flex flex-col gap-2 ${
                       isSelected
-                        ? "bg-[#f0fdf9] border-l-4 border-l-[#00b89f]"
-                        : "hover:bg-slate-50/70 border-l-4 border-l-transparent"
+                        ? "bg-emerald-50/40 border-l-4 border-l-emerald-600"
+                        : "hover:bg-slate-50/60 border-l-4 border-l-transparent"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
                         <div
-                          className={`w-10 h-10 rounded-[8px] flex items-center justify-center shrink-0 mt-0.5 ${
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                             isAvail
-                              ? "bg-[#e6f4ef] text-[#016b46]"
-                              : "bg-[#f3f4f6] text-[#6b7280]"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-slate-100 text-slate-500"
                           }`}
                         >
                           <Building2 className="w-5 h-5 stroke-[1.8]" />
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-bold text-[#1e1e1e]">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                               {rs.nama_rs}
                             </span>
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
                                 isAvail
-                                  ? "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]"
-                                  : "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-rose-50 text-rose-700 border-rose-200"
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
-                                  isAvail ? "bg-[#059669]" : "bg-[#dc2626]"
+                                  isAvail ? "bg-emerald-600" : "bg-rose-600"
                                 }`}
                               />
                               {rs.status_ketersediaan}
                             </span>
                           </div>
 
-                          <div className="text-xs text-[#666666] mt-0.5">
+                          <div className="text-xs text-slate-500 mt-0.5 truncate">
                             {rs.alamat}
                           </div>
-                          <div className="text-xs text-[#666666] mt-0.5 flex items-center gap-3">
-                            <span className="flex items-center gap-1 font-mono text-[#4b5563]">
-                              <Phone className="w-3 h-3 text-[#00b89f]" />
+                          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-3">
+                            <span className="flex items-center gap-1 font-mono text-slate-600">
+                              <Phone className="w-3 h-3 text-emerald-600" />
                               {rs.kontak}
                             </span>
-                            <span className="text-[#8c8c8c]">•</span>
-                            <span className="text-[#0fa18f] font-medium">
+                            <span className="text-slate-300">•</span>
+                            <span className="text-emerald-700 font-medium">
                               {rs.jarak_estimasi}
                             </span>
                           </div>
@@ -596,10 +589,10 @@ export default function RujukanPasienPage() {
                             e.stopPropagation();
                             setSelectedHospitalId(rs.id_rs);
                           }}
-                          className={`px-3 py-1.5 rounded-[8px] text-xs font-medium transition cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
                             isSelected
-                              ? "bg-[#00b89f] text-white shadow-2xs font-semibold"
-                              : "border border-[#00b89f] text-[#00b89f] hover:bg-[#e7faf7]"
+                              ? "bg-emerald-600 text-white shadow-2xs font-semibold"
+                              : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                           }`}
                         >
                           {isSelected ? "Terpilih" : "Pilih RS"}
@@ -612,7 +605,7 @@ export default function RujukanPasienPage() {
                             handleToggleHospitalAvailability(rs);
                           }}
                           disabled={updatingHospitalId === rs.id_rs}
-                          className="text-[11px] text-[#666666] hover:text-[#1e1e1e] underline cursor-pointer"
+                          className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
                         >
                           {updatingHospitalId === rs.id_rs
                             ? "Menyimpan..."
@@ -628,7 +621,7 @@ export default function RujukanPasienPage() {
                       {rs.fasilitas_unggulan.slice(0, 3).map((f) => (
                         <span
                           key={f}
-                          className="px-2 py-0.5 rounded-[4px] bg-slate-100 text-[#4b5563] text-[10px]"
+                          className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px]"
                         >
                           {f}
                         </span>
@@ -642,89 +635,89 @@ export default function RujukanPasienPage() {
         </div>
       </div>
 
-      {/* FULL-WIDTH DETAIL RUJUKAN CARD (Figma node 322:14230) */}
-      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] p-6 space-y-6">
+      {/* FULL-WIDTH DETAIL RUJUKAN CARD */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-5">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-[#1e1e1e]">
-            Detail Rujukan
+          <h2 className="text-base sm:text-lg font-bold text-slate-900">
+            Detail & Penerbitan Surat Rujukan
           </h2>
-          <p className="text-xs text-[#666666] mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Konfirmasi data rujukan pasien darurat dan penerbitan Surat Rujukan Resmi SPGDT.
           </p>
         </div>
 
-        {/* 7 Summary Info Fields (Figma frame 322:14234) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4 rounded-[10px] bg-[#f8faf9] border border-[#e9ebf0]">
+        {/* 7 Summary Info Fields */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 p-4 rounded-xl bg-slate-50 border border-slate-200">
           {/* Field 1: Nama Pasien */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <User className="w-3.5 h-3.5 text-[#00b89f]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <User className="w-3.5 h-3.5 text-emerald-600" />
               Nama Pasien
             </div>
-            <div className="text-xs sm:text-sm font-semibold text-[#1e1e1e] truncate">
+            <div className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
               {selectedPasien ? selectedPasien.nama_pasien : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 2: No. RM */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <FileText className="w-3.5 h-3.5 text-[#00b89f]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
               No. RM
             </div>
-            <div className="text-xs sm:text-sm font-mono font-semibold text-[#1e1e1e]">
+            <div className="text-xs sm:text-sm font-mono font-semibold text-slate-900">
               {selectedPasien ? selectedPasien.no_rm : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 3: Kondisi Pasien */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <HeartPulse className="w-3.5 h-3.5 text-[#dc2626]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
               Kondisi
             </div>
-            <div className="text-xs sm:text-sm font-semibold text-[#dc2626] truncate">
+            <div className="text-xs sm:text-sm font-semibold text-rose-700 truncate">
               {selectedPasien ? selectedPasien.kondisi_pasien : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 4: Rumah Sakit Tujuan */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <Building2 className="w-3.5 h-3.5 text-[#00b89f]" />
-              Rumah Sakit Tujuan
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+              RS Tujuan
             </div>
-            <div className="text-xs sm:text-sm font-semibold text-[#1e1e1e] truncate">
+            <div className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
               {selectedHospital ? selectedHospital.nama_rs : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 5: Alamat RS */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <MapPin className="w-3.5 h-3.5 text-[#00b89f]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <MapPin className="w-3.5 h-3.5 text-emerald-600" />
               Alamat
             </div>
-            <div className="text-xs text-[#4b5563] truncate">
+            <div className="text-xs text-slate-600 truncate">
               {selectedHospital ? selectedHospital.alamat : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 6: Kontak RS */}
           <div className="space-y-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <Phone className="w-3.5 h-3.5 text-[#00b89f]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <Phone className="w-3.5 h-3.5 text-emerald-600" />
               Kontak
             </div>
-            <div className="text-xs font-mono text-[#4b5563]">
+            <div className="text-xs font-mono text-slate-600">
               {selectedHospital ? selectedHospital.kontak : "Belum dipilih"}
             </div>
           </div>
 
           {/* Field 7: Status Ketersediaan */}
           <div className="space-y-1 col-span-2 sm:col-span-1">
-            <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#00b89f]" />
+            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Status Ketersediaan
             </div>
             <div>
@@ -732,21 +725,21 @@ export default function RujukanPasienPage() {
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
                     selectedHospital.status_ketersediaan === "Tersedia"
-                      ? "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]"
-                      : "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-rose-50 text-rose-700 border-rose-200"
                   }`}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       selectedHospital.status_ketersediaan === "Tersedia"
-                        ? "bg-[#059669]"
-                        : "bg-[#dc2626]"
+                        ? "bg-emerald-600"
+                        : "bg-rose-600"
                     }`}
                   />
                   {selectedHospital.status_ketersediaan}
                 </span>
               ) : (
-                <span className="text-xs text-[#8c8c8c]">Belum dipilih</span>
+                <span className="text-xs text-slate-400">Belum dipilih</span>
               )}
             </div>
           </div>
@@ -755,14 +748,14 @@ export default function RujukanPasienPage() {
         {/* Textareas & Form Actions */}
         <form onSubmit={handleCreateReferral} className="space-y-4">
           {errorMsg && (
-            <div className="p-3.5 rounded-[8px] bg-[#fdf0f0] border border-[#fecaca] text-[#dc2626] text-xs font-medium flex items-center gap-2">
+            <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-[#1e1e1e] mb-1.5">
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
               Alasan Rujukan (Indikasi Medis & Kapasitas) *
             </label>
             <textarea
@@ -771,12 +764,12 @@ export default function RujukanPasienPage() {
               onChange={(e) => setAlasanRujukan(e.target.value)}
               required
               placeholder="Kondisi pasien membutuhkan penanganan lanjutan yang fasilitasnya sedang penuh di RSI..."
-              className="w-full px-3.5 py-2.5 text-xs text-[#1e1e1e] rounded-[8px] border border-[#e2e8f0] focus:outline-none focus:border-[#00b89f] transition"
+              className="w-full px-3.5 py-2.5 text-xs text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1e1e1e] mb-1.5">
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
               Ringkasan Tindakan / Terapi Stabilisasi Awal di IGD
             </label>
             <textarea
@@ -784,12 +777,12 @@ export default function RujukanPasienPage() {
               value={catatanMedis}
               onChange={(e) => setCatatanMedis(e.target.value)}
               placeholder="Catat terapi stabilisasi awal, oksigenasi, infus, dan obat emergensi yang telah diberikan..."
-              className="w-full px-3.5 py-2.5 text-xs text-[#1e1e1e] rounded-[8px] border border-[#e2e8f0] focus:outline-none focus:border-[#00b89f] transition"
+              className="w-full px-3.5 py-2.5 text-xs text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 transition"
             />
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[#f0f2f5]">
-            <div className="text-[11px] text-[#666666]">
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
+            <div className="text-[11px] text-slate-500">
               * Pastikan rumah sakit penerima telah siap dan status terkonfirmasi sebelum merujuk.
             </div>
 
@@ -800,7 +793,7 @@ export default function RujukanPasienPage() {
                 !selectedHospital ||
                 selectedHospital.status_ketersediaan !== "Tersedia"
               }
-              className="px-6 py-2.5 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer shrink-0"
+              className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition cursor-pointer shrink-0"
             >
               <FileText className="w-4 h-4" />
               <span>
@@ -814,17 +807,17 @@ export default function RujukanPasienPage() {
       </div>
 
       {/* BOTTOM TABLE: RIWAYAT SURAT RUJUKAN PASIEN DARURAT */}
-      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.02)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#f0f2f5] flex items-center justify-between">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#1e1e1e]">
+            <h2 className="text-sm font-bold text-slate-900">
               Riwayat Surat Rujukan Pasien Darurat
             </h2>
-            <p className="text-xs text-[#666666] mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Daftar surat rujukan resmi yang telah diterbitkan untuk penanganan lanjutan SPGDT
             </p>
           </div>
-          <span className="text-xs font-medium text-[#4b5563] bg-slate-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
             Total: {referrals.length} Surat
           </span>
         </div>
@@ -832,7 +825,7 @@ export default function RujukanPasienPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#fafafa] border-b border-[#f0f2f5] text-[11px] font-bold uppercase tracking-wider text-[#666666]">
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-5">NO. SURAT RUJUKAN</th>
                 <th className="py-3 px-4">PASIEN DARURAT</th>
                 <th className="py-3 px-4">RUMAH SAKIT TUJUAN</th>
@@ -841,36 +834,36 @@ export default function RujukanPasienPage() {
                 <th className="py-3 px-5 text-right">AKSI</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0f2f5] text-xs">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {referrals.map((r) => (
-                <tr key={r.id_surat} className="hover:bg-slate-50/70 transition">
+                <tr key={r.id_surat} className="hover:bg-slate-50/60 transition">
                   <td className="py-3.5 px-5">
-                    <div className="font-mono font-bold text-[#1e1e1e]">
+                    <div className="font-mono font-bold text-slate-900">
                       {r.no_rujukan}
                     </div>
-                    <div className="text-[11px] text-[#8c8c8c] mt-0.5">
+                    <div className="text-[11px] text-slate-400 mt-0.5">
                       {r.tanggal_rujukan_formatted}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-semibold text-[#1e1e1e]">
+                    <div className="font-semibold text-slate-900">
                       {r.nama_pasien}
                     </div>
-                    <div className="text-[11px] text-[#666666] font-mono">
+                    <div className="text-[11px] text-slate-500 font-mono">
                       {r.no_rm} • {r.jenis_kelamin_usia}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-semibold text-[#1e1e1e]">{r.nama_rs}</div>
-                    <div className="text-[11px] text-[#666666]">
+                    <div className="font-semibold text-slate-900">{r.nama_rs}</div>
+                    <div className="text-[11px] text-slate-500">
                       {r.alamat_rs}
                     </div>
                   </td>
                   <td className="py-3.5 px-4 max-w-[240px]">
-                    <div className="font-medium text-[#dc2626] line-clamp-1">
+                    <div className="font-medium text-rose-700 line-clamp-1">
                       {r.diagnosa}
                     </div>
-                    <div className="text-[11px] text-[#666666] line-clamp-1 mt-0.5">
+                    <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                       {r.alasan_rujukan}
                     </div>
                   </td>
@@ -878,23 +871,23 @@ export default function RujukanPasienPage() {
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                         r.status === "Diterima"
-                          ? "bg-[#e6f4ef] text-[#016b46] border-[#cbe7dd]"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : r.status === "Dikirim"
-                          ? "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
                           : r.status === "Batal"
-                          ? "bg-[#fdf0f0] text-[#dc2626] border-[#fecaca]"
-                          : "bg-[#fef3e9] text-[#b45309] border-[#fed7aa]"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
                           r.status === "Diterima"
-                            ? "bg-[#059669]"
+                            ? "bg-emerald-600"
                             : r.status === "Dikirim"
-                            ? "bg-[#2563eb]"
+                            ? "bg-blue-600"
                             : r.status === "Batal"
-                            ? "bg-[#dc2626]"
-                            : "bg-[#f59e0b]"
+                            ? "bg-rose-600"
+                            : "bg-amber-500"
                         }`}
                       />
                       {r.status}
@@ -904,9 +897,9 @@ export default function RujukanPasienPage() {
                     <button
                       type="button"
                       onClick={() => setActiveSuratModal(r)}
-                      className="px-3 py-1.5 rounded-[8px] bg-white hover:bg-slate-50 text-[#1e1e1e] border border-[#e2e8f0] text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                     >
-                      <Printer className="w-3.5 h-3.5 text-[#00b89f]" />
+                      <Printer className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Lihat & Cetak Surat</span>
                     </button>
                   </td>

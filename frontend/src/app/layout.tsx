@@ -31,7 +31,7 @@ export default function RootLayout({
       lang="id"
       className={`${plusJakarta.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#f7faf9] text-slate-800 antialiased selection:bg-[#13c9b3]/20 selection:text-[#0d332f]">
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-emerald-500/20 selection:text-emerald-950">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

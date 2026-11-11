@@ -344,7 +344,7 @@ function RincianBiayaPelayananContent() {
       <div className="flex items-center justify-between pt-2">
         <Link
           href="/pembayaran/buat"
-          className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-slate-50 text-[#4b5563] text-xs font-medium flex items-center gap-1.5 transition"
+          className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Kembali</span>
@@ -354,7 +354,7 @@ function RincianBiayaPelayananContent() {
           type="button"
           disabled={creating}
           onClick={handleProceedToInspection}
-          className="px-5 py-2.5 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
+          className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
         >
           <span>{creating ? "Memproses Draf..." : "Periksa Tagihan"}</span>
           <ChevronRight className="w-4 h-4" />

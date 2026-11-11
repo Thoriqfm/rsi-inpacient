@@ -197,7 +197,7 @@ export function UbahStatusModal({
                       value={opt.status}
                       checked={isSelected}
                       onChange={() => setSelectedStatus(opt.status)}
-                      className="mt-1 text-[#13c9b3] focus:ring-[#13c9b3]"
+                      className="mt-1 text-emerald-600 focus:ring-emerald-500"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export function UbahStatusModal({
             <button
               type="submit"
               disabled={isSubmitting || isOccupied}
-              className="px-6 py-2.5 rounded-xl bg-[#13c9b3] hover:bg-[#0fb39f] active:bg-[#0c9d8c] text-[#0d332f] text-sm font-bold shadow-md shadow-teal-500/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>
