@@ -40,7 +40,25 @@ export function SuratRujukanModal({
 
   useEffect(() => {
     if (!referral) return;
-    fetchReferralHistoryApi(referral.id_surat).then(setHistoryLogs);
+    let cancelled = false;
+    setErrorMsg(null);
+    fetchReferralHistoryApi(referral.id_surat)
+      .then((logs) => {
+        if (!cancelled) setHistoryLogs(logs);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setHistoryLogs([]);
+          setErrorMsg(
+            err instanceof Error
+              ? err.message
+              : "Gagal memuat riwayat audit surat rujukan."
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [referral]);
 
   if (!referral) return null;
@@ -287,25 +305,31 @@ export function SuratRujukanModal({
 
             {/* Audit Trail List */}
             <div className="space-y-1.5 pt-2 border-t border-[#e9ebf0]">
-              {historyLogs.map((log) => (
-                <div
-                  key={log.id_log}
-                  className="flex items-center justify-between text-[11px] bg-white px-3 py-2 rounded-[6px] border border-[#e9ebf0]"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#00b89f]" />
-                    <span className="font-semibold text-[#1e1e1e]">
-                      {log.aksi === "CREATE"
-                        ? `Surat Rujukan diterbitkan (Status: ${log.status_baru})`
-                        : `Status diubah: ${log.status_sebelumnya} → ${log.status_baru}`}
-                    </span>
-                  </div>
-                  <div className="text-[#666666]">
-                    Oleh <strong>{log.nama_petugas || "Petugas"}</strong> •{" "}
-                    {log.waktu_aksi_formatted}
-                  </div>
+              {historyLogs.length === 0 ? (
+                <div className="text-[11px] text-[#666666] bg-white px-3 py-2 rounded-[6px] border border-[#e9ebf0]">
+                  Belum ada catatan perubahan status pada riwayat audit.
                 </div>
-              ))}
+              ) : (
+                historyLogs.map((log) => (
+                  <div
+                    key={log.id_log}
+                    className="flex items-center justify-between text-[11px] bg-white px-3 py-2 rounded-[6px] border border-[#e9ebf0]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#00b89f]" />
+                      <span className="font-semibold text-[#1e1e1e]">
+                        {log.aksi === "CREATE"
+                          ? `Surat Rujukan diterbitkan (Status: ${log.status_baru})`
+                          : `Status diubah: ${log.status_sebelumnya} → ${log.status_baru}`}
+                      </span>
+                    </div>
+                    <div className="text-[#666666]">
+                      Oleh <strong>{log.nama_petugas || "Petugas"}</strong> •{" "}
+                      {log.waktu_aksi_formatted}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

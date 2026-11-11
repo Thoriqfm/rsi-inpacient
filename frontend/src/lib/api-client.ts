@@ -446,13 +446,11 @@ export async function fetchAvailableBedsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped: BedItem[] = rawItems.map(
-            (b: Record<string, unknown>, idx: number) =>
-              mapRawBedToBedItem({ ...b, status: "Tersedia" }, idx)
-          );
-          return { items: mapped, source: "backend" };
-        }
+        const mapped: BedItem[] = rawItems.map(
+          (b: Record<string, unknown>, idx: number) =>
+            mapRawBedToBedItem({ ...b, status: "Tersedia" }, idx)
+        );
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local stateful store
@@ -1696,31 +1694,56 @@ export async function fetchReferralHistoryApi(
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/referrals/${id_surat}/history`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+      clearTimeout(timer);
+
       if (res.ok) {
         const json = await res.json();
-        const rawList = json.data || [];
-        if (Array.isArray(rawList) && rawList.length > 0) {
-          return rawList.map((row: Record<string, unknown>, idx: number) => ({
-            id_log: Number(row.id_log || idx + 1),
-            aksi: String(row.aksi || "STATUS_CHANGE"),
-            status_sebelumnya: row.status_sebelumnya
-              ? String(row.status_sebelumnya)
-              : null,
-            status_baru: row.status_baru ? String(row.status_baru) : "Dibuat",
-            nama_petugas: row.nama_petugas
-              ? String(row.nama_petugas)
-              : "Rini Aprilianti",
-            waktu_aksi: String(row.waktu_aksi || new Date().toISOString()),
-            waktu_aksi_formatted: formatBackendTimestamp(row.waktu_aksi)
-              .timestamp,
-          }));
-        }
+        const rawList = Array.isArray(json.data?.items)
+          ? json.data.items
+          : Array.isArray(json.data)
+            ? json.data
+            : [];
+        return rawList.map((row: Record<string, unknown>, idx: number) => ({
+          id_log: Number(row.id_log || idx + 1),
+          aksi: String(row.aksi || "STATUS_CHANGE"),
+          status_sebelumnya: row.status_sebelumnya
+            ? String(row.status_sebelumnya)
+            : null,
+          status_baru: row.status_baru ? String(row.status_baru) : "Dibuat",
+          nama_petugas: row.nama_petugas
+            ? String(row.nama_petugas)
+            : "Rini Aprilianti",
+          waktu_aksi: String(row.waktu_aksi || new Date().toISOString()),
+          waktu_aksi_formatted: formatBackendTimestamp(row.waktu_aksi)
+            .timestamp,
+        }));
       }
-    } catch {
-      // fallback below
+      if (isStrictBackendMode()) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message ||
+            `Gagal memuat riwayat rujukan (HTTP ${res.status})`
+        );
+      }
+    } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        !err.message.includes("fetch") &&
+        !err.name.includes("AbortError")
+      ) {
+        throw err;
+      }
+      if (isStrictBackendMode()) {
+        throw new Error(
+          `[Strict Backend Mode] Operasi "fetchReferralHistory" gagal dijalankan ke server API Backend (${API_BASE_URL}). Pastikan server backend sedang aktif dan database terhubung.`
+        );
+      }
     }
   }
 
