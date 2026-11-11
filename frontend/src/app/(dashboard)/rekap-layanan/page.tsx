@@ -173,62 +173,63 @@ export default function RekapLayananPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 text-[#1e1e1e]">
-      {/* Toast Notification (Figma 72:6995) */}
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-800">
+      {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0a2e28] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-teal-500/30 flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-[#00b89f] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
           <button
             type="button"
             onClick={() => setToastMsg(null)}
-            className="ml-2 text-teal-200/60 hover:text-white"
+            className="ml-2 text-emerald-200 hover:text-white cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Page Header (Figma 143:27 - 143:33) */}
+      {/* Page Header */}
       <div className="space-y-1">
-        <p className="font-semibold text-[#0fa18f] text-[10px] tracking-[1px] uppercase">
+        <p className="font-semibold text-emerald-700 text-xs tracking-wider uppercase">
           REKAM MEDIS ELEKTRONIK
         </p>
-        <h1 className="text-[27px] font-medium leading-[35px] text-[#1e1e1e] tracking-[-0.675px]">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
           Rekap Riwayat Layanan &amp; Tindakan
         </h1>
-        <p className="text-[13px] text-[#667085] leading-[21px]">
-          Kelola dan periksa rekap layanan serta tindakan pasien rawat inap sebagai
-          dasar proses billing.
+        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+          Kelola dan periksa rekap layanan serta tindakan pasien rawat inap sebagai dasar proses billing.
         </p>
       </div>
 
-      {/* 3 Status Summary Cards (Figma 143:39 - 143:70) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 3 Status Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {/* Card 1: Draft */}
         <button
           type="button"
           onClick={() => setActiveTab("Draft")}
-          className={`bg-white border border-[#e9ebf0] rounded-[12px] p-[18px] min-h-[112px] flex items-center justify-between text-left transition shadow-[0px_4px_8px_rgba(26,39,50,0.05)] cursor-pointer hover:border-[#00b89f] ${
-            activeTab === "Draft" ? "ring-2 ring-[#0fa18f]/20 border-[#0fa18f]" : ""
+          className={`bg-white border rounded-xl p-4 sm:p-5 flex items-center justify-between text-left transition shadow-xs cursor-pointer hover:border-emerald-500 ${
+            activeTab === "Draft"
+              ? "border-emerald-600 ring-2 ring-emerald-500/20"
+              : "border-slate-200"
           }`}
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-[44px] h-[44px] rounded-[11px] bg-[#e7faf7] flex items-center justify-center shrink-0">
-              <FileText className="w-[18px] h-[18px] text-[#0fa18f]" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5 text-emerald-600 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[12px] text-[#475467] font-normal">Draft</div>
-              <div className="text-[10px] text-[#98a2b3] mt-0.5">
+              <div className="text-xs font-semibold text-slate-800">Draft</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
                 Rekap belum selesai
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[27px] font-medium text-[#1e1e1e]">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
               {counts.draft}
             </span>
-            <ChevronRight className="w-[18px] h-[18px] text-[#98a2b3]" />
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </button>
 
@@ -236,30 +237,30 @@ export default function RekapLayananPage() {
         <button
           type="button"
           onClick={() => setActiveTab("Proses Verifikasi")}
-          className={`bg-white border border-[#e9ebf0] rounded-[12px] p-[18px] min-h-[112px] flex items-center justify-between text-left transition shadow-[0px_4px_8px_rgba(26,39,50,0.05)] cursor-pointer hover:border-[#f68624] ${
+          className={`bg-white border rounded-xl p-4 sm:p-5 flex items-center justify-between text-left transition shadow-xs cursor-pointer hover:border-amber-500 ${
             activeTab === "Proses Verifikasi"
-              ? "ring-2 ring-[#f68624]/20 border-[#f68624]"
-              : ""
+              ? "border-amber-500 ring-2 ring-amber-500/20"
+              : "border-slate-200"
           }`}
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-[44px] h-[44px] rounded-[11px] bg-[#fef3e9] flex items-center justify-center shrink-0">
-              <Clock className="w-[18px] h-[18px] text-[#f68624]" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 text-amber-600 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[12px] text-[#475467] font-normal">
+              <div className="text-xs font-semibold text-slate-800">
                 Proses Verifikasi
               </div>
-              <div className="text-[10px] text-[#98a2b3] mt-0.5">
+              <div className="text-[11px] text-slate-500 mt-0.5">
                 Menunggu pemeriksaan
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[27px] font-medium text-[#1e1e1e]">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
               {counts.verifikasi}
             </span>
-            <ChevronRight className="w-[18px] h-[18px] text-[#98a2b3]" />
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </button>
 
@@ -267,53 +268,53 @@ export default function RekapLayananPage() {
         <button
           type="button"
           onClick={() => setActiveTab("Siap Billing")}
-          className={`bg-white border border-[#e9ebf0] rounded-[12px] p-[18px] min-h-[112px] flex items-center justify-between text-left transition shadow-[0px_4px_8px_rgba(26,39,50,0.05)] cursor-pointer hover:border-[#018f5d] ${
+          className={`bg-white border rounded-xl p-4 sm:p-5 flex items-center justify-between text-left transition shadow-xs cursor-pointer hover:border-emerald-600 ${
             activeTab === "Siap Billing"
-              ? "ring-2 ring-[#018f5d]/20 border-[#018f5d]"
-              : ""
+              ? "border-emerald-600 ring-2 ring-emerald-500/20"
+              : "border-slate-200"
           }`}
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-[44px] h-[44px] rounded-[11px] bg-[#e6f4ef] flex items-center justify-center shrink-0">
-              <Activity className="w-[18px] h-[18px] text-[#018f5d]" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <Activity className="w-5 h-5 text-emerald-700 stroke-[1.8]" />
             </div>
             <div>
-              <div className="text-[12px] text-[#475467] font-normal">
+              <div className="text-xs font-semibold text-slate-800">
                 Siap Billing
               </div>
-              <div className="text-[10px] text-[#98a2b3] mt-0.5">
-                Dapat diteruskan
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                Dapat diteruskan kasir
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[27px] font-medium text-[#1e1e1e]">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
               {counts.siapBilling}
             </span>
-            <ChevronRight className="w-[18px] h-[18px] text-[#98a2b3]" />
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
         </button>
       </div>
 
-      {/* Main Section: Search, Tabs, and Table (Figma 143:85) */}
-      <div className="bg-white border border-[#e9ebf0] rounded-[12px] shadow-[0px_4px_8px_rgba(26,39,50,0.05)] overflow-hidden">
-        {/* Search Bar (Figma 143:86 - 143:95) */}
-        <div className="p-5 pb-3.5">
+      {/* Main Section: Search, Tabs, Table & Mobile Cards */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        {/* Search Bar */}
+        <div className="p-4 sm:p-5 pb-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-xl">
-            <div className="bg-[#fbfcfc] border border-[#d7dce4] rounded-[9px] flex items-center gap-2.5 px-3 h-[40px] flex-1">
-              <Search className="w-[18px] h-[18px] text-[#a6acb5] shrink-0" />
+            <div className="bg-slate-50/60 border border-slate-200 rounded-lg flex items-center gap-2.5 px-3 h-10 flex-1">
+              <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nama pasien atau No. RM..."
-                className="w-full bg-transparent text-[12px] text-[#1e1e1e] placeholder-[#a6acb5] focus:outline-none"
+                className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -321,17 +322,17 @@ export default function RekapLayananPage() {
             </div>
             <button
               type="button"
-              className="bg-white border border-[#d7dce4] hover:bg-slate-50 text-[#344054] font-medium text-[12px] px-4 h-[40px] rounded-[9px] transition cursor-pointer"
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-xs px-4 h-10 rounded-lg transition cursor-pointer shadow-2xs"
             >
               Cari
             </button>
           </div>
         </div>
 
-        {/* Dynamic Patient Search Result Dropdown / Banner (Figma 144:3463 & 144:3216) */}
+        {/* Dynamic Patient Search Result Dropdown */}
         {searchQuery.trim().length > 0 && (
-          <div className="px-5 pb-4">
-            <div className="p-4 rounded-[10px] bg-slate-50 border border-slate-200 space-y-3">
+          <div className="px-4 sm:px-5 pb-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-700">
                   Hasil pencarian pasien untuk &ldquo;{searchQuery}&rdquo;
@@ -342,39 +343,39 @@ export default function RekapLayananPage() {
               </div>
 
               {patientSearchResults.length > 0 ? (
-                <div className="divide-y divide-slate-200/70 bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div className="divide-y divide-slate-200 bg-white rounded-lg border border-slate-200 overflow-hidden">
                   {patientSearchResults.slice(0, 3).map((p) => (
                     <div
                       key={p.id_pasien}
                       className="p-3 flex items-center justify-between gap-3 text-xs"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#b6eee7] text-[#07594f] font-semibold text-[11px] flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-900 font-semibold text-xs flex items-center justify-center shrink-0">
                           {getInitials(p.nama_pasien)}
                         </div>
-                        <div>
-                          <div className="font-bold text-slate-900">
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 truncate">
                             {p.nama_pasien}
                           </div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="text-[11px] text-slate-500 font-mono truncate">
                             {p.no_rm} • {p.periode_perawatan || "18–22 Februari 2026"}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {p.has_recap ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Sudah ada rekap
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800">
-                            Pasien belum memiliki rekap
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            Belum ada rekap
                           </span>
                         )}
                         <Link
                           href={`/rekap-layanan/pasien/${p.id_pasien}`}
-                          className="px-3 py-1.5 rounded-lg bg-[#0b796b] hover:bg-[#07594f] text-white font-medium text-[11px] transition"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-2xs"
                         >
                           Pilih Pasien
                         </Link>
@@ -383,7 +384,7 @@ export default function RekapLayananPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-4 text-center space-y-2">
+                <div className="p-4 text-center space-y-1">
                   <p className="text-xs font-bold text-slate-800">
                     Pasien tidak ditemukan
                   </p>
@@ -393,7 +394,7 @@ export default function RekapLayananPage() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="text-xs font-semibold text-[#0b796b] hover:underline"
+                    className="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer"
                   >
                     Hapus Pencarian
                   </button>
@@ -403,144 +404,74 @@ export default function RekapLayananPage() {
           </div>
         )}
 
-        {/* Tab List (Figma 143:104 - 143:121) */}
-        <div className="border-b border-[#e9ebf0] px-5 flex items-center gap-5.5 overflow-x-auto">
-          {/* Tab: Semua */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("Semua")}
-            className="flex items-center gap-1.5 h-[42px] px-0.5 relative cursor-pointer"
-          >
-            <span
-              className={`text-[11px] font-medium ${
-                activeTab === "Semua" ? "text-[#0b796b]" : "text-[#667085]"
-              }`}
-            >
-              Semua
-            </span>
-            <span
-              className={`h-[18px] min-w-[20px] px-1.5 rounded-[9px] text-[9px] font-medium flex items-center justify-center ${
-                activeTab === "Semua"
-                  ? "bg-[#e7faf7] text-[#0b796b]"
-                  : "bg-[#f0f2f3] text-[#737b88]"
-              }`}
-            >
-              {counts.total}
-            </span>
-            {activeTab === "Semua" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
-            )}
-          </button>
-
-          {/* Tab: Draft */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("Draft")}
-            className="flex items-center gap-1.5 h-[42px] px-0.5 relative cursor-pointer"
-          >
-            <span
-              className={`text-[11px] font-medium ${
-                activeTab === "Draft" ? "text-[#0b796b]" : "text-[#667085]"
-              }`}
-            >
-              Draft
-            </span>
-            <span
-              className={`h-[18px] min-w-[20px] px-1.5 rounded-[9px] text-[9px] font-medium flex items-center justify-center ${
-                activeTab === "Draft"
-                  ? "bg-[#e7faf7] text-[#0b796b]"
-                  : "bg-[#f0f2f3] text-[#737b88]"
-              }`}
-            >
-              {counts.draft}
-            </span>
-            {activeTab === "Draft" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
-            )}
-          </button>
-
-          {/* Tab: Proses Verifikasi */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("Proses Verifikasi")}
-            className="flex items-center gap-1.5 h-[42px] px-0.5 relative cursor-pointer"
-          >
-            <span
-              className={`text-[11px] font-medium ${
-                activeTab === "Proses Verifikasi"
-                  ? "text-[#0b796b]"
-                  : "text-[#667085]"
-              }`}
-            >
-              Proses Verifikasi
-            </span>
-            <span
-              className={`h-[18px] min-w-[20px] px-1.5 rounded-[9px] text-[9px] font-medium flex items-center justify-center ${
-                activeTab === "Proses Verifikasi"
-                  ? "bg-[#e7faf7] text-[#0b796b]"
-                  : "bg-[#f0f2f3] text-[#737b88]"
-              }`}
-            >
-              {counts.verifikasi}
-            </span>
-            {activeTab === "Proses Verifikasi" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
-            )}
-          </button>
-
-          {/* Tab: Siap Billing */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("Siap Billing")}
-            className="flex items-center gap-1.5 h-[42px] px-0.5 relative cursor-pointer"
-          >
-            <span
-              className={`text-[11px] font-medium ${
-                activeTab === "Siap Billing" ? "text-[#0b796b]" : "text-[#667085]"
-              }`}
-            >
-              Siap Billing
-            </span>
-            <span
-              className={`h-[18px] min-w-[20px] px-1.5 rounded-[9px] text-[9px] font-medium flex items-center justify-center ${
-                activeTab === "Siap Billing"
-                  ? "bg-[#e7faf7] text-[#0b796b]"
-                  : "bg-[#f0f2f3] text-[#737b88]"
-              }`}
-            >
-              {counts.siapBilling}
-            </span>
-            {activeTab === "Siap Billing" && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00b89f] rounded-t-[2px]" />
-            )}
-          </button>
+        {/* Tab List */}
+        <div className="border-b border-slate-100 px-4 sm:px-5 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
+          {(
+            [
+              { id: "Semua", label: "Semua", count: counts.total },
+              { id: "Draft", label: "Draft", count: counts.draft },
+              { id: "Proses Verifikasi", label: "Proses Verifikasi", count: counts.verifikasi },
+              { id: "Siap Billing", label: "Siap Billing", count: counts.siapBilling },
+            ] as const
+          ).map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className="flex items-center gap-1.5 h-11 px-0.5 relative cursor-pointer shrink-0"
+              >
+                <span
+                  className={`text-xs font-medium ${
+                    isActive ? "text-emerald-700 font-semibold" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                </span>
+                <span
+                  className={`h-4.5 min-w-5 px-1.5 rounded-full text-[10px] font-medium flex items-center justify-center ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-t" />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Table Content (Figma 143:123 - 143:240) */}
-        <div className="overflow-x-auto min-h-[220px]">
+        {/* Desktop Table Content */}
+        <div className="hidden md:block overflow-x-auto min-h-[220px]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#f8faf9] border-b border-[#e9ebf0] text-[9px] font-medium text-[#667085] uppercase tracking-[0.225px]">
-                <th className="py-3 pl-5 pr-3 w-[50px]">No.</th>
-                <th className="py-3 px-3 w-[220px]">Nama Pasien</th>
-                <th className="py-3 px-3 w-[124px]">No. RM</th>
-                <th className="py-3 px-3 w-[142px]">Periode Perawatan</th>
-                <th className="py-3 px-3 w-[120px]">Jumlah Layanan</th>
-                <th className="py-3 px-3 w-[110px]">Status Rekap</th>
-                <th className="py-3 px-3 w-[140px]">Terakhir Diperbarui</th>
-                <th className="py-3 pl-3 pr-5 text-right w-[180px]">Aksi</th>
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="py-3 pl-5 pr-3 w-12">No.</th>
+                <th className="py-3 px-3">Nama Pasien</th>
+                <th className="py-3 px-3">No. RM</th>
+                <th className="py-3 px-3">Periode</th>
+                <th className="py-3 px-3">Layanan</th>
+                <th className="py-3 px-3">Status Rekap</th>
+                <th className="py-3 px-3">Diperbarui</th>
+                <th className="py-3 pl-3 pr-5 text-right w-44">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#edf0f1] text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
-                    Memuat data rekap layanan &amp; tindakan...
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin mx-auto mb-2" />
+                    <span>Memuat data rekap tindakan...</span>
                   </td>
                 </tr>
               ) : filteredHistories.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     Tidak ada dokumen rekap untuk status atau filter pencarian ini.
                   </td>
                 </tr>
@@ -554,69 +485,68 @@ export default function RekapLayananPage() {
                   return (
                     <tr
                       key={h.id_rekap}
-                      className="hover:bg-[#fbfcfc] transition"
+                      className="hover:bg-slate-50/60 transition"
                     >
                       {/* No */}
-                      <td className="py-3.5 pl-5 pr-3 font-normal text-[#475467]">
+                      <td className="py-3.5 pl-5 pr-3 font-normal text-slate-400">
                         {numStr}
                       </td>
 
                       {/* Nama Pasien + Room */}
                       <td className="py-3.5 px-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-[32px] h-[32px] rounded-[9px] bg-[#e7faf7] text-[#0b796b] font-medium text-[9px] flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center justify-center shrink-0">
                             {getInitials(h.nama_pasien)}
                           </div>
                           <div>
-                            <div className="font-normal text-[#2b313b] text-[11px]">
+                            <div className="font-semibold text-slate-900 text-xs">
                               {h.nama_pasien}
                             </div>
-                            <div className="text-[9px] text-[#98a2b3]">
-                              {h.nama_kamar || "Cendana 1 • Kamar 108"}
+                            <div className="text-[10px] text-slate-500">
+                              {h.nama_kamar || "Kamar Rawat Inap"}
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* No RM */}
-                      <td className="py-3.5 px-3 font-medium text-[#344054]">
+                      <td className="py-3.5 px-3 font-mono font-medium text-slate-800">
                         {h.no_rm}
                       </td>
 
                       {/* Periode */}
-                      <td className="py-3.5 px-3 font-normal text-[#475467]">
-                        {h.periode_perawatan || "15–19 Februari 2026"}
+                      <td className="py-3.5 px-3 text-slate-600 text-xs">
+                        {h.periode_perawatan || "-"}
                       </td>
 
                       {/* Jumlah Layanan */}
-                      <td className="py-3.5 px-3 font-normal text-[#2b313b]">
-                        <span>{h.jumlah_tindakan}</span>{" "}
-                        <span className="text-[#475467]">item</span>
+                      <td className="py-3.5 px-3 text-slate-800 font-medium">
+                        {h.jumlah_tindakan} <span className="text-slate-400 font-normal">item</span>
                       </td>
 
                       {/* Status Rekap Badge */}
-                      <td className="py-3.5 px-3">
+                      <td className="py-3.5 px-3 whitespace-nowrap">
                         {isDraft ? (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[12px] bg-[#e7faf7] border border-[#ccefeb] text-[#0b796b] text-[9px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0fa18f]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                             <span>Draft</span>
-                          </div>
+                          </span>
                         ) : isSiapBilling ? (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[12px] bg-[#e6f4ef] border border-[#cbe7dd] text-[#016b46] text-[9px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#018f5d]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                             <span>Siap Billing</span>
-                          </div>
+                          </span>
                         ) : (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[12px] bg-[#fef3e9] border border-[#fed7aa] text-[#b45309] text-[9px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                             <span>Proses Verifikasi</span>
-                          </div>
+                          </span>
                         )}
                       </td>
 
                       {/* Terakhir Diperbarui */}
-                      <td className="py-3.5 px-3 font-normal text-[#475467]">
-                        {h.tanggal_diperbarui_formatted || "Kemarin, 16.42"}
+                      <td className="py-3.5 px-3 text-slate-500 text-xs">
+                        {h.tanggal_diperbarui_formatted || "-"}
                       </td>
 
                       {/* Aksi */}
@@ -625,7 +555,7 @@ export default function RekapLayananPage() {
                           {/* Lihat Detail */}
                           <Link
                             href={`/rekap-layanan/${h.id_rekap}`}
-                            className="text-[#0b796b] hover:text-[#07594f] font-medium text-[10px] px-2 py-1 rounded-md hover:bg-teal-50 transition"
+                            className="text-emerald-700 hover:text-emerald-800 font-medium text-xs px-2.5 py-1 rounded-md hover:bg-emerald-50 transition border border-emerald-200"
                           >
                             Lihat Detail
                           </Link>
@@ -635,13 +565,13 @@ export default function RekapLayananPage() {
                             <Link
                               href={`/rekap-layanan/${h.id_rekap}/edit`}
                               title="Edit Rekap"
-                              className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center text-[#667085] hover:text-[#1e1e1e] hover:bg-slate-100 transition"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                             >
-                              <Edit3 className="w-[15px] h-[15px]" />
+                              <Edit3 className="w-4 h-4" />
                             </Link>
                           )}
 
-                          {/* 3 Dots Menu Button (Figma 72:2169) */}
+                          {/* 3 Dots Menu Button */}
                           <div className="relative" data-action-menu>
                             <button
                               type="button"
@@ -649,9 +579,9 @@ export default function RekapLayananPage() {
                                 e.stopPropagation();
                                 setOpenMenuId(isMenuOpen ? null : h.id_rekap);
                               }}
-                              className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center text-[#667085] hover:text-[#1e1e1e] hover:bg-slate-100 transition cursor-pointer"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
                             >
-                              <MoreHorizontal className="w-[18px] h-[18px]" />
+                              <MoreHorizontal className="w-4 h-4" />
                             </button>
 
                             {/* Dropdown Menu */}
@@ -689,32 +619,118 @@ export default function RekapLayananPage() {
           </table>
         </div>
 
-        {/* Table Footer: Pagination & Count (Figma 143:244 - 143:253) */}
-        <div className="border-t border-[#e9ebf0] px-5 py-3.5 flex items-center justify-between text-[10px] text-[#667085]">
+        {/* Mobile Card Content */}
+        <div className="md:hidden p-3.5 space-y-3 divide-y divide-slate-100">
+          {loading ? (
+            <div className="py-10 text-center text-slate-400 text-xs">
+              <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin mx-auto mb-2" />
+              <span>Memuat data rekap...</span>
+            </div>
+          ) : filteredHistories.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 text-xs">
+              Tidak ada rekap yang sesuai kriteria.
+            </div>
+          ) : (
+            filteredHistories.map((h) => {
+              const isDraft = h.status === "Draft";
+              const isSiapBilling = h.status === "Siap Billing";
+              return (
+                <div
+                  key={h.id_rekap}
+                  className="pt-3 first:pt-0 bg-white rounded-xl border border-slate-200 p-4 space-y-2.5 shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                      {h.kode_rekap}
+                    </span>
+                    {isDraft ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        Draft
+                      </span>
+                    ) : isSiapBilling ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        Siap Billing
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        Proses Verifikasi
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="font-semibold text-slate-900 text-xs sm:text-sm">
+                      {h.nama_pasien}
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-mono">
+                      {h.no_rm} • {h.nama_kamar || "Kamar Ranap"}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-600 flex items-center justify-between">
+                    <span>{h.jumlah_tindakan} tindakan layanan</span>
+                    <span className="text-[11px] text-slate-400">{h.tanggal_diperbarui_formatted}</span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <Link
+                      href={`/rekap-layanan/${h.id_rekap}`}
+                      className="flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium text-center transition"
+                    >
+                      Lihat Detail
+                    </Link>
+                    {!isSiapBilling && (
+                      <Link
+                        href={`/rekap-layanan/${h.id_rekap}/edit`}
+                        className="py-1.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium text-center transition"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(h)}
+                      className="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                      title="Hapus Rekap"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Table Footer: Pagination & Count */}
+        <div className="border-t border-slate-100 px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <div>
-            Menampilkan <span className="text-[#344054] font-medium">{filteredHistories.length}</span> dari{" "}
-            <span className="text-[#344054] font-medium">{histories.length}</span> rekap
+            Menampilkan <span className="text-slate-800 font-semibold">{filteredHistories.length}</span> dari{" "}
+            <span className="text-slate-800 font-semibold">{histories.length}</span> rekap
           </div>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               disabled
-              className="w-[30px] h-[30px] rounded-lg border border-slate-200 text-slate-300 flex items-center justify-center text-xs"
+              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-300 flex items-center justify-center text-xs"
             >
-              ‹
+              &lt;
             </button>
             <button
               type="button"
-              className="w-[30px] h-[30px] rounded-lg border border-teal-500 bg-teal-50 text-[#0b796b] font-medium flex items-center justify-center text-xs"
+              className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-medium flex items-center justify-center text-xs shadow-2xs"
             >
               1
             </button>
             <button
               type="button"
               disabled
-              className="w-[30px] h-[30px] rounded-lg border border-slate-200 text-slate-300 flex items-center justify-center text-xs"
+              className="w-8 h-8 rounded-lg border border-slate-200 text-slate-300 flex items-center justify-center text-xs"
             >
-              ›
+              &gt;
             </button>
           </div>
         </div>

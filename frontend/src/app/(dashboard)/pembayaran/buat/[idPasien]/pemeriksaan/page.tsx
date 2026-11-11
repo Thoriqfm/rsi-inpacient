@@ -174,158 +174,152 @@ function PemeriksaanTagihanContent() {
   }
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-[#1e1e1e]">
+    <div className="space-y-6 pb-12 font-sans text-slate-800 max-w-7xl mx-auto">
       {/* Toast Alert */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0d332f] text-white px-5 py-3 rounded-[10px] shadow-xl border border-[#00b89f]/40 flex items-center gap-3 animate-fadeIn">
-          <Check className="w-5 h-5 text-[#00b89f] shrink-0" />
-          <span className="text-xs font-medium">{toastMsg}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
+          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-[#8c8c8c]">
-        <Link href="/pembayaran" className="hover:text-[#00b89f] transition">
-          Pembayaran (Billing)
-        </Link>
-        <span>/</span>
-        <Link href="/pembayaran/buat" className="hover:text-[#00b89f] transition">
-          Buat Tagihan
-        </Link>
-        <span>/</span>
-        <span className="text-[#0fa18f] font-medium">Pemeriksaan</span>
-      </div>
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Header */}
       <div>
-        <h1 className="text-[#1e1e1e] text-[27px] font-medium leading-[35px] tracking-[-0.675px]">
-          Pemeriksaan Tagihan
+        <div className="text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-1">
+          LANGKAH 2 — PEMERIKSAAN BIAYA
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+          Pemeriksaan &amp; Penyesuaian Tagihan
         </h1>
-        <p className="text-[#666] text-xs font-normal mt-0.5">
-          Pastikan seluruh rincian biaya telah sesuai dengan riwayat layanan pasien sebelum tagihan diterbitkan.
+        <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+          Pastikan seluruh rincian tarif dan tindakan telah sesuai dengan rekam medis pasien sebelum invoice diterbitkan.
         </p>
       </div>
 
       {/* 2 Columns Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Kolom Kiri: Info, Tabel Rincian, Verifikasi & Catatan Penyesuaian */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Kolom Kiri: Info, Tabel Rincian, Verifikasi (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
           {/* CARD 1: Informasi Pasien */}
-          <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.03)] space-y-5">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-full bg-[#e6f4ef] text-[#0fa18f] font-semibold text-sm flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-900 font-bold text-sm flex items-center justify-center shrink-0">
                   {getInitials(billing.nama_pasien)}
                 </div>
                 <div>
-                  <div className="text-[#0fa18f] text-[10px] font-semibold uppercase tracking-wider">
+                  <div className="text-emerald-700 text-[10px] font-semibold uppercase tracking-wider">
                     INFORMASI PASIEN
                   </div>
-                  <h2 className="text-[#1e1e1e] text-base font-semibold">
+                  <h2 className="text-slate-900 text-base font-bold">
                     {billing.nama_pasien}
                   </h2>
-                  <span className="text-xs text-[#8c8c8c]">{billing.no_rm}</span>
+                  <span className="text-xs text-slate-500 font-mono">{billing.no_rm}</span>
                 </div>
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-[#e6f4ef] text-[#016b46] border border-[#cbe7dd]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                 Siap Billing
               </span>
             </div>
 
             {/* 4 Details Columns */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-[#f0f2f5] text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-slate-100 text-xs">
               <div>
-                <span className="text-[10px] text-[#8c8c8c] block">Periode Perawatan</span>
-                <span className="font-medium text-[#1e1e1e]">
-                  {billing.periode_perawatan || "15–19 Februari 2026"}
+                <span className="text-slate-400 text-[11px] block">Periode Perawatan</span>
+                <span className="font-medium text-slate-800">
+                  {billing.periode_perawatan || "15–19 Feb 2026"}
                 </span>
               </div>
 
               <div>
-                <span className="text-[10px] text-[#8c8c8c] block">Kamar / Bed</span>
-                <span className="font-medium text-[#1e1e1e]">
-                  {billing.nama_kamar || `${billing.kelas_perawatan} • Kamar 108`}
+                <span className="text-slate-400 text-[11px] block">Kamar / Bed</span>
+                <span className="font-medium text-slate-800">
+                  {billing.nama_kamar || `${billing.kelas_perawatan} • Bed 108`}
                 </span>
               </div>
 
               <div>
-                <span className="text-[10px] text-[#8c8c8c] block">ID Rekap</span>
-                <span className="font-medium text-[#1e1e1e] font-mono">
+                <span className="text-slate-400 text-[11px] block">ID Rekap</span>
+                <span className="font-mono font-medium text-slate-800">
                   {billing.kode_rekap}
                 </span>
               </div>
 
               <div>
-                <span className="text-[10px] text-[#8c8c8c] block">Sumber Data</span>
-                <span className="font-medium text-[#1e1e1e]">
-                  RME & Rekap Layanan
+                <span className="text-slate-400 text-[11px] block">Sumber Data</span>
+                <span className="font-medium text-slate-800">
+                  RME &amp; Rekap Rawat Inap
                 </span>
               </div>
             </div>
           </div>
 
           {/* CARD 2: Rincian Biaya Pelayanan (Table) */}
-          <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.03)] overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#f0f2f5] flex items-center justify-between">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#1e1e1e]">Rincian biaya pelayanan</h3>
-                <p className="text-[11px] text-[#8c8c8c] mt-0.5">
-                  Referensi: {billing.kode_rekap} • Terakhir diperbarui {billing.tanggal_diperbarui_formatted || "24 Feb 2026, 09.30"}
+                <h3 className="text-xs font-semibold text-slate-800">Rincian Biaya Pelayanan</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Referensi: {billing.kode_rekap} • Terakhir diperbarui {billing.tanggal_diperbarui_formatted || "24 Feb 2026"}
                 </p>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-[#8c8c8c]">
-                Hanya baca
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-600">
+                Data RME
               </span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-[#f0f2f5] text-[10px] font-semibold text-[#8c8c8c] uppercase tracking-wider bg-white">
-                    <th className="py-3 px-6 w-12">NO.</th>
-                    <th className="py-3 px-4">TANGGAL LAYANAN</th>
-                    <th className="py-3 px-4">NAMA LAYANAN / TINDAKAN</th>
+                  <tr className="border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
+                    <th className="py-3 px-4 w-12 text-center">NO.</th>
+                    <th className="py-3 px-4">TANGGAL</th>
+                    <th className="py-3 px-4">NAMA TINDAKAN</th>
                     <th className="py-3 px-4">KATEGORI</th>
                     <th className="py-3 px-4">JUMLAH</th>
                     <th className="py-3 px-4">TARIF SATUAN</th>
-                    <th className="py-3 px-6 text-right">SUBTOTAL</th>
+                    <th className="py-3 px-5 text-right">SUBTOTAL</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#f5f6f8]">
+                <tbody className="divide-y divide-slate-100">
                   {billing.detail_tagihan_list.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-[#fafbfb] transition">
-                      <td className="py-3.5 px-6 text-[#8c8c8c] font-medium">
+                    <tr key={idx} className="hover:bg-slate-50/60 transition">
+                      <td className="py-3 px-4 text-slate-400 text-center font-normal">
                         {String(idx + 1).padStart(2, "0")}
                       </td>
 
-                      <td className="py-3.5 px-4 text-[#4b5563]">
-                        {item.tanggal_tindakan || "15–19 Feb 2026"}
+                      <td className="py-3 px-4 text-slate-600">
+                        {item.tanggal_tindakan || "-"}
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <div className="font-medium text-[#1e1e1e]">{item.nama_tindakan}</div>
-                        <div className="text-[10px] text-[#8c8c8c] mt-0.5">
-                          Data dummy untuk kebutuhan prototype
-                        </div>
+                      <td className="py-3 px-4 font-semibold text-slate-900">
+                        {item.nama_tindakan}
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-[6px] bg-[#f3f4f6] text-[10px] font-medium text-[#4b5563]">
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-medium text-slate-700">
                           {item.kategori}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 text-[#4b5563]">
+                      <td className="py-3 px-4 text-slate-700">
                         {item.jumlah} {item.satuan}
                       </td>
 
-                      <td className="py-3.5 px-4 text-[#4b5563]">
+                      <td className="py-3 px-4 text-slate-700 font-mono">
                         {formatRupiah(item.harga_satuan_num)}
                       </td>
 
-                      <td className="py-3.5 px-6 text-right font-medium text-[#1e1e1e]">
+                      <td className="py-3 px-5 text-right font-mono font-bold text-slate-900 tabular-nums">
                         {formatRupiah(item.subtotal_num)}
                       </td>
                     </tr>
@@ -336,72 +330,69 @@ function PemeriksaanTagihanContent() {
           </div>
 
           {/* CARD 3: Verifikasi & Catatan Penyesuaian */}
-          <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.03)] space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-3.5">
             <div>
-              <h3 className="text-xs font-semibold text-[#1e1e1e]">
-                Verifikasi & catatan penyesuaian
+              <h3 className="text-xs font-semibold text-slate-800">
+                Verifikasi &amp; Catatan Penyesuaian
               </h3>
-              <p className="text-[11px] text-[#8c8c8c] mt-0.5">
-                Catatan disimpan sebagai referensi audit dan tidak mengubah data RME.
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Catatan audit internal untuk kasir dan tidak mengubah data rekam medis.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#1e1e1e] mb-1.5">
-                Catatan penyesuaian (opsional)
-              </label>
               <textarea
                 rows={3}
                 value={catatanPenyesuaian}
                 onChange={(e) => setCatatanPenyesuaian(e.target.value)}
-                placeholder="Contoh: Periksa kembali layanan laboratorium tanggal 16 Februari 2026..."
-                className="w-full p-3 rounded-[8px] border border-[#e2e8f0] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-[#00b89f]"
+                placeholder="Contoh: Periksa kembali komponen pemakaian oksigen central..."
+                className="w-full p-3 rounded-lg border border-slate-300 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-[#8c8c8c]">
-              <Info className="w-3.5 h-3.5 text-[#9ca3af]" />
-              <span>Gunakan &quot;Hitung Ulang&quot; untuk mengambil riwayat tindakan dan tarif terbaru.</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+              <Info className="w-3.5 h-3.5 text-slate-400" />
+              <span>Gunakan tombol &quot;Hitung Ulang&quot; di kanan bila terdapat perubahan master tarif.</span>
             </div>
           </div>
         </div>
 
-        {/* Kolom Kanan: Summary Card, Action Buttons & Notice */}
-        <div className="space-y-4">
+        {/* Kolom Kanan: Summary Card, Action Buttons (4 cols) */}
+        <div className="lg:col-span-4 space-y-4 sticky top-24">
           {/* Summary Box */}
-          <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.03)] space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
             <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between text-[#8c8c8c]">
-                <span>Total Item Layanan</span>
-                <span className="text-[#1e1e1e] font-medium">
-                  {billing.detail_tagihan_list.length} jenis layanan
+              <div className="flex items-center justify-between text-slate-500">
+                <span>Item Layanan</span>
+                <span className="text-slate-900 font-semibold">
+                  {billing.detail_tagihan_list.length} item
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-[#8c8c8c]">
+              <div className="flex items-center justify-between text-slate-500">
                 <span>Total Biaya Pelayanan</span>
-                <span className="text-[#1e1e1e] font-medium">
+                <span className="text-slate-900 font-mono font-bold">
                   {formatRupiah(billing.total_biaya_num)}
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-[#f0f2f5] flex items-baseline justify-between">
-                <span className="text-xs font-semibold text-[#1e1e1e]">Total Tagihan</span>
-                <span className="text-xl font-bold text-[#00b89f]">
+              <div className="pt-3 border-t border-slate-100 flex items-baseline justify-between">
+                <span className="text-xs font-bold text-slate-900">Total Tagihan</span>
+                <span className="text-xl font-mono font-bold text-emerald-700 tabular-nums">
                   {formatRupiah(billing.total_biaya_num)}
                 </span>
               </div>
             </div>
 
             {/* Waiting Verification Notice */}
-            <div className="bg-[#fef3e9] border border-[#fed7aa] rounded-[8px] p-3 flex items-start gap-2.5">
-              <Clock className="w-4 h-4 text-[#e06a14] shrink-0 mt-0.5" />
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2.5">
+              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <div className="text-xs font-semibold text-[#b45309]">
-                  Menunggu verifikasi
+                <div className="text-xs font-semibold text-amber-900">
+                  Pemeriksaan Berkas
                 </div>
-                <div className="text-[10px] text-[#b45309]/80 mt-0.5">
-                  Periksa rincian sebelum konfirmasi
+                <div className="text-[11px] text-amber-800/80 mt-0.5">
+                  Konfirmasi rincian sebelum invoice diterbitkan
                 </div>
               </div>
             </div>
@@ -414,37 +405,31 @@ function PemeriksaanTagihanContent() {
               type="button"
               disabled={recalculating}
               onClick={handleRecalculate}
-              className="w-full py-2.5 rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-slate-50 text-xs font-medium text-[#1e1e1e] flex items-center justify-center gap-2 transition cursor-pointer shadow-xs disabled:opacity-50"
+              className="w-full py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center justify-center gap-2 transition cursor-pointer shadow-xs disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${recalculating ? "animate-spin" : ""}`} />
-              <span>{recalculating ? "Menghitung Ulang..." : "Hitung Ulang"}</span>
+              <span>{recalculating ? "Menghitung Ulang..." : "Hitung Ulang Tarif"}</span>
             </button>
 
             {/* Konfirmasi Tagihan Sesuai */}
             <button
               type="button"
               onClick={handleConfirmReady}
-              className="w-full py-2.5 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+              className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
             >
               <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>Konfirmasi Tagihan Sesuai</span>
+              <span>Konfirmasi Tagihan Sesuai →</span>
             </button>
 
             {/* Back link */}
             <div className="text-center pt-1">
               <Link
-                href={`/pembayaran/buat/${idPasien}?id_rekap=${billing.id_rekap}`}
-                className="text-xs text-[#8c8c8c] hover:text-[#00b89f] transition"
+                href="/pembayaran/buat"
+                className="text-xs text-slate-500 hover:text-emerald-700 transition"
               >
-                &lt; Kembali ke rincian biaya
+                ← Kembali ke pemilihan pasien
               </Link>
             </div>
-          </div>
-
-          {/* Note info */}
-          <div className="text-[11px] text-[#8c8c8c] flex items-start gap-1.5 px-1">
-            <Info className="w-3.5 h-3.5 text-[#9ca3af] shrink-0 mt-0.5" />
-            <span>Konfirmasi hanya dapat dilakukan jika seluruh data layanan dan tarif tersedia.</span>
           </div>
         </div>
       </div>

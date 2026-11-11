@@ -23,10 +23,10 @@ export default function HomePage() {
   }, [user, isLoading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#102d2a] text-white">
+    <div className="min-h-screen flex items-center justify-center bg-[#064e3b] text-white">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-4 border-[#13c9b3]/30 border-t-[#13c9b3] rounded-full animate-spin" />
-        <p className="text-sm text-teal-100/70">Memuat Sistem Inpatient Care...</p>
+        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
+        <p className="text-sm text-emerald-100/80">Memuat Sistem Inpatient Care...</p>
       </div>
     </div>
   );

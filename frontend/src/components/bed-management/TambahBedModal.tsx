@@ -151,7 +151,7 @@ export function TambahBedModal({
               value={noBed}
               onChange={(e) => setNoBed(e.target.value.toUpperCase())}
               placeholder="BED-XXX-000"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-semibold text-slate-800 uppercase focus:outline-none focus:ring-2 focus:ring-[#13c9b3]/40 focus:border-[#13c9b3]"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-semibold text-slate-800 uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               required
             />
             {/* Real-time Uniqueness & Format Badge */}
@@ -182,7 +182,7 @@ export function TambahBedModal({
             <select
               value={bangsal}
               onChange={(e) => setBangsal(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#13c9b3]/40 focus:border-[#13c9b3] cursor-pointer"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 cursor-pointer"
             >
               {BANGSAL_OPTIONS.map((opt) => (
                 <option key={opt.label} value={opt.label}>
@@ -205,9 +205,9 @@ export function TambahBedModal({
                     key={opt.label}
                     type="button"
                     onClick={() => setKelas(opt.label)}
-                    className={`p-3 rounded-2xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
+                    className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center ${
                       isSelected
-                        ? "border-[#13c9b3] bg-teal-50/70 text-teal-950 ring-2 ring-[#13c9b3]/30 font-bold"
+                        ? "border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-500/20 font-bold"
                         : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
                     }`}
                   >
@@ -250,7 +250,7 @@ export function TambahBedModal({
             <button
               type="submit"
               disabled={isSubmitting || isDuplicate || !isValidFormat}
-              className="px-6 py-2.5 rounded-xl bg-[#13c9b3] hover:bg-[#0fb39f] active:bg-[#0c9d8c] text-[#0d332f] text-sm font-bold shadow-md shadow-teal-500/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

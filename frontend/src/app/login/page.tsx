@@ -86,121 +86,104 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#0d2a27]">
-      {/* LEFT PANEL: Hospital Operations Platform Branding (Figma 81:11793 & 81:12602) */}
-      <div className="relative flex-1 bg-gradient-to-br from-[#102d2a] via-[#0d332f] to-[#092220] p-8 lg:p-14 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-teal-800/30">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 lg:bg-[#064e3b]">
+      {/* Panel Kiri (Branding & Info) - Sembunyikan di HP, tampilkan di Desktop */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-[#064e3b] via-[#053b2d] to-[#022c22] text-white relative overflow-hidden border-r border-[#022c22]">
         {/* Glow ambient background circles */}
-        <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-[#13c9b3]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-80px] right-[-80px] w-96 h-96 bg-[#0d9488]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-80px] right-[-80px] w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header: Brand & Identity */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#13c9b3] text-[#0d332f] font-black flex items-center justify-center text-2xl shadow-lg shadow-teal-500/20">
+            <div className="w-11 h-11 rounded-xl bg-emerald-500 text-white font-bold flex items-center justify-center text-2xl shadow-lg shadow-emerald-950/40">
               +
             </div>
             <div>
-              <div className="text-white font-bold text-xl tracking-tight leading-none flex items-center gap-2">
+              <div className="text-white font-bold text-xl tracking-tight leading-none">
                 Inpatient Care
               </div>
-              <p className="text-xs text-teal-300/80 font-medium tracking-wide mt-1">
-                Sistem Informasi Rawat Inap
+              <p className="text-xs text-emerald-300/80 font-medium tracking-wide mt-1">
+                Sistem Informasi Rawat Inap RSI
               </p>
             </div>
           </div>
         </div>
 
-        {/* Middle Content: Tag, Heading, and Glass Cards */}
-        <div className="relative z-10 my-10 lg:my-0 space-y-6 max-w-xl">
+        {/* Middle Content */}
+        <div className="relative z-10 my-auto py-8 space-y-6 max-w-xl">
           <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-[#13c9b3]">
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
               HOSPITAL OPERATIONS PLATFORM
             </div>
             <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Selamat Datang
+              Selamat Datang di SIMRS Rawat Inap
             </h1>
-            <p className="text-sm text-slate-300/85 leading-relaxed">
-              Masuk untuk mengakses sistem sesuai dengan peran dan wewenang Anda di rumah sakit.
+            <p className="text-sm text-emerald-100/80 leading-relaxed">
+              Platform terintegrasi untuk pemantauan ketersediaan tempat tidur, antrean darurat IGD, rekam medis elektronik, dan kasir billing.
             </p>
           </div>
 
-          {/* Glassmorphism Feature Cards as shown in Figma 81:11793 & 81:12602 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            {/* Card 1: Ketersediaan Tempat Tidur */}
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-              <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center text-[#13c9b3] mb-3">
+          {/* 3 Value Pillars */}
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
                 <Bed className="w-4 h-4" />
               </div>
-              <div>
-                <div className="text-[11px] text-teal-200/80 font-medium">
-                  Ketersediaan Tempat Tidur
-                </div>
-                <div className="text-xs font-bold text-white mt-0.5">
-                  Informasi rawat inap terintegrasi
-                </div>
-                {/* 4 mini bar charts as in Figma 81:11837 */}
-                <div className="flex items-end gap-1.5 mt-3 h-5">
-                  <span className="w-3 bg-teal-400/40 rounded-t h-2" />
-                  <span className="w-3 bg-teal-400/60 rounded-t h-3.5" />
-                  <span className="w-3 bg-[#13c9b3] rounded-t h-5" />
-                  <span className="w-3 bg-teal-400/50 rounded-t h-3" />
-                </div>
-              </div>
+              <div className="text-xs font-bold text-white">Bed Management</div>
+              <div className="text-[11px] text-emerald-200/70 mt-0.5">Real-time status ranap</div>
             </div>
 
-            {/* Card 2: Operasional Aktif */}
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3">
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
                 <Activity className="w-4 h-4" />
               </div>
-              <div>
-                <div className="text-xs font-bold text-white">Operasional Aktif</div>
-                <div className="text-[11px] text-teal-200/80 mt-0.5">
-                  Pemantauan real-time
-                </div>
-              </div>
+              <div className="text-xs font-bold text-white">Antrean &amp; SPGDT</div>
+              <div className="text-[11px] text-emerald-200/70 mt-0.5">FIFO &amp; RS jejaring</div>
             </div>
 
-            {/* Card 3: Data Terlindungi */}
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-300 mb-3">
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <div>
-                <div className="text-xs font-bold text-white">Data Terlindungi</div>
-                <div className="text-[11px] text-teal-200/80 mt-0.5">
-                  Akses sesuai kewenangan
-                </div>
-              </div>
+              <div className="text-xs font-bold text-white">RME &amp; Billing</div>
+              <div className="text-[11px] text-emerald-200/70 mt-0.5">Invoice resmi kasir</div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Footer Note (Figma 81:11866) */}
-        <div className="relative z-10 pt-4 text-xs text-teal-200/60 flex items-center justify-between border-t border-teal-800/30">
-          <span>Sistem internal rumah sakit • Akses terbatas untuk staf yang berwenang.</span>
+        {/* Footer info */}
+        <div className="relative z-10 text-[11px] text-emerald-300/60">
+          &copy; 2026 RSI Inpatient Care Platform. Terstandarisasi Kemenkes RI.
         </div>
       </div>
 
-      {/* RIGHT PANEL: Login Form Card (Figma 81:11793 & 81:12602) */}
-      <div className="flex-1 bg-gradient-to-b from-[#f9fbfa] via-[#f2f7f5] to-[#ebf3f0] flex items-center justify-center p-6 sm:p-10 lg:p-14">
-        <div className="w-full max-w-[440px] bg-white rounded-3xl p-7 sm:p-9 shadow-xl shadow-teal-950/5 border border-slate-100">
-          {/* Form Header */}
-          <div className="space-y-1 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 text-[#13c9b3] flex items-center justify-center mb-3">
-              <KeyRound className="w-5 h-5" />
+      {/* Panel Form Login: Full-width di HP, 50% di Desktop, dengan pb-20 agar tidak overlap */}
+      <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-10 pb-20 bg-slate-50 lg:bg-white">
+        <div className="max-w-sm w-full mx-auto space-y-6">
+          {/* Header khusus mobile */}
+          <div className="lg:hidden flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">
+              +
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
-              Masuk ke Akun Anda
+            <div>
+              <h1 className="text-lg font-bold text-slate-900 leading-tight">Inpatient Care</h1>
+              <p className="text-xs text-slate-500">SIMRS Rawat Inap RSI</p>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Masuk ke Sistem
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Gunakan akun petugas yang telah terdaftar.
+            <p className="text-xs text-slate-500 mt-1">
+              Gunakan akun petugas rumah sakit yang terdaftar
             </p>
           </div>
 
-          {/* Alert Error State: Frame 81:12328 */}
+          {/* Alert Error State */}
           {alertError && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-fadeIn">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-fadeIn">
               <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
               <span className="font-medium leading-snug">{alertError}</span>
             </div>
@@ -229,15 +212,14 @@ export default function LoginPage() {
                     if (alertError) setAlertError(null);
                   }}
                   placeholder="Masukkan username"
-                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition ${
+                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none transition ${
                     usernameError
                       ? "border-rose-400 ring-2 ring-rose-400/20 focus:border-rose-500"
-                      : "border-slate-200 focus:ring-2 focus:ring-[#13c9b3]/40 focus:border-[#13c9b3]"
+                      : "border-slate-300 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 focus:bg-white"
                   }`}
                   disabled={isSubmitting}
                 />
               </div>
-              {/* Validation Error: Frame 81:11924 */}
               {usernameError && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-rose-600 text-[11px] font-medium">
                   <AlertCircle className="w-3.5 h-3.5" />
@@ -268,10 +250,10 @@ export default function LoginPage() {
                     if (alertError) setAlertError(null);
                   }}
                   placeholder="Masukkan password"
-                  className={`w-full pl-10 pr-10 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition ${
+                  className={`w-full pl-10 pr-10 py-2.5 bg-slate-50 border rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none transition ${
                     passwordError
                       ? "border-rose-400 ring-2 ring-rose-400/20 focus:border-rose-500"
-                      : "border-slate-200 focus:ring-2 focus:ring-[#13c9b3]/40 focus:border-[#13c9b3]"
+                      : "border-slate-300 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 focus:bg-white"
                   }`}
                   disabled={isSubmitting}
                 />
@@ -279,7 +261,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
-                  title={showPassword ? "Button - Sembunyikan password" : "Button - Tampilkan password"}
+                  title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -289,7 +271,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
-              {/* Validation Error: Frame 81:11924 */}
               {passwordError && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-rose-600 text-[11px] font-medium">
                   <AlertCircle className="w-3.5 h-3.5" />
@@ -298,54 +279,33 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Submit Button (Figma 81:11909) */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-2 py-3 px-4 bg-[#13c9b3] hover:bg-[#0fb39f] active:bg-[#0c9d8c] text-[#0d332f] font-bold rounded-xl text-sm transition duration-150 shadow-md shadow-teal-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition duration-150 shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-[#0d332f]/30 border-t-[#0d332f] rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   <span>Memverifikasi...</span>
                 </>
               ) : (
-                <span>Login</span>
+                <span>Masuk Sekarang</span>
               )}
             </button>
           </form>
 
-          {/* Form Notes */}
-          <div className="mt-5 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <Info className="w-3.5 h-3.5 text-[#00b89f] shrink-0" />
-              <span>
-                {isStrictBackend
-                  ? "Mode Strict Backend aktif: Kredensial divalidasi langsung ke server backend API."
-                  : "Akses sistem diberikan sesuai peran akun Anda."}
-              </span>
-            </div>
-            {isStrictBackend ? (
-              <p className="text-[11px] text-[#016b46] bg-[#e6f4ef] border border-[#cbe7dd] p-2.5 rounded-lg leading-relaxed">
-                Koneksi langsung ke server backend MySQL. Fallback ke mockup dinonaktifkan.
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Mode Simulasi Mock: Menggunakan sesi lokal di browser jika server backend tidak aktif.
-              </p>
-            )}
-          </div>
-
           {/* Quick Select Demo Accounts for Instant Testing */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2.5 text-center">
+          <div className="pt-4 border-t border-slate-100 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
               Pilihan Akun Uji Coba Cepat:
             </p>
             <div className="space-y-1.5">
               <button
                 type="button"
                 onClick={() => handleSelectDemo("admin.demo")}
-                className="w-full p-2 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
+                className="w-full p-2.5 rounded-lg border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
               >
                 <div>
                   <div className="font-semibold text-slate-800 group-hover:text-purple-900 flex items-center gap-1.5">
@@ -353,7 +313,7 @@ export default function LoginPage() {
                     <span className="text-[9px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded">Akses Penuh</span>
                   </div>
                   <div className="text-[10px] text-slate-500">
-                    Akses Semua Modul & Fitur (admin.demo)
+                    admin.demo
                   </div>
                 </div>
                 <span className="text-[10px] bg-purple-700 text-white font-medium px-2 py-0.5 rounded-full">
@@ -364,35 +324,37 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleSelectDemo("budi.santoso")}
-                className="w-full p-2 rounded-xl border border-teal-100 bg-teal-50/50 hover:bg-teal-50 text-left transition flex items-center justify-between text-xs group cursor-pointer"
+                className="w-full p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
               >
                 <div>
-                  <div className="font-semibold text-slate-800 group-hover:text-teal-900">
-                    Budi Santoso
+                  <div className="font-semibold text-slate-800 group-hover:text-emerald-900 flex items-center gap-1.5">
+                    <span>Budi Santoso</span>
+                    <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.2 rounded">Bed Mgmt</span>
                   </div>
                   <div className="text-[10px] text-slate-500">
-                    Petugas Bed Management (budi.santoso)
+                    budi.santoso
                   </div>
                 </div>
-                <span className="text-[10px] bg-teal-600 text-white font-medium px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-emerald-700 text-white font-medium px-2 py-0.5 rounded-full">
                   Pilih
                 </span>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleSelectDemo("rini.aprilianti")}
-                className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
+                onClick={() => handleSelectDemo("petugas.admin")}
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition flex items-center justify-between text-xs group cursor-pointer"
               >
                 <div>
-                  <div className="font-semibold text-slate-800 group-hover:text-slate-900">
-                    Rini Aprilianti
+                  <div className="font-semibold text-slate-800 group-hover:text-slate-900 flex items-center gap-1.5">
+                    <span>Rina Aprilianti</span>
+                    <span className="text-[9px] bg-slate-200 text-slate-700 font-bold px-1.5 py-0.2 rounded">Admin Ranap</span>
                   </div>
                   <div className="text-[10px] text-slate-500">
-                    Petugas Administrasi (rini.aprilianti)
+                    petugas.admin
                   </div>
                 </div>
-                <span className="text-[10px] bg-slate-600 text-white font-medium px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-slate-700 text-white font-medium px-2 py-0.5 rounded-full">
                   Pilih
                 </span>
               </button>

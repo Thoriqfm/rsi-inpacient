@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -20,7 +20,7 @@ import {
 import { HistoryRecapItem, HistoryStatus } from "@/types";
 import { fetchHistoryByIdApi, updateHistoryApi } from "@/lib/api-client";
 
-export default function EditRekapPage() {
+function EditRekapContent() {
   const { user } = useAuth();
 
   const params = useParams();
@@ -97,18 +97,17 @@ export default function EditRekapPage() {
     : rekap.detail_tindakan.slice(0, 3);
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 pb-16 text-[#1e1e1e]">
-      {/* Breadcrumb & Header (Figma 145:6776) */}
+    <div className="max-w-7xl mx-auto space-y-6 pb-16 text-slate-800">
+      {/* Breadcrumb & Header */}
       <div className="space-y-1">
-        <p className="font-semibold text-[#0fa18f] text-[10px] tracking-[1px] uppercase">
+        <p className="font-semibold text-emerald-700 text-xs tracking-wider uppercase">
           PERBARUI REKAP
         </p>
-        <h1 className="text-[27px] font-medium leading-[35px] text-[#1e1e1e] tracking-[-0.675px]">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
           Edit Rekap Riwayat Layanan &amp; Tindakan
         </h1>
-        <p className="text-[13px] text-[#667085] leading-[21px]">
-          Data pasien dan riwayat RME bersifat read-only. Lengkapi informasi
-          administratif rekap.
+        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+          Data pasien dan riwayat RME bersifat read-only. Lengkapi informasi administratif rekap.
         </p>
       </div>
 
@@ -393,22 +392,22 @@ export default function EditRekapPage() {
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="bg-white border border-[#e9ebf0] rounded-[12px] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0px_4px_8px_rgba(26,39,50,0.05)]">
-          <p className="text-[11px] text-[#667085]">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <p className="text-xs text-slate-500">
             Pastikan informasi administratif sudah sesuai sebelum disimpan.
           </p>
 
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <Link
               href={`/rekap-layanan/${idRekap}`}
-              className="px-5 py-2.5 rounded-[9px] border border-[#d7dce4] bg-white hover:bg-slate-50 text-[#344054] font-medium text-xs transition"
+              className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
             >
               Batal
             </Link>
             <button
               type="submit"
               disabled={saving || isLocked}
-              className="px-5 py-2.5 rounded-[9px] bg-[#00b89f] hover:bg-[#00a38d] text-white font-medium text-xs shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
@@ -416,5 +415,24 @@ export default function EditRekapPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function EditRekapPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Edit Rekap Tindakan" />;
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-slate-400 text-xs font-sans">
+          Memuat formulir edit rekap...
+        </div>
+      }
+    >
+      <EditRekapContent />
+    </Suspense>
   );
 }

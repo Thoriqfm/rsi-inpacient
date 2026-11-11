@@ -30,7 +30,7 @@ export function RoleAccessDenied({ moduleName }: RoleAccessDeniedProps) {
       <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/bed-management"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs sm:text-sm font-semibold shadow-2xs transition cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
         >
           <Bed className="w-4 h-4" />
           <span>Buka Bed Management</span>
@@ -38,7 +38,7 @@ export function RoleAccessDenied({ moduleName }: RoleAccessDeniedProps) {
 
         <Link
           href="/pengaturan"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-white border border-[#e2e8f0] hover:bg-slate-50 text-[#1e1e1e] text-xs sm:text-sm font-medium transition cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium transition cursor-pointer"
         >
           <span>Ganti Peran di Pengaturan</span>
         </Link>

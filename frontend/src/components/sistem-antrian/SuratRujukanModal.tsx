@@ -266,7 +266,7 @@ export function SuratRujukanModal({
                       type="button"
                       disabled={updatingStatus}
                       onClick={() => handleTransitionStatus("Diterima")}
-                      className="px-3 py-1.5 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Konfirmasi Diterima RS Tujuan</span>
@@ -275,7 +275,7 @@ export function SuratRujukanModal({
                       type="button"
                       disabled={updatingStatus}
                       onClick={() => handleTransitionStatus("Batal")}
-                      className="px-3 py-1.5 rounded-[8px] border border-[#fecaca] bg-[#fdf0f0] hover:bg-rose-100 text-[#dc2626] text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Batalkan</span>
@@ -314,18 +314,18 @@ export function SuratRujukanModal({
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-2 rounded-[8px] bg-[#0a2e28] hover:bg-[#0d332f] text-white text-xs font-semibold flex items-center gap-2 shadow-2xs transition cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-[#064e3b] hover:bg-[#053b2d] text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition cursor-pointer"
             >
-              <Printer className="w-4 h-4 text-[#00b89f]" />
+              <Printer className="w-4 h-4 text-emerald-400" />
               <span>Cetak Surat Rujukan (PDF / Print)</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-[8px] bg-slate-100 hover:bg-slate-200 text-[#1e1e1e] text-xs font-semibold transition cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition cursor-pointer"
             >
-              Selesai & Tutup
+              Selesai &amp; Tutup
             </button>
           </div>
         </div>

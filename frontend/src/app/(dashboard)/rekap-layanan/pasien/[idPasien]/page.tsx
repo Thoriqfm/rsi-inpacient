@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/types";
 import { fetchPatientRmeApi } from "@/lib/api-client";
 
-export default function InformasiDataPasienPage() {
+function InformasiDataPasienContent() {
   const { user } = useAuth();
 
   const params = useParams();
@@ -71,18 +71,17 @@ export default function InformasiDataPasienPage() {
   const activeRekap = existingRekap.find((r) => r.status !== "Draft") || existingRekap[0];
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 text-[#1e1e1e]">
-      {/* Breadcrumb & Header (Figma 144:4504 - 144:4510) */}
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-800">
+      {/* Header */}
       <div className="space-y-1">
-        <p className="font-semibold text-[#0fa18f] text-[10px] tracking-[1px] uppercase">
-          INFORMASI PASIEN
+        <p className="font-semibold text-emerald-700 text-xs tracking-wider uppercase">
+          DATA PASIEN &amp; RIWAYAT RME
         </p>
-        <h1 className="text-[27px] font-medium leading-[35px] text-[#1e1e1e] tracking-[-0.675px]">
-          Data Pasien
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+          Data Pasien &amp; Riwayat Medis
         </h1>
-        <p className="text-[13px] text-[#667085] leading-[21px]">
-          Periksa identitas pasien dan riwayat layanan dari RME sebelum membuat
-          rekap.
+        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+          Periksa identitas pasien dan riwayat layanan dari RME sebelum membuat rekap billing.
         </p>
       </div>
 
@@ -226,13 +225,13 @@ export default function InformasiDataPasienPage() {
         </div>
       </div>
 
-      {/* Bottom Action Bar (Figma 144:4660) */}
+      {/* Bottom Action Bar */}
       <div className="flex items-center justify-between pt-2">
         <Link
           href="/rekap-layanan"
-          className="px-5 py-2.5 rounded-[9px] border border-[#d7dce4] bg-white hover:bg-slate-50 text-[#344054] font-medium text-xs transition"
+          className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
         >
-          Kembali
+          ← Kembali
         </Link>
 
         {activeRekap ? (
@@ -242,7 +241,7 @@ export default function InformasiDataPasienPage() {
             </span>
             <Link
               href={`/rekap-layanan/${activeRekap.id_rekap}`}
-              className="px-5 py-2.5 rounded-[9px] bg-[#0b796b] hover:bg-[#07594f] text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
+              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
             >
               <span>Buka Dokumen Rekap</span>
             </Link>
@@ -250,13 +249,32 @@ export default function InformasiDataPasienPage() {
         ) : (
           <Link
             href={`/rekap-layanan/pasien/${pasien.id_pasien}/buat`}
-            className="px-5 py-2.5 rounded-[9px] bg-[#00b89f] hover:bg-[#00a38d] text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Buat Rekap</span>
+            <span>Buat Rekap Baru</span>
           </Link>
         )}
       </div>
     </div>
+  );
+}
+
+export default function InformasiDataPasienPage() {
+  const { user } = useAuth();
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Informasi Pasien" />;
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-slate-400 text-xs font-sans">
+          Memuat informasi data pasien...
+        </div>
+      }
+    >
+      <InformasiDataPasienContent />
+    </Suspense>
   );
 }

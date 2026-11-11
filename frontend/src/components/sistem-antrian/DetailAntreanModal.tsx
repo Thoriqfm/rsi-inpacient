@@ -215,14 +215,14 @@ export function DetailAntreanModal({
 
           {/* Direct Bed Allocation Action if Status == Menunggu */}
           {item.status === "Menunggu" && (
-            <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-4 space-y-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0d332f] flex items-center gap-1.5">
-                  <Bed className="w-4 h-4 text-teal-600" />
+                <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <Bed className="w-4 h-4 text-emerald-600" />
                   Alokasikan Bed Sekarang (Tersedia:{" "}
                   {matchingBeds.length} Bed {item.kelas_perawatan})
                 </span>
-                <span className="text-[11px] text-teal-700 font-medium">
+                <span className="text-[11px] text-emerald-700 font-medium">
                   Otomatis ubah status ke Dialokasikan
                 </span>
               </div>
@@ -232,7 +232,7 @@ export function DetailAntreanModal({
                   <select
                     value={effectiveBedId}
                     onChange={(e) => setSelectedBedId(Number(e.target.value))}
-                    className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-teal-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
+                    className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
                   >
                     {matchingBeds.length > 0 && (
                       <optgroup
@@ -262,9 +262,9 @@ export function DetailAntreanModal({
                     type="button"
                     onClick={handleAllocateNow}
                     disabled={loadingAction !== null}
-                    className="px-4 py-2 rounded-xl bg-[#0d332f] hover:bg-[#144943] text-white text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm transition"
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0 shadow-xs transition cursor-pointer"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#13c9b3]" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                     <span>
                       {loadingAction === "allocate"
                         ? "Mengalokasikan..."

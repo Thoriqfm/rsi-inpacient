@@ -194,7 +194,7 @@ export function TambahAntreanModal({
                     onClick={() => handleSelectPatient(p)}
                     className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
                       isSelected
-                        ? "border-[#13c9b3] bg-teal-50/60 ring-2 ring-[#13c9b3]/30"
+                        ? "border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20"
                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
@@ -319,7 +319,7 @@ export function TambahAntreanModal({
                 onChange={(e) =>
                   setKelasTarget(e.target.value as KelasPerawatan)
                 }
-                className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
+              className="w-full px-3 py-2.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               >
                 <option value="VIP">VIP</option>
                 <option value="Kelas 1">Kelas 1</option>
@@ -336,7 +336,7 @@ export function TambahAntreanModal({
                 value={catatan}
                 onChange={(e) => setCatatan(e.target.value)}
                 placeholder="Contoh: Menunggu bed Anggrek 1 selesai sterilisasi..."
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#13c9b3]"
+                className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               />
             </div>
           </div>
@@ -346,16 +346,16 @@ export function TambahAntreanModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition"
+              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={submitting || isDarurat || isAlreadyWaiting}
-              className="px-5 py-2.5 rounded-xl bg-[#0d332f] hover:bg-[#134b45] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-teal-950/15 transition"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4 text-[#13c9b3]" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-300" />
               <span>
                 {submitting
                   ? "Menyimpan Antrean..."
