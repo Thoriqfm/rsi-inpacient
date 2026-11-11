@@ -310,6 +310,7 @@ export interface HistoryPatientSummary {
   hak_kelas_jaminan: string;
   dokter_dpjp: string;
   diagnosa_masuk: string;
+  kondisi_pasien?: "Stabil" | "Darurat";
   status_penanganan: string;
   tanggal_masuk_formatted: string;
   periode_perawatan?: string;

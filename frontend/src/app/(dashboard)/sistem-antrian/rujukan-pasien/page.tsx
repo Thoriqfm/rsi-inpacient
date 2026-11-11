@@ -35,6 +35,7 @@ import {
   fetchQueuesApi,
   fetchReferralHospitalsApi,
   fetchReferralsApi,
+  searchHistoryPatientsApi,
   updateHospitalAvailabilityApi,
 } from "@/lib/api-client";
 import { AntrianTabs } from "@/components/sistem-antrian/AntrianTabs";
@@ -48,51 +49,11 @@ export default function RujukanPasienPage() {
   const [waitingCount, setWaitingCount] = useState<number>(3);
   const [loading, setLoading] = useState(true);
 
-  // Extended emergency candidate list to match clinical Figma frame 322:13902
-  const emergencyCandidates: PasienCandidate[] = useMemo(() => {
-    const base = INITIAL_PASIEN_CANDIDATES.filter(
-      (p) => p.kondisi_pasien === "Darurat"
-    );
-    // If fewer than 5, provide additional realistic emergency cases
-    const extra: PasienCandidate[] = [
-      {
-        id_pasien: 101,
-        no_rm: "RM-2026-00152",
-        nama_pasien: "Yulia Kartika",
-        jenis_kelamin_usia: "P, 38 thn",
-        dokter_dpjp: "dr. Nanda Putra, Sp.PD",
-        hak_kelas_jaminan: "Kelas 1 (BPJS Kesehatan)",
-        kelas_rekomendasi: "Kelas 1",
-        diagnosa_masuk: "Gagal napas akut (ARDS) suspek pneumonia berat",
-        kondisi_pasien: "Darurat",
-        status_penanganan: "Menunggu",
-        asal_instalasi: "IGD Resusitasi (Triase Merah)",
-        tanda_vital: "TD: 135/85 mmHg • Nadi: 118x/m • RR: 32x/m • SpO2: 89% (NRM 12L)",
-      },
-      {
-        id_pasien: 102,
-        no_rm: "RM-2026-00149",
-        nama_pasien: "Agus Santoso",
-        jenis_kelamin_usia: "L, 64 thn",
-        dokter_dpjp: "dr. Hendri Kusuma, Sp.JP",
-        hak_kelas_jaminan: "Kelas 1 (Asuransi Mandiri Inhealth)",
-        kelas_rekomendasi: "Kelas 1",
-        diagnosa_masuk: "Stroke iskemik akut onset < 3 jam",
-        kondisi_pasien: "Darurat",
-        status_penanganan: "Menunggu",
-        asal_instalasi: "IGD Bedah (Triase Merah)",
-        tanda_vital: "TD: 175/100 mmHg • Nadi: 94x/m • GCS: E3V4M5 • SpO2: 96%",
-      },
-    ];
-
-    const all = [...base];
-    for (const item of extra) {
-      if (!all.some((p) => p.no_rm === item.no_rm)) {
-        all.push(item);
-      }
-    }
-    return all;
-  }, []);
+  const [emergencyCandidates, setEmergencyCandidates] = useState<
+    PasienCandidate[]
+  >(() =>
+    INITIAL_PASIEN_CANDIDATES.filter((p) => p.kondisi_pasien === "Darurat")
+  );
 
   const [selectedPasien, setSelectedPasien] = useState<PasienCandidate>(
     emergencyCandidates[0] || INITIAL_PASIEN_CANDIDATES[4]
@@ -126,16 +87,60 @@ export default function RujukanPasienPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [hRes, rRes, qRes] = await Promise.all([
+      const [hRes, rRes, qRes, pRes] = await Promise.all([
         fetchReferralHospitalsApi(),
         fetchReferralsApi(),
         fetchQueuesApi(),
+        searchHistoryPatientsApi("").catch(() => []),
       ]);
       setHospitals(hRes.items);
       setReferrals(rRes.items);
       setWaitingCount(
         qRes.items.filter((q) => q.status === "Menunggu").length
       );
+
+      if (pRes.length > 0) {
+        const dbEmergency: PasienCandidate[] = pRes
+          .filter((p) => p.kondisi_pasien === "Darurat")
+          .map((p) => {
+            const matched = INITIAL_PASIEN_CANDIDATES.find(
+              (seed) => seed.no_rm === p.no_rm
+            );
+            return {
+              id_pasien: p.id_pasien,
+              no_rm: p.no_rm,
+              nama_pasien: p.nama_pasien,
+              jenis_kelamin_usia:
+                matched?.jenis_kelamin_usia || p.jenis_kelamin_usia || "L/P",
+              dokter_dpjp: matched?.dokter_dpjp || p.dokter_dpjp || "dr. DPJP",
+              hak_kelas_jaminan:
+                matched?.hak_kelas_jaminan ||
+                p.hak_kelas_jaminan ||
+                "BPJS Kesehatan",
+              kelas_rekomendasi:
+                matched?.kelas_rekomendasi || p.kelas_perawatan || "Kelas 1",
+              diagnosa_masuk:
+                matched?.diagnosa_masuk ||
+                p.diagnosa_masuk ||
+                "Penanganan Darurat IGD",
+              kondisi_pasien: "Darurat",
+              status_penanganan:
+                (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
+                "Menunggu",
+              asal_instalasi:
+                matched?.asal_instalasi || "IGD Resusitasi (Triase Merah)",
+              tanda_vital:
+                matched?.tanda_vital ||
+                "TD: 165/105 mmHg • Nadi: 114x/m • RR: 28x/m • SpO2: 91%",
+            };
+          });
+        if (dbEmergency.length > 0) {
+          setEmergencyCandidates(dbEmergency);
+          setSelectedPasien((prev) =>
+            dbEmergency.find((d) => d.no_rm === prev?.no_rm) || dbEmergency[0]
+          );
+        }
+      }
 
       // Select first available hospital by default if none selected
       const firstAvail = hRes.items.find(
