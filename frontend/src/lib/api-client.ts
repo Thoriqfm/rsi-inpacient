@@ -1257,8 +1257,11 @@ function mapRawHospitalToHospitalItem(
 ): ReferralHospitalItem {
   const seedHospitals = getMockReferralHospitals();
   const matched =
-    seedHospitals.find((s) => s.id_rs === Number(h.id_rs)) ||
-    seedHospitals[idx % seedHospitals.length];
+    seedHospitals.find(
+      (s) =>
+        (h.nama_rs && s.nama_rs === String(h.nama_rs)) ||
+        s.id_rs === Number(h.id_rs)
+    ) || seedHospitals[idx % seedHospitals.length];
 
   const statusKetersediaan: HospitalAvailability =
     h.status_ketersediaan === "Tersedia" ? "Tersedia" : "Tidak Tersedia";
@@ -1297,11 +1300,11 @@ export async function fetchReferralHospitalsApi(): Promise<{
   items: ReferralHospitalItem[];
   source: "backend" | "mock";
 }> {
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(
         `${API_BASE_URL}/referral-hospitals?page=1&limit=50`,
         {
@@ -1314,14 +1317,12 @@ export async function fetchReferralHospitalsApi(): Promise<{
       if (res.ok) {
         const json = await res.json();
         const rawItems = json.data?.items || [];
-        if (rawItems.length > 0) {
-          const mapped = rawItems.map(
-            (h: Record<string, unknown>, idx: number) =>
-              mapRawHospitalToHospitalItem(h, idx)
-          );
-          saveMockReferralHospitals(mapped);
-          return { items: mapped, source: "backend" };
-        }
+        const mapped = rawItems.map(
+          (h: Record<string, unknown>, idx: number) =>
+            mapRawHospitalToHospitalItem(h, idx)
+        );
+        saveMockReferralHospitals(mapped);
+        return { items: mapped, source: "backend" };
       }
     } catch {
       // Fallback to local mock store
@@ -1342,9 +1343,11 @@ export async function updateHospitalAvailabilityApi(
   const hospitals = getMockReferralHospitals();
   const idx = hospitals.findIndex((h) => h.id_rs === id_rs);
 
-  const token = getToken();
+  const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(
         `${API_BASE_URL}/referral-hospitals/${id_rs}/availability`,
         {
@@ -1354,25 +1357,42 @@ export async function updateHospitalAvailabilityApi(
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status_ketersediaan }),
+          signal: controller.signal,
         }
       );
+      clearTimeout(timer);
 
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) {
-          const updated = mapRawHospitalToHospitalItem(
-            json.data,
-            idx !== -1 ? idx : 0
-          );
-          if (idx !== -1) {
-            hospitals[idx] = updated;
-            saveMockReferralHospitals(hospitals);
-          }
-          return updated;
-        }
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error?.message ||
+            `Gagal memperbarui status RS rujukan (HTTP ${res.status})`
+        );
       }
-    } catch {
-      // continue local update
+
+      const json = await res.json();
+      if (json.data) {
+        const updated = mapRawHospitalToHospitalItem(
+          json.data,
+          idx !== -1 ? idx : 0
+        );
+        if (idx !== -1) {
+          hospitals[idx] = updated;
+          saveMockReferralHospitals(hospitals);
+        }
+        return updated;
+      }
+    } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        !err.message.includes("fetch") &&
+        !err.name.includes("AbortError")
+      ) {
+        throw err;
+      }
+      if (isStrictBackendMode()) {
+        throw err;
+      }
     }
   }
 
@@ -1495,15 +1515,11 @@ export async function createReferralApi(
   const rs =
     hospitals.find((h) => h.id_rs === payload.id_rs) || hospitals[0];
 
-  if (rs.status_ketersediaan !== "Tersedia") {
-    throw new Error(
-      `Rumah sakit tujuan (${rs.nama_rs}) saat ini berstatus Tidak Tersedia. Silakan pilih RS rujukan yang berstatus Tersedia.`
-    );
-  }
-
   const token = await getValidToken();
   if (token && !token.startsWith("mock-")) {
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE_URL}/referrals`, {
         method: "POST",
         headers: {
@@ -1515,7 +1531,9 @@ export async function createReferralApi(
           id_rs: payload.id_rs,
           alasan_rujukan: payload.alasan_rujukan,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => null);
@@ -1540,13 +1558,24 @@ export async function createReferralApi(
         }
       }
     } catch (err: unknown) {
-      if (err instanceof Error && !err.message.includes("fetch")) {
+      if (
+        err instanceof Error &&
+        !err.message.includes("fetch") &&
+        !err.name.includes("AbortError")
+      ) {
         throw err;
       }
       if (isStrictBackendMode()) {
         throw err;
       }
     }
+  }
+
+  assertNotStrict("createReferralApi");
+  if (rs.status_ketersediaan !== "Tersedia") {
+    throw new Error(
+      `Rumah sakit tujuan (${rs.nama_rs}) saat ini berstatus Tidak Tersedia. Silakan pilih RS rujukan yang berstatus Tersedia.`
+    );
   }
 
   const now = new Date();
@@ -1556,8 +1585,6 @@ export async function createReferralApi(
   )}${String(now.getDate()).padStart(2, "0")}`;
   const seq = String(referrals.length + 1).padStart(3, "0");
   const { timestamp } = formatNowTimestamp();
-
-  assertNotStrict("createReferralApi");
   const newReferral: ReferralItem = {
     id_surat:
       referrals.length > 0
