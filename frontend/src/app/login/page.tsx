@@ -86,9 +86,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#064e3b]">
-      {/* LEFT PANEL: Hospital Operations Platform Branding */}
-      <div className="relative flex-1 bg-gradient-to-br from-[#064e3b] via-[#053b2d] to-[#022c22] p-6 sm:p-10 lg:p-14 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-[#022c22]">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 lg:bg-[#064e3b]">
+      {/* Panel Kiri (Branding & Info) - Sembunyikan di HP, tampilkan di Desktop */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-[#064e3b] via-[#053b2d] to-[#022c22] text-white relative overflow-hidden border-r border-[#022c22]">
         {/* Glow ambient background circles */}
         <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-[-80px] right-[-80px] w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -111,7 +111,7 @@ export default function LoginPage() {
         </div>
 
         {/* Middle Content */}
-        <div className="relative z-10 my-8 lg:my-0 space-y-6 max-w-xl">
+        <div className="relative z-10 my-auto py-8 space-y-6 max-w-xl">
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
               HOSPITAL OPERATIONS PLATFORM
@@ -119,13 +119,13 @@ export default function LoginPage() {
             <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
               Selamat Datang di SIMRS Rawat Inap
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
+            <p className="text-sm text-emerald-100/80 leading-relaxed">
               Platform terintegrasi untuk pemantauan ketersediaan tempat tidur, antrean darurat IGD, rekam medis elektronik, dan kasir billing.
             </p>
           </div>
 
           {/* 3 Value Pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
                 <Bed className="w-4 h-4" />
@@ -153,14 +153,25 @@ export default function LoginPage() {
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-[11px] text-emerald-300/60 hidden lg:block">
+        <div className="relative z-10 text-[11px] text-emerald-300/60">
           &copy; 2026 RSI Inpatient Care Platform. Terstandarisasi Kemenkes RI.
         </div>
       </div>
 
-      {/* RIGHT PANEL: Crisp White Form Card */}
-      <div className="w-full lg:w-[480px] xl:w-[520px] bg-white p-6 sm:p-10 lg:p-12 flex flex-col justify-center">
+      {/* Panel Form Login: Full-width di HP, 50% di Desktop, dengan pb-20 agar tidak overlap */}
+      <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-10 pb-20 bg-slate-50 lg:bg-white">
         <div className="max-w-sm w-full mx-auto space-y-6">
+          {/* Header khusus mobile */}
+          <div className="lg:hidden flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">
+              +
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-slate-900 leading-tight">Inpatient Care</h1>
+              <p className="text-xs text-slate-500">SIMRS Rawat Inap RSI</p>
+            </div>
+          </div>
+
           <div>
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
               Masuk ke Sistem
