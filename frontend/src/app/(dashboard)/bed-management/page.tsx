@@ -567,32 +567,44 @@ export default function BedManagementPage() {
                         )}
                       </td>
 
-                      {/* Status Operasional Pill with colored dot */}
+                      {/* Status Operasional Pill + Nama Penghuni */}
                       <td className="py-3.5 px-4 text-center">
-                        {bed.status === "Tersedia" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                            Tersedia
-                          </span>
-                        )}
-                        {bed.status === "Terisi" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                            Terisi
-                          </span>
-                        )}
-                        {bed.status === "Pembersihan" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            Pembersihan
-                          </span>
-                        )}
-                        {bed.status === "Pemeliharaan" && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                            Pemeliharaan
-                          </span>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {bed.status === "Tersedia" && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                              Tersedia
+                            </span>
+                          )}
+                          {bed.status === "Terisi" && (
+                            <>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                Terisi
+                              </span>
+                              {bed.occupant && (
+                                <span className="text-[11px] font-medium text-slate-600">
+                                  {bed.occupant.nama_pasien}{" "}
+                                  <span className="font-mono text-[10px] text-slate-400">
+                                    ({bed.occupant.no_rm})
+                                  </span>
+                                </span>
+                              )}
+                            </>
+                          )}
+                          {bed.status === "Pembersihan" && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              Pembersihan
+                            </span>
+                          )}
+                          {bed.status === "Pemeliharaan" && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                              Pemeliharaan
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Terakhir Diperbarui */}
@@ -757,6 +769,11 @@ export default function BedManagementPage() {
                       {bed.updated_relative}
                     </span>
                   </div>
+                  {bed.status === "Terisi" && bed.occupant && (
+                    <div className="text-[11px] text-slate-700 bg-rose-50/50 border border-rose-100 rounded-lg px-2.5 py-1.5">
+                      Pasien: <strong>{bed.occupant.nama_pasien}</strong> ({bed.occupant.no_rm})
+                    </div>
+                  )}
 
                   {/* Mobile Actions */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
