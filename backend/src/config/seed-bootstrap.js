@@ -146,19 +146,54 @@ export async function runBootstrapSeed() {
             }
         }
 
-        // 3. Seed Patients (11 inpatient & emergency patients)
+        // 3. Seed Patients (35 inpatient, queue, registered, & emergency patients)
         const patientSeedData = [
+            // 14 pasien Rawat Inap aktif (menempati tepat 14 bed Terisi)
             { no_rm: "RM-2026-00142", nama_pasien: "Hendra Wijaya", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1981-05-14"), alamat: "Jl. Diponegoro No. 45", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
             { no_rm: "RM-2026-00148", nama_pasien: "Siti Aminah", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1992-08-22"), alamat: "Jl. Ahmad Yani No. 18", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
-            { no_rm: "RM-2026-00153", nama_pasien: "Ahmad Fauzi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1968-02-10"), alamat: "Jl. Pahlawan No. 72", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
-            { no_rm: "RM-2026-00161", nama_pasien: "Dewi Lestari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1999-11-03"), alamat: "Jl. Mawar No. 9", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
-            { no_rm: "RM-2026-00110", nama_pasien: "Bambang Supriyadi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1964-04-19"), alamat: "Jl. Kenanga No. 23", status_penanganan: "Dirujuk", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-06") },
-            { no_rm: "RM-2026-00115", nama_pasien: "Rina Kartika", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1997-07-30"), alamat: "Jl. Anggrek No. 11", status_penanganan: "Dirujuk", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00209", nama_pasien: "Andi Kusuma", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1984-01-11"), alamat: "Jl. Pemuda No. 19", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
+            { no_rm: "RM-2026-00210", nama_pasien: "Dian Permata", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1990-06-30"), alamat: "Jl. Raya Gubeng No. 77", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
             { no_rm: "RM-2026-00119", nama_pasien: "Agus Setiawan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1975-12-01"), alamat: "Jl. Flamboyan No. 34", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
             { no_rm: "RM-2026-00124", nama_pasien: "Nurul Hidayah", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1985-03-17"), alamat: "Jl. Kamboja No. 5", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-10") },
+            { no_rm: "RM-2026-00211", nama_pasien: "Arif Rahman", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1982-09-08"), alamat: "Jl. Mayjen Sungkono No. 50", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-08") },
+            { no_rm: "RM-2026-00212", nama_pasien: "Kartika Sari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1994-04-21"), alamat: "Jl. Tunjungan No. 15", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-08") },
             { no_rm: "RM-2026-00131", nama_pasien: "Doni Pratama", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1993-09-25"), alamat: "Jl. Cempaka No. 88", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
-            { no_rm: "RM-2026-00201", nama_pasien: "Eko Prasetyo", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1970-06-12"), alamat: "Jl. Veteran No. 14", status_penanganan: "Menunggu", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-11") },
+            { no_rm: "RM-2026-00136", nama_pasien: "Ratna Permata", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1988-04-11"), alamat: "Jl. Dahlia No. 16", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-08") },
+            { no_rm: "RM-2026-00213", nama_pasien: "Yoga Prasetya", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1977-11-19"), alamat: "Jl. Bukit Darmo No. 3", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-09") },
+            { no_rm: "RM-2026-00139", nama_pasien: "Wahyu Nugroho", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1979-11-20"), alamat: "Jl. Teratai No. 27", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-09") },
+            { no_rm: "RM-2026-00145", nama_pasien: "Lina Marlina", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1991-03-04"), alamat: "Jl. Seroja No. 8", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-09") },
+            { no_rm: "RM-2026-00214", nama_pasien: "Nadia Putri", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1997-02-15"), alamat: "Jl. Kedungdoro No. 64", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-10") },
+
+            // 3 pasien selesai alokasi kamar (alokasi Selesai + rekap Siap Billing)
+            { no_rm: "RM-2026-00153", nama_pasien: "Ahmad Fauzi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1968-02-10"), alamat: "Jl. Pahlawan No. 72", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00215", nama_pasien: "Dewi Kartika", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1986-07-18"), alamat: "Jl. Walikota Mustajab No. 29", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00216", nama_pasien: "Hendarto Gunawan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1972-10-05"), alamat: "Jl. Kertajaya Indah No. 41", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
+
+            // 6 pasien Menunggu Stabil di Daftar Tunggu FIFO (#01 - #06)
+            { no_rm: "RM-2026-00161", nama_pasien: "Dewi Lestari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1999-11-03"), alamat: "Jl. Mawar No. 9", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
             { no_rm: "RM-2026-00202", nama_pasien: "Maya Sari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1989-01-28"), alamat: "Jl. Merdeka No. 55", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
+            { no_rm: "RM-2026-00203", nama_pasien: "Fajar Ramadhan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1995-02-14"), alamat: "Jl. Kartini No. 31", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
+            { no_rm: "RM-2026-00204", nama_pasien: "Putri Wulandari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1996-07-09"), alamat: "Jl. Pemuda No. 40", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
+            { no_rm: "RM-2026-00217", nama_pasien: "Bima Sakti", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1991-12-03"), alamat: "Jl. Raya Manyar No. 22", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00218", nama_pasien: "Sari Indah", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1993-05-27"), alamat: "Jl. Pucang Anom No. 14", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+
+            // 5 pasien Terdaftar Stabil baru (belum masuk antrean maupun kamar)
+            { no_rm: "RM-2026-00205", nama_pasien: "Rizky Pratama", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1994-10-12"), alamat: "Jl. Kusuma Bangsa No. 12", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00206", nama_pasien: "Intan Permatasari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1998-05-22"), alamat: "Jl. Basuki Rahmat No. 7", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00207", nama_pasien: "Bagus Santoso", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1987-08-19"), alamat: "Jl. Dharmahusada No. 63", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00219", nama_pasien: "Taufik Hidayat", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1988-03-14"), alamat: "Jl. Ngagel Jaya No. 81", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00220", nama_pasien: "Nisa Aulia", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("2000-01-09"), alamat: "Jl. Jemursari No. 37", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-12") },
+
+            // 4 pasien Darurat belum dirujuk (siap tes Rujukan RS)
+            { no_rm: "RM-2026-00201", nama_pasien: "Eko Prasetyo", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1970-06-12"), alamat: "Jl. Veteran No. 14", status_penanganan: "Menunggu", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-11") },
+            { no_rm: "RM-2026-00208", nama_pasien: "Surya Darmawan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1978-09-03"), alamat: "Jl. Raya Darmo No. 92", status_penanganan: "Menunggu", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00221", nama_pasien: "Yusuf Mansyur", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1969-11-28"), alamat: "Jl. Perak Barat No. 105", status_penanganan: "Menunggu", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-12") },
+            { no_rm: "RM-2026-00222", nama_pasien: "Hesti Rahmawati", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1983-08-16"), alamat: "Jl. Rungkut Industri No. 12", status_penanganan: "Menunggu", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-12") },
+
+            // 3 pasien Darurat sudah dirujuk (riwayat surat rujukan awal)
+            { no_rm: "RM-2026-00110", nama_pasien: "Bambang Supriyadi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1964-04-19"), alamat: "Jl. Kenanga No. 23", status_penanganan: "Dirujuk", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00115", nama_pasien: "Rina Kartika", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1997-07-30"), alamat: "Jl. Anggrek No. 11", status_penanganan: "Dirujuk", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00225", nama_pasien: "Kusuma Wijaya", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1962-01-24"), alamat: "Jl. Diponegoro No. 118", status_penanganan: "Dirujuk", kondisi_pasien: "Darurat", tanggal_masuk: new Date("2026-11-10") },
         ];
 
         for (const p of patientSeedData) {
@@ -171,55 +206,69 @@ export async function runBootstrapSeed() {
             }
         }
 
-        // 4. Seed Beds (If active bed count is 0, create 66 inpatient beds across 4 wards)
+        // 4. Seed Beds (32 bed terstruktur di 4 bangsal; seluruh 14 bed Terisi punya pasien aktif)
         const bedCount = await prisma.bed.count({ where: { deleted_at: null } });
         if (bedCount === 0) {
-            const bedsToCreate = [];
-            const wards = [
-                { prefix: "ANG", bangsal: "Anggrek 1", kelas: "Kelas 1", tipe: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", count: 20, start: 101 },
-                { prefix: "CEN", bangsal: "Cendana 2", kelas: "Kelas 2", tipe: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", count: 18, start: 201 },
-                { prefix: "VIP", bangsal: "Paviliun VIP", kelas: "VIP", tipe: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", count: 10, start: 1 },
-                { prefix: "MEL", bangsal: "Melati 3", kelas: "Kelas 3", tipe: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", count: 18, start: 301 },
-            ];
-            let globalIdx = 0;
-            for (const w of wards) {
-                for (let i = 0; i < w.count; i++) {
-                    const numStr = w.prefix === "VIP" ? String(w.start + i).padStart(3, "0") : String(w.start + i);
-                    const no_bed = `BED-${w.prefix}-${numStr}`;
-                    const nama_kamar = w.prefix === "VIP" ? `Suite ${String(w.start + i).padStart(2, "0")}` : `Kamar ${numStr}`;
-                    let status = "Tersedia";
-                    if (globalIdx < 42) status = "Terisi";
-                    else if (globalIdx < 47) status = "Pembersihan";
-                    else if (globalIdx < 51) status = "Pemeliharaan";
+            const bedsToCreate = [
+                // Anggrek 1 (Kelas 1) - 8 bed (4 Terisi, 3 Tersedia, 1 Pembersihan)
+                { no_bed: "BED-ANG-101", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 101", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Terisi" },
+                { no_bed: "BED-ANG-102", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 102", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Terisi" },
+                { no_bed: "BED-ANG-103", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 103", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Terisi" },
+                { no_bed: "BED-ANG-104", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 104", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Terisi" },
+                { no_bed: "BED-ANG-105", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 105", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Tersedia" },
+                { no_bed: "BED-ANG-106", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 106", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Tersedia" },
+                { no_bed: "BED-ANG-107", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 107", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Tersedia" },
+                { no_bed: "BED-ANG-108", nama_bangsal: "Anggrek 1", nama_kamar: "Kamar 108", kelas_perawatan: "Kelas 1", tipe_bed: "2 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, Oksigen Central", status: "Pembersihan" },
 
-                    if (no_bed === "BED-ANG-105" || no_bed === "BED-ANG-106" || no_bed === "BED-ANG-108") {
-                        status = "Tersedia";
-                    }
+                // Cendana 2 (Kelas 2) - 8 bed (4 Terisi, 2 Tersedia, 1 Pembersihan, 1 Pemeliharaan)
+                { no_bed: "BED-CEN-201", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 201", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Terisi" },
+                { no_bed: "BED-CEN-202", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 202", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Terisi" },
+                { no_bed: "BED-CEN-203", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 203", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Terisi" },
+                { no_bed: "BED-CEN-204", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 204", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Terisi" },
+                { no_bed: "BED-CEN-205", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 205", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Tersedia" },
+                { no_bed: "BED-CEN-206", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 206", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Tersedia" },
+                { no_bed: "BED-CEN-207", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 207", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Pembersihan" },
+                { no_bed: "BED-CEN-208", nama_bangsal: "Cendana 2", nama_kamar: "Kamar 208", kelas_perawatan: "Kelas 2", tipe_bed: "4 Bed/Rm", fasilitas: "1 Tempat Tidur, AC, Kamar Mandi Dalam, TV LED", status: "Pemeliharaan" },
 
-                    bedsToCreate.push({
-                        no_bed,
-                        nama_bangsal: w.bangsal,
-                        nama_kamar,
-                        kelas_perawatan: w.kelas,
-                        tipe_bed: w.tipe,
-                        fasilitas: w.fasilitas,
-                        status,
-                        created_at: now,
-                        updated_at: now,
-                    });
-                    globalIdx++;
-                }
-            }
+                // Paviliun VIP (VIP) - 8 bed (3 Terisi, 3 Tersedia, 1 Pembersihan, 1 Pemeliharaan)
+                { no_bed: "BED-VIP-001", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 01", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Terisi" },
+                { no_bed: "BED-VIP-002", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 02", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Terisi" },
+                { no_bed: "BED-VIP-003", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 03", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Terisi" },
+                { no_bed: "BED-VIP-004", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 04", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Tersedia" },
+                { no_bed: "BED-VIP-005", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 05", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Tersedia" },
+                { no_bed: "BED-VIP-006", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 06", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Tersedia" },
+                { no_bed: "BED-VIP-007", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 07", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Pembersihan" },
+                { no_bed: "BED-VIP-008", nama_bangsal: "Paviliun VIP", nama_kamar: "Suite 08", kelas_perawatan: "VIP", tipe_bed: "1 Bed/Rm", fasilitas: "1 Tempat Tidur Elektrik, AC, Sofa Penunggu, Smart TV, Kulkas Mini", status: "Pemeliharaan" },
+
+                // Melati 3 (Kelas 3) - 8 bed (3 Terisi, 4 Tersedia, 1 Pembersihan)
+                { no_bed: "BED-MEL-301", nama_bangsal: "Melati 3", nama_kamar: "Kamar 301", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Terisi" },
+                { no_bed: "BED-MEL-302", nama_bangsal: "Melati 3", nama_kamar: "Kamar 302", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Terisi" },
+                { no_bed: "BED-MEL-303", nama_bangsal: "Melati 3", nama_kamar: "Kamar 303", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Terisi" },
+                { no_bed: "BED-MEL-304", nama_bangsal: "Melati 3", nama_kamar: "Kamar 304", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Tersedia" },
+                { no_bed: "BED-MEL-305", nama_bangsal: "Melati 3", nama_kamar: "Kamar 305", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Tersedia" },
+                { no_bed: "BED-MEL-306", nama_bangsal: "Melati 3", nama_kamar: "Kamar 306", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Tersedia" },
+                { no_bed: "BED-MEL-307", nama_bangsal: "Melati 3", nama_kamar: "Kamar 307", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Tersedia" },
+                { no_bed: "BED-MEL-308", nama_bangsal: "Melati 3", nama_kamar: "Kamar 308", kelas_perawatan: "Kelas 3", tipe_bed: "6 Bed/Rm", fasilitas: "1 Tempat Tidur, Kipas Sentral, Oksigen Wall Outlet", status: "Pembersihan" },
+            ].map((b) => ({ ...b, created_at: now, updated_at: now }));
+
             await prisma.bed.createMany({ data: bedsToCreate, skipDuplicates: true });
         }
 
-        // 5. Seed Active Waiting Queue if none are currently waiting (hanya pasien kondisi Stabil)
+        // 5. Seed Active Waiting Queue if none are currently waiting (6 pasien kondisi Stabil)
         const waitingCount = await prisma.daftarTunggu.count({
             where: { status: "Menunggu" },
         });
         if (waitingCount === 0) {
+            const fifoRms = [
+                "RM-2026-00161",
+                "RM-2026-00202",
+                "RM-2026-00203",
+                "RM-2026-00204",
+                "RM-2026-00217",
+                "RM-2026-00218",
+            ];
             const candidates = await prisma.pasien.findMany({
-                where: { no_rm: { in: ["RM-2026-00161", "RM-2026-00202"] } },
+                where: { no_rm: { in: fifoRms } },
                 include: {
                     rekam_alokasi_list: { where: { status_alokasi: "Aktif" }, select: { id_alokasi: true } },
                     daftar_tunggu_list: { where: { status: "Menunggu" }, select: { id_antrean: true } },
@@ -232,29 +281,33 @@ export async function runBootstrapSeed() {
             });
             let nextNo = (maxRow?.no_antrean || 0) + 1;
 
-            for (const pasien of candidates) {
-                if (pasien.rekam_alokasi_list.length === 0 && pasien.daftar_tunggu_list.length === 0) {
+            for (let idx = 0; idx < fifoRms.length; idx++) {
+                const pasien = candidates.find((c) => c.no_rm === fifoRms[idx]);
+                if (pasien && pasien.rekam_alokasi_list.length === 0 && pasien.daftar_tunggu_list.length === 0) {
+                    const entryTime = new Date(now.getTime() - (fifoRms.length - idx) * 60 * 1000);
                     await prisma.daftarTunggu.create({
                         data: {
                             id_pasien: pasien.id_pasien,
                             id_akun: adminId,
-                            waktu_masuk: new Date(),
+                            waktu_masuk: entryTime,
                             no_antrean: nextNo++,
                             status: "Menunggu",
-                            created_at: new Date(),
+                            created_at: entryTime,
                         },
                     });
                 }
             }
         }
 
-        // 6. Seed Referral Letters if empty
+        // 6. Seed Referral Letters if empty (3 surat rujukan awal)
         const referralCount = await prisma.suratRujukan.count();
         if (referralCount === 0) {
             const pBambang = await prisma.pasien.findUnique({ where: { no_rm: "RM-2026-00110" } });
             const pRina = await prisma.pasien.findUnique({ where: { no_rm: "RM-2026-00115" } });
+            const pKusuma = await prisma.pasien.findUnique({ where: { no_rm: "RM-2026-00225" } });
             const rsJantung = await prisma.rumahSakitRujukan.findFirst({ where: { nama_rs: { contains: "Jantung" } } });
             const rsBunda = await prisma.rumahSakitRujukan.findFirst({ where: { nama_rs: { contains: "Bunda" } } });
+            const rsSaraf = await prisma.rumahSakitRujukan.findFirst({ where: { nama_rs: { contains: "Otak" } } });
 
             if (pBambang && rsJantung) {
                 await prisma.suratRujukan.create({
@@ -280,6 +333,20 @@ export async function runBootstrapSeed() {
                         tanggal_rujukan: now,
                         alasan_rujukan: "Memerlukan ruang HCU Maternal dan NICU PONEK siaga 24 jam.",
                         status: "Dibuat",
+                        created_at: now,
+                    },
+                });
+            }
+            if (pKusuma && rsSaraf) {
+                await prisma.suratRujukan.create({
+                    data: {
+                        no_rujukan: "RUJ-20261111-003",
+                        id_pasien: pKusuma.id_pasien,
+                        id_rs: rsSaraf.id_rs,
+                        id_akun: adminId,
+                        tanggal_rujukan: now,
+                        alasan_rujukan: "Suspek stroke hemoragik akut; memerlukan CT Scan Angiografi & bedah saraf.",
+                        status: "Diterima",
                         created_at: now,
                     },
                 });
@@ -351,21 +418,27 @@ export async function runBootstrapSeed() {
 
         const existingAllocationCount = await prisma.rekamAlokasi.count();
         if (existingAllocationCount === 0) {
-            const activeInpatientRms = [
-                "RM-2026-00142",
-                "RM-2026-00148",
-                "RM-2026-00119",
-                "RM-2026-00124",
-                "RM-2026-00131",
+            // Pasangkan tepat 1-per-1 antara 14 pasien Rawat Inap aktif dengan 14 bed berstatus Terisi
+            const activeBedOccupants = [
+                { no_rm: "RM-2026-00142", no_bed: "BED-ANG-101" },
+                { no_rm: "RM-2026-00148", no_bed: "BED-ANG-102" },
+                { no_rm: "RM-2026-00209", no_bed: "BED-ANG-103" },
+                { no_rm: "RM-2026-00210", no_bed: "BED-ANG-104" },
+                { no_rm: "RM-2026-00119", no_bed: "BED-CEN-201" },
+                { no_rm: "RM-2026-00124", no_bed: "BED-CEN-202" },
+                { no_rm: "RM-2026-00211", no_bed: "BED-CEN-203" },
+                { no_rm: "RM-2026-00212", no_bed: "BED-CEN-204" },
+                { no_rm: "RM-2026-00131", no_bed: "BED-VIP-001" },
+                { no_rm: "RM-2026-00136", no_bed: "BED-VIP-002" },
+                { no_rm: "RM-2026-00213", no_bed: "BED-VIP-003" },
+                { no_rm: "RM-2026-00139", no_bed: "BED-MEL-301" },
+                { no_rm: "RM-2026-00145", no_bed: "BED-MEL-302" },
+                { no_rm: "RM-2026-00214", no_bed: "BED-MEL-303" },
             ];
-            const occupiedBeds = await prisma.bed.findMany({
-                where: { deleted_at: null, status: "Terisi" },
-                orderBy: { id_bed: "asc" },
-                take: activeInpatientRms.length,
-            });
-            for (let i = 0; i < activeInpatientRms.length; i++) {
-                const p = allPatients.find((row) => row.no_rm === activeInpatientRms[i]);
-                const b = occupiedBeds[i];
+            const allBeds = await prisma.bed.findMany({ where: { deleted_at: null } });
+            for (const pair of activeBedOccupants) {
+                const p = allPatients.find((row) => row.no_rm === pair.no_rm);
+                const b = allBeds.find((row) => row.no_bed === pair.no_bed);
                 const rt = b ? roomTariffByClass.get(b.kelas_perawatan) : null;
                 if (p && b && rt) {
                     await prisma.rekamAlokasi.create({
@@ -383,33 +456,37 @@ export async function runBootstrapSeed() {
                 }
             }
 
-            // Alokasi selesai untuk Ahmad Fauzi (RM-2026-00153) agar siap ditagihkan beserta biaya kamar
-            const pAhmad = allPatients.find((row) => row.no_rm === "RM-2026-00153");
-            const cleaningBed = await prisma.bed.findFirst({
-                where: { deleted_at: null, status: "Pembersihan" },
-                orderBy: { id_bed: "asc" },
-            });
-            const ahmadRt = cleaningBed ? roomTariffByClass.get(cleaningBed.kelas_perawatan) : null;
-            if (pAhmad && cleaningBed && ahmadRt) {
-                await prisma.rekamAlokasi.create({
-                    data: {
-                        id_pasien: pAhmad.id_pasien,
-                        id_bed: cleaningBed.id_bed,
-                        id_akun: adminId,
-                        waktu_alokasi: yesterday,
-                        waktu_selesai: oneHourAgo,
-                        status_alokasi: "Selesai",
-                        id_tarif_kamar: ahmadRt.id_tarif_kamar,
-                        kelas_perawatan_snapshot: ahmadRt.kelas_perawatan,
-                        harga_per_malam_snapshot: ahmadRt.harga_per_malam,
-                    },
-                });
+            // Alokasi selesai untuk 3 pasien Siap Billing pada 3 bed berstatus Pembersihan
+            const finishedBedOccupants = [
+                { no_rm: "RM-2026-00153", no_bed: "BED-VIP-007" },
+                { no_rm: "RM-2026-00215", no_bed: "BED-ANG-108" },
+                { no_rm: "RM-2026-00216", no_bed: "BED-MEL-308" },
+            ];
+            for (const pair of finishedBedOccupants) {
+                const p = allPatients.find((row) => row.no_rm === pair.no_rm);
+                const b = allBeds.find((row) => row.no_bed === pair.no_bed);
+                const rt = b ? roomTariffByClass.get(b.kelas_perawatan) : null;
+                if (p && b && rt) {
+                    await prisma.rekamAlokasi.create({
+                        data: {
+                            id_pasien: p.id_pasien,
+                            id_bed: b.id_bed,
+                            id_akun: adminId,
+                            waktu_alokasi: yesterday,
+                            waktu_selesai: oneHourAgo,
+                            status_alokasi: "Selesai",
+                            id_tarif_kamar: rt.id_tarif_kamar,
+                            kelas_perawatan_snapshot: rt.kelas_perawatan,
+                            harga_per_malam_snapshot: rt.harga_per_malam,
+                        },
+                    });
+                }
             }
         }
 
-        // Seed RME Dummy hanya untuk pasien yang sudah Rawat Inap / Dirujuk (bukan yang masih Menunggu masuk kamar)
+        // Seed RME Dummy hanya untuk pasien yang sudah Rawat Inap / Dirujuk (bukan Menunggu / Terdaftar)
         for (const p of allPatients) {
-            if (p.status_penanganan === "Menunggu") {
+            if (p.status_penanganan === "Menunggu" || p.status_penanganan === "Terdaftar") {
                 continue;
             }
             const existingRme = await prisma.rmeDummy.count({ where: { id_pasien: p.id_pasien } });
@@ -445,48 +522,78 @@ export async function runBootstrapSeed() {
             }
         }
 
-        // 9. Ensure at least one Rekap Tindakan is 'Siap Billing' without an active Tagihan
-        const siapBillingRecaps = await prisma.rekapTindakan.findMany({
-            where: { status: "Siap Billing", deleted_at: null },
-            include: { tagihan_list: { where: { status: { not: "Batal" } } } },
+        // 9. Seed initial Rekap Tindakan (3 Siap Billing + 1 Draft) if table is empty
+        const existingRecapCount = await prisma.rekapTindakan.count({
+            where: { deleted_at: null },
         });
-        const unbilledReadyRecap = siapBillingRecaps.find((r) => r.tagihan_list.length === 0);
+        if (existingRecapCount === 0 && allPatients.length > 0) {
+            const stamp = Date.now().toString().slice(-6);
+            const initialRecapConfigs = [
+                {
+                    no_rm: "RM-2026-00153",
+                    kode_rekap: `RKP-READY-${stamp}-1`,
+                    status: "Siap Billing",
+                    catatan: "Rekap siap cetak & hitung tagihan (VIP) untuk pengujian modul Billing.",
+                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
+                },
+                {
+                    no_rm: "RM-2026-00215",
+                    kode_rekap: `RKP-READY-${stamp}-2`,
+                    status: "Siap Billing",
+                    catatan: "Rekap siap cetak & hitung tagihan (Kelas 1) untuk pengujian modul Billing.",
+                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
+                },
+                {
+                    no_rm: "RM-2026-00216",
+                    kode_rekap: `RKP-READY-${stamp}-3`,
+                    status: "Siap Billing",
+                    catatan: "Rekap siap cetak & hitung tagihan (Kelas 3) untuk pengujian modul Billing.",
+                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
+                },
+                {
+                    no_rm: "RM-2026-00148",
+                    kode_rekap: `RKP-DRAFT-${stamp}-4`,
+                    status: "Draft",
+                    catatan: "Draft rekap tindakan rawat inap (siap diedit/difinalisasi pada modul Rekap Layanan).",
+                    keterangan: "Menunggu verifikasi tindakan tambahan harian.",
+                },
+            ];
 
-        if (!unbilledReadyRecap && allPatients.length > 0) {
-            const targetPasien =
-                allPatients.find((p) => p.no_rm === "RM-2026-00153") ||
-                allPatients[0];
+            for (const cfg of initialRecapConfigs) {
+                const targetPasien = allPatients.find((p) => p.no_rm === cfg.no_rm);
+                if (!targetPasien) continue;
 
-            const rmeItems = await prisma.rmeDummy.findMany({
-                where: { id_pasien: targetPasien.id_pasien },
-                take: 3,
-            });
-            const ahmadAllocation = await prisma.rekamAlokasi.findFirst({
-                where: { id_pasien: targetPasien.id_pasien, status_alokasi: { not: "Batal" } },
-                orderBy: { id_alokasi: "desc" },
-            });
-
-            if (rmeItems.length > 0) {
-                await prisma.rekapTindakan.create({
-                    data: {
-                        kode_rekap: `RKP-READY-${Date.now().toString().slice(-6)}`,
-                        id_pasien: targetPasien.id_pasien,
-                        id_alokasi: ahmadAllocation?.id_alokasi ?? null,
-                        id_akun: adminId,
-                        status: "Siap Billing",
-                        catatan: "Rekap siap cetak & hitung tagihan untuk pengujian modul Billing.",
-                        keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
-                        detail_rekap_tindakan_list: {
-                            create: rmeItems.map((r) => ({
-                                id_riwayat: r.id_riwayat,
-                                kode_tindakan: r.kode_tindakan,
-                                nama_tindakan: r.nama_tindakan,
-                                tanggal_tindakan: r.tanggal_tindakan,
-                                jumlah: r.jumlah,
-                            })),
-                        },
-                    },
+                const rmeItems = await prisma.rmeDummy.findMany({
+                    where: { id_pasien: targetPasien.id_pasien },
+                    take: 3,
                 });
+                const patientAllocation = await prisma.rekamAlokasi.findFirst({
+                    where: { id_pasien: targetPasien.id_pasien, status_alokasi: { not: "Batal" } },
+                    orderBy: { id_alokasi: "desc" },
+                });
+
+                if (rmeItems.length > 0) {
+                    await prisma.rekapTindakan.create({
+                        data: {
+                            kode_rekap: cfg.kode_rekap,
+                            id_pasien: targetPasien.id_pasien,
+                            id_alokasi: patientAllocation?.id_alokasi ?? null,
+                            id_akun: adminId,
+                            status: cfg.status,
+                            catatan: cfg.catatan,
+                            keterangan: cfg.keterangan,
+                            detail_rekap_tindakan_list: {
+                                create: rmeItems.map((r) => ({
+                                    id_riwayat: r.id_riwayat,
+                                    kode_tindakan: r.kode_tindakan,
+                                    nama_tindakan: r.nama_tindakan,
+                                    tanggal_tindakan: r.tanggal_tindakan,
+                                    jumlah: r.jumlah,
+                                })),
+                            },
+                        },
+                    });
+                }
             }
         }
 
