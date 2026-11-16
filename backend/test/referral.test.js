@@ -389,5 +389,26 @@ describe("Referral management (UC-05)", { skip: !RUN }, () => {
         const stableReferral = await createReferral(stablePasien, hospital);
         assert.equal(stableReferral.status, 422);
         assert.equal(stableReferral.body.error.code, "REFERRAL_PATIENT_NOT_EMERGENCY");
+
+        const inpatientDarurat = await prisma.pasien.create({
+            data: {
+                no_rm: `RMRI${suffix.slice(-6)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+                nama_pasien: "Pasien Darurat Ranap",
+                kondisi_pasien: "Darurat",
+                status_penanganan: "Rawat Inap",
+            },
+        });
+        pasienIds.push(inpatientDarurat.id_pasien);
+
+        const inpatientReferral = await createReferral(inpatientDarurat, hospital);
+        assert.equal(inpatientReferral.status, 409);
+        assert.equal(inpatientReferral.body.error.code, "REFERRAL_PATIENT_INPATIENT");
+
+        const activeDarurat = await createPasien("Pasien Rujukan Aktif");
+        const firstRef = await createReferral(activeDarurat, hospital);
+        assert.equal(firstRef.status, 201);
+        const dupRef = await createReferral(activeDarurat, hospital);
+        assert.equal(dupRef.status, 409);
+        assert.equal(dupRef.body.error.code, "REFERRAL_ALREADY_ACTIVE");
     });
 });

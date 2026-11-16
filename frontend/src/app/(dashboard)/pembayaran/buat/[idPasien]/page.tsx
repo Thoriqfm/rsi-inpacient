@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { BillingPreviewResult, HistoryRecapItem, RoomAllocation, RoomTariff } from "@/types";
 import {
+  closeAllocationApi,
   createBillingApi,
   fetchHistoriesApi,
   fetchRoomTariffsApi,
@@ -124,6 +125,24 @@ function RincianBiayaPelayananContent() {
   };
 
   const hasActiveRoom = allocations.some((a) => a.status_alokasi === "Aktif");
+  const activeAllocation = allocations.find((a) => a.status_alokasi === "Aktif") || null;
+  const [closingAlloc, setClosingAlloc] = useState(false);
+
+  const handleCloseActiveAllocation = async () => {
+    if (!activeAllocation) return;
+    setClosingAlloc(true);
+    setErrorMsg(null);
+    setReconcileNotice(null);
+    try {
+      await closeAllocationApi(activeAllocation.id_alokasi, "Selesai");
+      await loadData();
+      setReconcileNotice("Alokasi kamar berhasil diselesaikan. Biaya final kamar sudah dihitung otomatis.");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Gagal menyelesaikan alokasi kamar.");
+    } finally {
+      setClosingAlloc(false);
+    }
+  };
   const openAllocationLink = async () => {
     setLinkOpen(true); setLinkBusy(true); setLinkError(null); setLinkCandidates([]);
     try {
@@ -481,7 +500,21 @@ function RincianBiayaPelayananContent() {
         </div>
       </div>
 
-      {hasActiveRoom && <p role="status" className="p-3 rounded-lg bg-amber-50 text-amber-900 text-xs">Periksa Tagihan belum tersedia: pasien masih menempati kamar. Selesaikan alokasi setelah pasien keluar; biaya final kemudian dihitung otomatis.</p>}
+      {hasActiveRoom && (
+        <div role="status" className="p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            Periksa Tagihan belum tersedia: pasien masih menempati kamar. Selesaikan alokasi setelah pasien keluar; biaya final kemudian dihitung otomatis.
+          </span>
+          <button
+            type="button"
+            disabled={closingAlloc || creating}
+            onClick={() => void handleCloseActiveAllocation()}
+            className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shrink-0 transition cursor-pointer disabled:opacity-60"
+          >
+            {closingAlloc ? "Menyelesaikan..." : "Selesaikan Alokasi Sekarang"}
+          </button>
+        </div>
+      )}
       {/* Bottom Navigation */}
       <div className="flex items-center justify-between pt-2">
         <Link

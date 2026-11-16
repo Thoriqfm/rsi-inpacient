@@ -18,8 +18,13 @@ import {
   HistoryRecapItem,
   PasienCandidate,
   RmeRecordItem,
+  TarifItem,
 } from "@/types";
-import { fetchPatientRmeApi } from "@/lib/api-client";
+import {
+  createRmeApi,
+  fetchPatientRmeApi,
+  fetchTariffsApi,
+} from "@/lib/api-client";
 
 function InformasiDataPasienContent() {
   const { user } = useAuth();
@@ -31,18 +36,64 @@ function InformasiDataPasienContent() {
   const [rmeItems, setRmeItems] = useState<RmeRecordItem[]>([]);
   const [existingRekap, setExistingRekap] = useState<HistoryRecapItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tariffs, setTariffs] = useState<TarifItem[]>([]);
+  const [showAddRmeModal, setShowAddRmeModal] = useState(false);
+  const [selectedTarifCode, setSelectedTarifCode] = useState("");
+  const [rmeJumlah, setRmeJumlah] = useState(1);
+  const [rmeKeterangan, setRmeKeterangan] = useState("");
+  const [addingRme, setAddingRme] = useState(false);
+  const [rmeError, setRmeError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchPatientRmeApi(idPasien);
+      const [res, tarifRes] = await Promise.all([
+        fetchPatientRmeApi(idPasien),
+        user?.role === "SUPER_ADMIN"
+          ? fetchTariffsApi().catch(() => [] as TarifItem[])
+          : Promise.resolve([] as TarifItem[]),
+      ]);
       setPasien(res.pasien);
       setRmeItems(res.items);
       setExistingRekap(res.rekap_existing);
+      setTariffs(tarifRes);
+      if (tarifRes.length > 0) {
+        setSelectedTarifCode((prev) => prev || tarifRes[0].kode_tindakan);
+      }
     } finally {
       setLoading(false);
     }
-  }, [idPasien]);
+  }, [idPasien, user?.role]);
+
+  const handleAddRme = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const tarif = tariffs.find((t) => t.kode_tindakan === selectedTarifCode);
+    if (!tarif) {
+      setRmeError("Pilih jenis tindakan dari Master Tarif.");
+      return;
+    }
+    setAddingRme(true);
+    setRmeError(null);
+    try {
+      await createRmeApi({
+        id_pasien: idPasien,
+        kode_tindakan: tarif.kode_tindakan,
+        nama_tindakan: tarif.nama_tindakan,
+        jumlah: rmeJumlah,
+        keterangan: rmeKeterangan,
+      });
+      setShowAddRmeModal(false);
+      setRmeJumlah(1);
+      setRmeKeterangan("");
+      await loadData();
+    } catch (err) {
+      setRmeError(
+        err instanceof Error ? err.message : "Gagal mencatat tindakan RME."
+      );
+    } finally {
+      setAddingRme(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -189,10 +240,25 @@ function InformasiDataPasienContent() {
               {rmeItems.length} item tercatat selama periode perawatan
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium self-start sm:self-auto">
-            <Info className="w-3.5 h-3.5" />
-            <span>Data read-only</span>
-          </span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {user?.role === "SUPER_ADMIN" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRmeError(null);
+                  setShowAddRmeModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Tindakan RME</span>
+              </button>
+            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium">
+              <Info className="w-3.5 h-3.5" />
+              <span>Data read-only</span>
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -207,25 +273,36 @@ function InformasiDataPasienContent() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#edf0f1] text-[11px]">
-              {rmeItems.map((r, idx) => (
-                <tr key={r.id_riwayat} className="hover:bg-[#fbfcfc] transition">
-                  <td className="py-3.5 pl-5 pr-3 text-[#475467] font-normal">
-                    {idx + 1}
-                  </td>
-                  <td className="py-3.5 px-3 font-medium text-[#1e1e1e]">
-                    {r.nama_tindakan}
-                  </td>
-                  <td className="py-3.5 px-3 text-[#475467]">
-                    {r.tanggal_tindakan_formatted || "18 Feb 2026, 10.15"}
-                  </td>
-                  <td className="py-3.5 px-3 text-[#475467]">
-                    {r.dokter_pelaksana}
-                  </td>
-                  <td className="py-3.5 pl-3 pr-5 text-[#667085]">
-                    {r.catatan_medis || "Pemeriksaan awal rawat inap"}
+              {rmeItems.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 px-4 text-center text-slate-500">
+                    Pasien ini belum memiliki catatan tindakan RME selama rawat inap.{" "}
+                    {user?.role === "SUPER_ADMIN"
+                      ? 'Klik "Tambah Tindakan RME" untuk mencatat tindakan.'
+                      : "Hubungi Super Admin untuk mencatat tindakan RME terlebih dahulu."}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                rmeItems.map((r, idx) => (
+                  <tr key={r.id_riwayat} className="hover:bg-[#fbfcfc] transition">
+                    <td className="py-3.5 pl-5 pr-3 text-[#475467] font-normal">
+                      {idx + 1}
+                    </td>
+                    <td className="py-3.5 px-3 font-medium text-[#1e1e1e]">
+                      {r.nama_tindakan}
+                    </td>
+                    <td className="py-3.5 px-3 text-[#475467]">
+                      {r.tanggal_tindakan_formatted || "-"}
+                    </td>
+                    <td className="py-3.5 px-3 text-[#475467]">
+                      {r.dokter_pelaksana || "DPJP Rawat Inap"}
+                    </td>
+                    <td className="py-3.5 pl-3 pr-5 text-[#667085]">
+                      {r.keterangan || r.catatan_medis || "Pemeriksaan rawat inap"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -252,6 +329,15 @@ function InformasiDataPasienContent() {
               <span>Buka Dokumen Rekap</span>
             </Link>
           </div>
+        ) : rmeItems.length === 0 ? (
+          <button
+            type="button"
+            disabled
+            className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-500 font-medium text-xs flex items-center gap-2 cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Buat Rekap Baru (Butuh Minimal 1 RME)</span>
+          </button>
         ) : (
           <Link
             href={`/rekap-layanan/pasien/${pasien.id_pasien}/buat`}
@@ -262,6 +348,95 @@ function InformasiDataPasienContent() {
           </Link>
         )}
       </div>
+
+      {/* Modal Tambah Tindakan RME (Super Admin) */}
+      {showAddRmeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <form
+            onSubmit={handleAddRme}
+            className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4"
+          >
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Tambah Tindakan RME (Simulasi)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Catat tindakan klinis untuk <strong>{pasien.nama_pasien}</strong> agar dapat direkap dan ditagihkan.
+              </p>
+            </div>
+
+            {rmeError && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                {rmeError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Jenis Tindakan (Master Tarif) *
+              </label>
+              <select
+                required
+                value={selectedTarifCode}
+                onChange={(e) => setSelectedTarifCode(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-emerald-500"
+              >
+                {tariffs.map((t) => (
+                  <option key={t.id_tarif} value={t.kode_tindakan}>
+                    {t.kode_tindakan} — {t.nama_tindakan}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Jumlah *
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={99}
+                required
+                value={rmeJumlah}
+                onChange={(e) => setRmeJumlah(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Keterangan Klinis (Opsional)
+              </label>
+              <textarea
+                rows={2}
+                value={rmeKeterangan}
+                onChange={(e) => setRmeKeterangan(e.target.value)}
+                placeholder="Catatan dokter / tindakan perawatan..."
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={addingRme}
+                onClick={() => setShowAddRmeModal(false)}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={addingRme || !selectedTarifCode}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
+              >
+                {addingRme ? "Menyimpan..." : "Simpan Tindakan RME"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

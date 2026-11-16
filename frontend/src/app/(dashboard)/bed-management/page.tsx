@@ -3,7 +3,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BedItem, BedStatus, KelasPerawatan } from "@/types";
-import { fetchBedsApi } from "@/lib/api-client";
+import {
+  closeAllocationApi,
+  fetchActiveAllocationsMapApi,
+  fetchBedsApi,
+} from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { TambahBedModal } from "@/components/bed-management/TambahBedModal";
 import { UbahStatusModal } from "@/components/bed-management/UbahStatusModal";
@@ -41,6 +45,9 @@ export default function BedManagementPage() {
   const isBedManager = user?.role === "PETUGAS_BED_MANAGEMENT";
 
   const [beds, setBeds] = useState<BedItem[]>([]);
+  const [activeAllocMap, setActiveAllocMap] = useState<
+    Record<number, { id_alokasi: number; id_pasien: number; waktu_alokasi: string }>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
@@ -61,6 +68,11 @@ export default function BedManagementPage() {
     useState<BedItem | null>(null);
   const [selectedBedForReject, setSelectedBedForReject] =
     useState<BedItem | null>(null);
+  const [selectedCloseAlloc, setSelectedCloseAlloc] = useState<{
+    bed: BedItem;
+    id_alokasi: number;
+  } | null>(null);
+  const [closingAlloc, setClosingAlloc] = useState(false);
 
   // Success Notification & Error State
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -71,8 +83,12 @@ export default function BedManagementPage() {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const res = await fetchBedsApi();
+      const [res, allocMap] = await Promise.all([
+        fetchBedsApi(),
+        fetchActiveAllocationsMapApi().catch(() => ({})),
+      ]);
       setBeds(res.items);
+      setActiveAllocMap(allocMap);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Gagal memuat data tempat tidur.";
@@ -94,8 +110,14 @@ export default function BedManagementPage() {
       if (isPollingRef.current) return;
       isPollingRef.current = true;
       try {
-        const res = await fetchBedsApi();
-        if (active) setBeds(res.items);
+        const [res, allocMap] = await Promise.all([
+          fetchBedsApi(),
+          fetchActiveAllocationsMapApi().catch(() => null),
+        ]);
+        if (active) {
+          setBeds(res.items);
+          if (allocMap) setActiveAllocMap(allocMap);
+        }
       } catch {
         // abaikan error polling latar belakang agar tidak mengganggu interaksi petugas
       } finally {
@@ -581,7 +603,7 @@ export default function BedManagementPage() {
                       {/* Aksi Berbasis Role */}
                       <td className="py-3.5 px-4 text-center">
                         {canManageMasterBed ? (
-                          <div className="flex items-center justify-center gap-3">
+                          <div className="flex items-center justify-center gap-2.5 flex-wrap">
                             {isSuperAdmin && bed.status === "Tersedia" && (
                               <Link
                                 href="/bed-management/alokasi"
@@ -589,6 +611,20 @@ export default function BedManagementPage() {
                               >
                                 Alokasikan
                               </Link>
+                            )}
+                            {isOccupied && activeAllocMap[bed.id_bed] && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedCloseAlloc({
+                                    bed,
+                                    id_alokasi: activeAllocMap[bed.id_bed].id_alokasi,
+                                  })
+                                }
+                                className="px-2.5 py-1 rounded-md text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 transition border border-amber-200 cursor-pointer"
+                              >
+                                Selesaikan Alokasi
+                              </button>
                             )}
                             <button
                               type="button"
@@ -620,6 +656,19 @@ export default function BedManagementPage() {
                               >
                                 Alokasikan
                               </Link>
+                            ) : isOccupied && activeAllocMap[bed.id_bed] ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedCloseAlloc({
+                                    bed,
+                                    id_alokasi: activeAllocMap[bed.id_bed].id_alokasi,
+                                  })
+                                }
+                                className="px-2.5 py-1 rounded-md text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 transition border border-amber-200 cursor-pointer"
+                              >
+                                Selesaikan Alokasi
+                              </button>
                             ) : (
                               <span className="text-xs text-slate-400 italic">
                                 Hanya Pantau
@@ -710,9 +759,23 @@ export default function BedManagementPage() {
                   </div>
 
                   {/* Mobile Actions */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                     {canManageMasterBed ? (
                       <>
+                        {isOccupied && activeAllocMap[bed.id_bed] && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedCloseAlloc({
+                                bed,
+                                id_alokasi: activeAllocMap[bed.id_bed].id_alokasi,
+                              })
+                            }
+                            className="flex-1 py-1.5 px-3 rounded-lg border border-amber-200 bg-amber-50 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition text-center cursor-pointer"
+                          >
+                            Selesaikan Alokasi
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setSelectedBedForStatus(bed)}
@@ -737,16 +800,27 @@ export default function BedManagementPage() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
-                    ) : (
-                      bed.status === "Tersedia" && (
-                        <Link
-                          href="/bed-management/alokasi"
-                          className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium text-center transition"
-                        >
-                          Alokasikan ke Pasien
-                        </Link>
-                      )
-                    )}
+                    ) : bed.status === "Tersedia" ? (
+                      <Link
+                        href="/bed-management/alokasi"
+                        className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium text-center transition"
+                      >
+                        Alokasikan ke Pasien
+                      </Link>
+                    ) : isOccupied && activeAllocMap[bed.id_bed] ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedCloseAlloc({
+                            bed,
+                            id_alokasi: activeAllocMap[bed.id_bed].id_alokasi,
+                          })
+                        }
+                        className="w-full py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs font-semibold text-center transition cursor-pointer"
+                      >
+                        Selesaikan Alokasi
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -853,6 +927,84 @@ export default function BedManagementPage() {
         onClose={() => setSelectedBedForReject(null)}
         bed={selectedBedForReject}
       />
+
+      {/* MODAL 5: KONFIRMASI SELESAIKAN ALOKASI (DISCHARGE) */}
+      {selectedCloseAlloc && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Selesaikan Alokasi Kamar?
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Pasien{" "}
+                <strong>
+                  {selectedCloseAlloc.bed.occupant?.nama_pasien || "Rawat Inap"}
+                </strong>{" "}
+                akan dinyatakan selesai menempati bed{" "}
+                <strong className="font-mono">
+                  {selectedCloseAlloc.bed.no_bed}
+                </strong>
+                . Status bed kembali menjadi <strong>Tersedia</strong> dan biaya
+                kamar final siap ditagihkan pada modul Billing.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={closingAlloc}
+                onClick={() => setSelectedCloseAlloc(null)}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={closingAlloc}
+                onClick={async () => {
+                  setClosingAlloc(true);
+                  try {
+                    await closeAllocationApi(
+                      selectedCloseAlloc.id_alokasi,
+                      "Selesai"
+                    );
+                    const bedNo = selectedCloseAlloc.bed.no_bed;
+                    const bedId = selectedCloseAlloc.bed.id_bed;
+                    setBeds((prev) =>
+                      prev.map((b) =>
+                        b.id_bed === bedId
+                          ? { ...b, status: "Tersedia", occupant: null }
+                          : b
+                      )
+                    );
+                    setActiveAllocMap((prev) => {
+                      const next = { ...prev };
+                      delete next[bedId];
+                      return next;
+                    });
+                    setSelectedCloseAlloc(null);
+                    showToast(
+                      `Alokasi bed ${bedNo} telah diselesaikan (status kembali Tersedia).`
+                    );
+                  } catch (err) {
+                    setLoadError(
+                      err instanceof Error
+                        ? err.message
+                        : "Gagal menyelesaikan alokasi kamar."
+                    );
+                    setSelectedCloseAlloc(null);
+                  } finally {
+                    setClosingAlloc(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
+              >
+                {closingAlloc ? "Menyelesaikan..." : "Ya, Selesaikan Alokasi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

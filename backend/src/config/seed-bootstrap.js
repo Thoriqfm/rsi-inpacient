@@ -213,13 +213,13 @@ export async function runBootstrapSeed() {
             await prisma.bed.createMany({ data: bedsToCreate, skipDuplicates: true });
         }
 
-        // 5. Seed Active Waiting Queue if none are currently waiting
+        // 5. Seed Active Waiting Queue if none are currently waiting (hanya pasien kondisi Stabil)
         const waitingCount = await prisma.daftarTunggu.count({
             where: { status: "Menunggu" },
         });
         if (waitingCount === 0) {
             const candidates = await prisma.pasien.findMany({
-                where: { no_rm: { in: ["RM-2026-00201", "RM-2026-00161", "RM-2026-00202"] } },
+                where: { no_rm: { in: ["RM-2026-00161", "RM-2026-00202"] } },
                 include: {
                     rekam_alokasi_list: { where: { status_alokasi: "Aktif" }, select: { id_alokasi: true } },
                     daftar_tunggu_list: { where: { status: "Menunggu" }, select: { id_antrean: true } },
@@ -318,9 +318,100 @@ export async function runBootstrapSeed() {
             }
         }
 
-        // 8. Seed RME Dummy for any patient without RME rows yet
+        // 7b. Seed Room Tariffs (4 Kelas Perawatan: VIP, Kelas 1, Kelas 2, Kelas 3)
+        const roomTariffDefaults = [
+            { kelas_perawatan: "VIP", harga_per_malam: "750000.00" },
+            { kelas_perawatan: "Kelas 1", harga_per_malam: "450000.00" },
+            { kelas_perawatan: "Kelas 2", harga_per_malam: "300000.00" },
+            { kelas_perawatan: "Kelas 3", harga_per_malam: "175000.00" },
+        ];
+        const roomTariffByClass = new Map();
+        for (const rt of roomTariffDefaults) {
+            let existingRt = await prisma.tarifKamar.findFirst({
+                where: { kelas_perawatan: rt.kelas_perawatan },
+                orderBy: { tanggal_berlaku: "desc" },
+            });
+            if (!existingRt) {
+                existingRt = await prisma.tarifKamar.create({
+                    data: {
+                        kelas_perawatan: rt.kelas_perawatan,
+                        harga_per_malam: rt.harga_per_malam,
+                        tanggal_berlaku: new Date("2026-01-01T00:00:00.000Z"),
+                    },
+                });
+            }
+            roomTariffByClass.set(rt.kelas_perawatan, existingRt);
+        }
+
+        // 8. Seed initial RekamAlokasi for seeded Rawat Inap patients & RME Dummy
         const allPatients = await prisma.pasien.findMany();
+        const yesterday = new Date(now.getTime() - 25 * 60 * 60 * 1000);
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        const rmeTime = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+        const existingAllocationCount = await prisma.rekamAlokasi.count();
+        if (existingAllocationCount === 0) {
+            const activeInpatientRms = [
+                "RM-2026-00142",
+                "RM-2026-00148",
+                "RM-2026-00119",
+                "RM-2026-00124",
+                "RM-2026-00131",
+            ];
+            const occupiedBeds = await prisma.bed.findMany({
+                where: { deleted_at: null, status: "Terisi" },
+                orderBy: { id_bed: "asc" },
+                take: activeInpatientRms.length,
+            });
+            for (let i = 0; i < activeInpatientRms.length; i++) {
+                const p = allPatients.find((row) => row.no_rm === activeInpatientRms[i]);
+                const b = occupiedBeds[i];
+                const rt = b ? roomTariffByClass.get(b.kelas_perawatan) : null;
+                if (p && b && rt) {
+                    await prisma.rekamAlokasi.create({
+                        data: {
+                            id_pasien: p.id_pasien,
+                            id_bed: b.id_bed,
+                            id_akun: adminId,
+                            waktu_alokasi: yesterday,
+                            status_alokasi: "Aktif",
+                            id_tarif_kamar: rt.id_tarif_kamar,
+                            kelas_perawatan_snapshot: rt.kelas_perawatan,
+                            harga_per_malam_snapshot: rt.harga_per_malam,
+                        },
+                    });
+                }
+            }
+
+            // Alokasi selesai untuk Ahmad Fauzi (RM-2026-00153) agar siap ditagihkan beserta biaya kamar
+            const pAhmad = allPatients.find((row) => row.no_rm === "RM-2026-00153");
+            const cleaningBed = await prisma.bed.findFirst({
+                where: { deleted_at: null, status: "Pembersihan" },
+                orderBy: { id_bed: "asc" },
+            });
+            const ahmadRt = cleaningBed ? roomTariffByClass.get(cleaningBed.kelas_perawatan) : null;
+            if (pAhmad && cleaningBed && ahmadRt) {
+                await prisma.rekamAlokasi.create({
+                    data: {
+                        id_pasien: pAhmad.id_pasien,
+                        id_bed: cleaningBed.id_bed,
+                        id_akun: adminId,
+                        waktu_alokasi: yesterday,
+                        waktu_selesai: oneHourAgo,
+                        status_alokasi: "Selesai",
+                        id_tarif_kamar: ahmadRt.id_tarif_kamar,
+                        kelas_perawatan_snapshot: ahmadRt.kelas_perawatan,
+                        harga_per_malam_snapshot: ahmadRt.harga_per_malam,
+                    },
+                });
+            }
+        }
+
+        // Seed RME Dummy hanya untuk pasien yang sudah Rawat Inap / Dirujuk (bukan yang masih Menunggu masuk kamar)
         for (const p of allPatients) {
+            if (p.status_penanganan === "Menunggu") {
+                continue;
+            }
             const existingRme = await prisma.rmeDummy.count({ where: { id_pasien: p.id_pasien } });
             if (existingRme === 0) {
                 await prisma.rmeDummy.createMany({
@@ -329,7 +420,7 @@ export async function runBootstrapSeed() {
                             id_pasien: p.id_pasien,
                             kode_tindakan: "TND-001",
                             nama_tindakan: "Visite Dokter Spesialis Penyakit Dalam",
-                            tanggal_tindakan: now,
+                            tanggal_tindakan: rmeTime,
                             jumlah: 1,
                             keterangan: `Evaluasi klinis harian (${p.nama_pasien})`,
                         },
@@ -337,7 +428,7 @@ export async function runBootstrapSeed() {
                             id_pasien: p.id_pasien,
                             kode_tindakan: "TND-002",
                             nama_tindakan: "Pemeriksaan Darah Lengkap (Hematologi)",
-                            tanggal_tindakan: now,
+                            tanggal_tindakan: rmeTime,
                             jumlah: 1,
                             keterangan: "Cek darah rutin panel rawat inap",
                         },
@@ -345,7 +436,7 @@ export async function runBootstrapSeed() {
                             id_pasien: p.id_pasien,
                             kode_tindakan: "TND-003",
                             nama_tindakan: "Pemasangan Infus & Cairan Ringer Lactate",
-                            tanggal_tindakan: now,
+                            tanggal_tindakan: rmeTime,
                             jumlah: 2,
                             keterangan: "Pemeliharaan terapi cairan intravena",
                         },
@@ -370,12 +461,17 @@ export async function runBootstrapSeed() {
                 where: { id_pasien: targetPasien.id_pasien },
                 take: 3,
             });
+            const ahmadAllocation = await prisma.rekamAlokasi.findFirst({
+                where: { id_pasien: targetPasien.id_pasien, status_alokasi: { not: "Batal" } },
+                orderBy: { id_alokasi: "desc" },
+            });
 
             if (rmeItems.length > 0) {
                 await prisma.rekapTindakan.create({
                     data: {
                         kode_rekap: `RKP-READY-${Date.now().toString().slice(-6)}`,
                         id_pasien: targetPasien.id_pasien,
+                        id_alokasi: ahmadAllocation?.id_alokasi ?? null,
                         id_akun: adminId,
                         status: "Siap Billing",
                         catatan: "Rekap siap cetak & hitung tagihan untuk pengujian modul Billing.",

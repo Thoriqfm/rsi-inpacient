@@ -13,10 +13,9 @@ import {
   FileText,
   Calendar,
   Activity,
-  ChevronDown,
   AlertTriangle,
 } from "lucide-react";
-import { HistoryStatus, PasienCandidate, RmeRecordItem } from "@/types";
+import { PasienCandidate, RmeRecordItem } from "@/types";
 import { createHistoryApi, fetchPatientRmeApi } from "@/lib/api-client";
 
 function BuatRekapBaruContent() {
@@ -28,7 +27,6 @@ function BuatRekapBaruContent() {
 
   const [pasien, setPasien] = useState<PasienCandidate | null>(null);
   const [rmeItems, setRmeItems] = useState<RmeRecordItem[]>([]);
-  const [status, setStatus] = useState<HistoryStatus>("Draft");
   const [catatan, setCatatan] = useState("");
   const [keterangan, setKeterangan] = useState("");
   const [showAllRme, setShowAllRme] = useState(false);
@@ -250,26 +248,16 @@ function BuatRekapBaruContent() {
               {/* Status Rekap */}
               <div className="space-y-1.5">
                 <label className="text-[12px] font-medium text-[#344054] block">
-                  Status Rekap <span className="text-rose-500">*</span>
+                  Status Awal Rekap
                 </label>
-                <div className="relative">
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as HistoryStatus)}
-                    className="w-full bg-[#fbfcfc] border border-[#d7dce4] rounded-[9px] px-3.5 py-2.5 text-[12px] text-[#1e1e1e] appearance-none focus:outline-none focus:ring-1 focus:ring-[#0fa18f]"
-                  >
-                    <option value="Draft">Draft</option>
-                    <option value="Proses Verifikasi">Proses Verifikasi</option>
-                    <option value="Siap Billing">Siap Billing</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
+                <div className="w-full bg-slate-50 border border-[#d7dce4] rounded-[9px] px-3.5 py-2.5 text-[12px] text-[#1e1e1e] flex items-center justify-between">
+                  <span className="font-semibold">Draft</span>
+                  <span className="text-[11px] text-slate-500">
+                    Ditetapkan otomatis saat pembuatan
+                  </span>
                 </div>
                 <p className="text-[11px] text-[#98a2b3]">
-                  {status === "Draft"
-                    ? "Rekap masih dapat dilengkapi dan belum masuk proses pemeriksaan."
-                    : status === "Proses Verifikasi"
-                    ? "Rekap sedang dalam proses pemeriksaan dan verifikasi kelengkapan layanan."
-                    : "Rekap telah diverifikasi lengkap dan siap diteruskan ke modul Billing."}
+                  Setelah tersimpan sebagai Draft, ajukan ke Proses Verifikasi lalu Siap Billing melalui halaman Detail Rekap.
                 </p>
               </div>
 
