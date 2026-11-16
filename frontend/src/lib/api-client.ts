@@ -27,6 +27,8 @@ import {
   ReferralStatus,
   RmeRecordItem,
   TarifItem,
+  RoomTariff,
+  RoomAllocation,
   UpdateBedStatusPayload,
   UpdateHistoryPayload,
   UserAccount,
@@ -1417,26 +1419,7 @@ function mapRawBillingToBillingItem(
     ? (row.detail_tagihan_list as Record<string, unknown>[])
     : [];
 
-  const detailList: BillingDetailItem[] = rawDetails.map((d, dIdx) => {
-    const hargaNum = Number(d.harga_satuan || 0);
-    const jumlah = Number(d.jumlah || 1);
-    const subNum = Number(d.subtotal || hargaNum * jumlah);
-    return {
-      id_detail_tagihan: Number(d.id_detail_tagihan || dIdx + 1),
-      id_detail_rekap: Number(d.id_detail_rekap || dIdx + 1),
-      id_tarif: Number(d.id_tarif || 0),
-      kode_tindakan: String(d.kode_tindakan || `TRF-${d.id_tarif || dIdx + 1}`),
-      nama_tindakan: String(d.nama_tindakan || "Tindakan Pelayanan"),
-      tanggal_tindakan_formatted: d.tanggal_tindakan
-        ? formatBackendTimestamp(d.tanggal_tindakan).timestamp
-        : dibuatFormatted,
-      jumlah,
-      harga_satuan: hargaNum.toFixed(2),
-      harga_satuan_num: hargaNum,
-      subtotal: subNum.toFixed(2),
-      subtotal_num: subNum,
-    };
-  });
+  const detailList = rawDetails.map((item, idx) => mapBillingDetail(item, idx, dibuatFormatted));
 
   const totalNum = Number(row.total_biaya || 0);
 
@@ -1525,11 +1508,12 @@ export async function fetchBillingByIdApi(
 }
 
 export async function previewBillingApi(
-  id_rekap: number
+  id_rekap: number,
+  id_alokasi_list: number[] = []
 ): Promise<BillingPreviewResult> {
   const res = await apiFetch("/billing/preview", {
     method: "POST",
-    body: JSON.stringify({ id_rekap }),
+    body: JSON.stringify({ id_rekap, id_alokasi_list }),
   });
 
   if (!res.ok) {
@@ -1543,30 +1527,7 @@ export async function previewBillingApi(
   const rawPasien = (data.pasien || {}) as Record<string, unknown>;
   const rawItems = Array.isArray(data.items) ? data.items : [];
 
-  const items: BillingDetailItem[] = rawItems.map(
-    (item: Record<string, unknown>, idx: number) => {
-      const hargaNum = Number(item.harga_satuan || 0);
-      const jumlah = Number(item.jumlah || 1);
-      const subNum = Number(item.subtotal || hargaNum * jumlah);
-      return {
-        id_detail_rekap: Number(item.id_detail_rekap || idx + 1),
-        id_tarif: Number(item.id_tarif || idx + 1),
-        kode_tindakan: String(item.kode_tindakan || "-"),
-        nama_tindakan: String(item.nama_tindakan || "Tindakan Medis"),
-        tanggal_tindakan: String(
-          item.tanggal_tindakan || new Date().toISOString()
-        ),
-        tanggal_tindakan_formatted: formatBackendTimestamp(
-          item.tanggal_tindakan
-        ).timestamp,
-        jumlah,
-        harga_satuan: hargaNum.toFixed(2),
-        harga_satuan_num: hargaNum,
-        subtotal: subNum.toFixed(2),
-        subtotal_num: subNum,
-      };
-    }
-  );
+  const items = rawItems.map((item: Record<string, unknown>, idx: number) => mapBillingDetail(item, idx));
 
   const totalNum = Number(data.total_biaya || 0);
   return {
@@ -1600,6 +1561,7 @@ export async function createBillingApi(
     method: "POST",
     body: JSON.stringify({
       id_rekap: payload.id_rekap,
+      id_alokasi_list: payload.id_alokasi_list || [],
       ...(payload.catatan ? { catatan: payload.catatan } : {}),
     }),
   });
@@ -1693,4 +1655,60 @@ export async function cancelBillingApi(
     (json.data || {}) as Record<string, unknown>,
     0
   );
+}
+
+function mapBillingDetail(item: Record<string, unknown>, idx: number, fallbackDate = "-"): BillingDetailItem {
+  const room = item.jenis_item === "KAMAR";
+  const start = item.waktu_mulai ? String(item.waktu_mulai) : null;
+  const end = item.waktu_selesai ? String(item.waktu_selesai) : null;
+  return {
+    id_detail_tagihan: item.id_detail_tagihan == null ? undefined : Number(item.id_detail_tagihan),
+    jenis_item: room ? "KAMAR" : "TINDAKAN",
+    id_detail_rekap: item.id_detail_rekap == null ? null : Number(item.id_detail_rekap),
+    id_tarif: item.id_tarif == null ? null : Number(item.id_tarif),
+    id_alokasi: item.id_alokasi == null ? null : Number(item.id_alokasi),
+    id_tarif_kamar: item.id_tarif_kamar == null ? null : Number(item.id_tarif_kamar),
+    kelas_perawatan_snapshot: item.kelas_perawatan_snapshot == null ? null : String(item.kelas_perawatan_snapshot),
+    waktu_mulai: start, waktu_selesai: end, estimasi: item.estimasi === true,
+    kode_tindakan: room ? `KAMAR-${item.id_alokasi}` : String(item.kode_tindakan || `TRF-${item.id_tarif || idx + 1}`),
+    nama_tindakan: String(item.nama_tindakan || "Pelayanan"),
+    kategori: room ? "Akomodasi Kamar" : "Tindakan Medis",
+    satuan: room ? "malam" : "tindakan",
+    tanggal_tindakan_formatted: room && start && end
+      ? `${formatBackendTimestamp(start).timestamp} ? ${formatBackendTimestamp(end).timestamp}${item.estimasi ? " (estimasi)" : ""}`
+      : item.tanggal_tindakan ? formatBackendTimestamp(item.tanggal_tindakan).timestamp : fallbackDate,
+    jumlah: Number(item.jumlah),
+    harga_satuan: String(item.harga_satuan), harga_satuan_num: Number(item.harga_satuan),
+    subtotal: String(item.subtotal), subtotal_num: Number(item.subtotal),
+  };
+}
+
+export async function fetchRoomTariffsApi(): Promise<RoomTariff[]> {
+  const res = await apiFetch("/billing/room-tariffs");
+  if (!res.ok) throw new Error(await readErrorMessage(res, "Gagal memuat tarif kamar."));
+  return (await res.json()).data.items;
+}
+
+export async function createRoomTariffApi(payload: {
+  kelas_perawatan: KelasPerawatan; harga_per_malam: string; tanggal_berlaku: string;
+  tanggal_berakhir?: string; id_tarif_sebelumnya?: number;
+}): Promise<RoomTariff> {
+  const res = await apiFetch("/billing/room-tariffs", { method: "POST", body: JSON.stringify(payload) });
+  if (!res.ok) throw new Error(await readErrorMessage(res, "Gagal menyimpan tarif kamar."));
+  return (await res.json()).data;
+}
+
+export async function fetchRoomAllocationsApi(id_pasien: number): Promise<RoomAllocation[]> {
+  const items: RoomAllocation[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await apiFetch(`/allocations?id_pasien=${id_pasien}&page=${page}&limit=100`);
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Gagal memuat alokasi kamar pasien."));
+    const json = await res.json();
+    items.push(...json.data.items);
+    totalPages = json.meta.total_pages;
+    page++;
+  } while (page <= totalPages);
+  return items;
 }

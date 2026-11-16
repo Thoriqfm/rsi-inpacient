@@ -12,12 +12,15 @@ import {
   Info,
   AlertTriangle,
 } from "lucide-react";
-import { BillingPreviewResult, HistoryRecapItem } from "@/types";
+import { BillingPreviewResult, HistoryRecapItem, RoomAllocation } from "@/types";
 import {
   createBillingApi,
   fetchHistoriesApi,
+  fetchRoomAllocationsApi,
   previewBillingApi,
 } from "@/lib/api-client";
+
+const formatRupiah = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(value);
 
 function RincianBiayaPelayananContent() {
   const { user } = useAuth();
@@ -33,12 +36,19 @@ function RincianBiayaPelayananContent() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [allocations, setAllocations] = useState<RoomAllocation[]>([]);
+  const [selectedAllocations, setSelectedAllocations] = useState<number[]>([]);
+  const [calculating, setCalculating] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const hRes = await fetchHistoriesApi({ id_pasien: idPasien });
+      const [hRes, rooms] = await Promise.all([
+        fetchHistoriesApi({ id_pasien: idPasien }), fetchRoomAllocationsApi(idPasien),
+      ]);
+      setAllocations(rooms);
+      setSelectedAllocations([]);
       const targetRekap = queryIdRekap
         ? hRes.items.find((h) => h.id_rekap === Number(queryIdRekap))
         : hRes.items.find((h) => h.status === "Siap Billing") || hRes.items[0];
@@ -73,6 +83,43 @@ function RincianBiayaPelayananContent() {
     };
   }, [loadData]);
 
+  const selectAllocations = async (ids: number[]) => {
+    if (!rekapInfo) return;
+    setSelectedAllocations(ids);
+    setCalculating(true);
+    setErrorMsg(null);
+    try {
+      setPreview(await previewBillingApi(rekapInfo.id_rekap, ids));
+    } catch (err) {
+      setPreview(null);
+      setErrorMsg(err instanceof Error ? err.message : "Gagal menghitung biaya kamar.");
+    } finally { setCalculating(false); }
+  };
+
+  const hasActiveRoom = allocations.some((a) => selectedAllocations.includes(a.id_alokasi) && a.status_alokasi === "Aktif");
+  const roomSelector = (
+    <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs" aria-busy={calculating}>
+      <h2 className="font-semibold text-sm">Biaya kamar per malam</h2>
+      <p className="text-slate-600">Pilih alokasi untuk perawatan yang sedang ditagihkan. Setiap 24 jam dihitung satu malam; sisa waktu dibulatkan ke atas, minimal satu malam.</p>
+      {allocations.length === 0 && <p>Belum ada alokasi kamar pasien.</p>}
+      {allocations.map((a) => {
+        const unavailable = a.status_alokasi === "Batal" || a.id_tagihan_kamar !== null || !a.harga_per_malam_snapshot;
+        return <label key={a.id_alokasi} className="flex items-start gap-3 border border-slate-200 rounded-lg p-3">
+          <input type="checkbox" className="mt-1" checked={selectedAllocations.includes(a.id_alokasi)}
+            disabled={unavailable || calculating || creating || !!rekapInfo?.tagihan.some((t) => t.status !== "Batal")}
+            onChange={(e) => void selectAllocations(e.target.checked ? [...selectedAllocations, a.id_alokasi] : selectedAllocations.filter((id) => id !== a.id_alokasi))} />
+          <span className="space-y-1">
+            <span className="block font-medium">{a.bed.no_bed} · {a.kelas_perawatan_snapshot || "Tanpa snapshot kelas"} · {a.status_alokasi}</span>
+            <span className="block text-slate-600">{new Date(a.waktu_alokasi).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} – {a.waktu_selesai ? new Date(a.waktu_selesai).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "Masih dirawat (estimasi)"}</span>
+            <span className="block">{a.harga_per_malam_snapshot ? `${formatRupiah(Number(a.harga_per_malam_snapshot))} / malam` : "Alokasi lama perlu rekonsiliasi tarif oleh Backend Lead."}{a.id_tagihan_kamar !== null ? " · Sudah ditagihkan" : ""}</span>
+          </span>
+        </label>;
+      })}
+      {calculating && <p role="status">Menghitung ulang rincian biaya...</p>}
+      {hasActiveRoom && <p role="status" className="text-amber-800">Biaya kamar aktif masih estimasi. Selesaikan alokasi sebelum membuat draf tagihan.</p>}
+    </section>
+  );
+
   const handleProceedToInspection = async () => {
     if (!preview) return;
     const activeInv = rekapInfo?.tagihan?.find((t) => t.status !== "Batal");
@@ -88,6 +135,7 @@ function RincianBiayaPelayananContent() {
     try {
       const created = await createBillingApi({
         id_rekap: preview.id_rekap,
+        id_alokasi_list: selectedAllocations,
         catatan: `Draf tagihan awal dari rekap ${preview.kode_rekap} atas nama ${preview.pasien.nama_pasien}.`,
       });
       router.push(
@@ -100,13 +148,6 @@ function RincianBiayaPelayananContent() {
       setCreating(false);
     }
   };
-
-  const formatRupiah = (val: number) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0,
-    }).format(val);
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(" ");
@@ -129,6 +170,7 @@ function RincianBiayaPelayananContent() {
   if (errorMsg || !preview) {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-4 font-sans text-xs">
+        {rekapInfo && roomSelector}
         <div className="p-5 rounded-[12px] bg-[#fdf0f0] border border-[#fecaca] text-[#dc2626] space-y-2">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <AlertTriangle className="w-4 h-4" />
@@ -201,14 +243,14 @@ function RincianBiayaPelayananContent() {
           <div>
             <span className="text-[10px] text-[#8c8c8c] block">Periode Perawatan</span>
             <span className="font-medium text-[#1e1e1e]">
-              {preview.pasien.periode_perawatan || "15–19 Februari 2026"}
+              {preview.pasien.periode_perawatan || "Lihat periode alokasi di bawah"}
             </span>
           </div>
 
           <div>
             <span className="text-[10px] text-[#8c8c8c] block">Kamar / Bed</span>
             <span className="font-medium text-[#1e1e1e]">
-              {preview.pasien.nama_kamar || `${preview.pasien.kelas_perawatan} • Kamar 108`}
+              {preview.pasien.nama_kamar || preview.items.filter((item) => item.jenis_item === "KAMAR").map((item) => item.kelas_perawatan_snapshot).join(", ") || "Belum memilih alokasi kamar"}
             </span>
           </div>
 
@@ -229,6 +271,7 @@ function RincianBiayaPelayananContent() {
       </div>
 
       {/* Banner Perhitungan Biaya Otomatis */}
+      {roomSelector}
       <div className="bg-[#e7faf7] border border-[#ccefeb] rounded-[10px] p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-full bg-white text-[#0fa18f] flex items-center justify-center shrink-0 shadow-xs">
@@ -292,7 +335,7 @@ function RincianBiayaPelayananContent() {
                   <td className="py-3.5 px-4">
                     <div className="font-medium text-[#1e1e1e]">{item.nama_tindakan}</div>
                     <div className="text-[10px] text-[#8c8c8c] mt-0.5">
-                      Data dummy untuk kebutuhan prototype
+                      {item.jenis_item === "KAMAR" ? "Biaya dari alokasi kamar pasien" : "Biaya dari rekap tindakan pasien"}
                     </div>
                   </td>
 
@@ -323,7 +366,7 @@ function RincianBiayaPelayananContent() {
         <div className="p-6 border-t border-[#f0f2f5] flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
           <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-[#9ca3af]" />
-            <span>Tarif yang ditampilkan merupakan data dummy untuk kebutuhan prototype.</span>
+            <span>Harga kamar dikunci saat masuk. Rincian dihitung oleh sistem berdasarkan tarif dan alokasi pasien.</span>
           </div>
 
           <div className="w-full md:w-80 space-y-2 text-xs">
@@ -363,7 +406,7 @@ function RincianBiayaPelayananContent() {
 
         <button
           type="button"
-          disabled={creating}
+          disabled={creating || calculating || hasActiveRoom}
           onClick={handleProceedToInspection}
           className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
         >

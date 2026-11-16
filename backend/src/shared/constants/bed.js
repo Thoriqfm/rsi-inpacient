@@ -7,6 +7,7 @@ export const BED_STATUS = {
 };
 
 export const BED_STATUS_LIST = Object.values(BED_STATUS);
+export const ROOM_CLASSES = ["VIP", "Kelas 1", "Kelas 2", "Kelas 3"];
 
 export const ALLOCATION_STATUS = {
     AKTIF: "Aktif",

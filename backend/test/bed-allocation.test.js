@@ -7,6 +7,7 @@ import { once } from "node:events";
 import jwt from "jsonwebtoken";
 import app from "../src/app.js";
 import prisma from "../src/config/prisma.js";
+import { jakartaDate } from "../src/shared/utils/room-billing.js";
 
 const RUN = Boolean(process.env.DATABASE_URL);
 const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -17,6 +18,7 @@ const akunIds = [];
 const bedIds = [];
 const pasienIds = [];
 const antreanIds = [];
+const roomTariffIds = [];
 let bedManagerToken;
 let adminToken;
 
@@ -83,6 +85,15 @@ async function createPasien() {
 
 describe("Bed management & allocation", { skip: !RUN }, () => {
     before(async () => {
+        const today = jakartaDate(new Date());
+        for (const kelas of ["Kelas 1", "Kelas 3"]) {
+            const existing = await prisma.tarifKamar.findFirst({ where: { kelas_perawatan: kelas, tanggal_berlaku: { lte: today },
+                OR: [{ tanggal_berakhir: null }, { tanggal_berakhir: { gt: today } }] } });
+            if (!existing) {
+                const rate = await prisma.tarifKamar.create({ data: { kelas_perawatan: kelas, harga_per_malam: "100000.00", tanggal_berlaku: today } });
+                roomTariffIds.push(rate.id_tarif_kamar);
+            }
+        }
         server = app.listen(0);
         await once(server, "listening");
         baseUrl = `http://127.0.0.1:${server.address().port}/api`;
@@ -95,6 +106,7 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
         await prisma.logAudit.deleteMany({ where: { id_akun: { in: akunIds } } });
         await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });
         await prisma.rekamAlokasi.deleteMany({ where: { id_akun: { in: akunIds } } });
+        await prisma.tarifKamar.deleteMany({ where: { id_tarif_kamar: { in: roomTariffIds } } });
         await prisma.daftarTunggu.deleteMany({ where: { id_antrean: { in: antreanIds } } });
         await prisma.bed.deleteMany({ where: { id_bed: { in: bedIds } } });
         await prisma.pasien.deleteMany({ where: { id_pasien: { in: pasienIds } } });

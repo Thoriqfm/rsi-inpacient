@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { TAGIHAN_STATUS_LIST, TARIF_STATUS_LIST } from "../../shared/constants/billing.js";
+import { ROOM_CLASSES } from "../../shared/constants/bed.js";
 
 const pageSchema = z.coerce.number().int().min(1).default(1);
 const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 const idRekapSchema = z.coerce.number().int().positive("Rekap tidak valid.");
+const allocationIds = z.array(z.number().int().positive()).max(100)
+    .refine((ids) => new Set(ids).size === ids.length, "ID alokasi tidak boleh duplikat.").optional();
 
 export const billingListQuerySchema = z
     .object({
@@ -15,11 +18,12 @@ export const billingListQuerySchema = z
     })
     .strict();
 
-export const previewBillingSchema = z.object({ id_rekap: idRekapSchema }).strict();
+export const previewBillingSchema = z.object({ id_rekap: idRekapSchema, id_alokasi_list: allocationIds }).strict();
 
 export const createBillingSchema = z
     .object({
         id_rekap: idRekapSchema,
+        id_alokasi_list: allocationIds,
         catatan: z.string().trim().max(5000).optional(),
     })
     .strict();
@@ -71,3 +75,15 @@ export const createTariffSchema = z
         (data) => !data.tanggal_berakhir || data.tanggal_berakhir >= data.tanggal_berlaku,
         { path: ["tanggal_berakhir"], message: "Tanggal berakhir tidak boleh sebelum tanggal berlaku." },
     );
+
+// Tarif kamar menerima tanggal kalender eksplisit, bukan timestamp dengan zona waktu.
+const roomDate = z.iso.date().transform((value) => new Date(`${value}T00:00:00.000Z`));
+export const createRoomTariffSchema = z.object({
+    kelas_perawatan: z.enum(ROOM_CLASSES),
+    harga_per_malam: hargaSchema,
+    tanggal_berlaku: roomDate,
+    tanggal_berakhir: roomDate.nullish(),
+    id_tarif_sebelumnya: z.number().int().positive().optional(),
+}).strict().refine((data) => !data.tanggal_berakhir || data.tanggal_berakhir > data.tanggal_berlaku, {
+    path: ["tanggal_berakhir"], message: "Tanggal berakhir harus setelah tanggal berlaku.",
+});

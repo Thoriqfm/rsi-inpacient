@@ -106,7 +106,7 @@ function PenerbitanInvoiceContent() {
     new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(val);
 
   if (user?.role === "PETUGAS_BED_MANAGEMENT") {
@@ -266,7 +266,7 @@ function PenerbitanInvoiceContent() {
                     {String(idx + 1).padStart(2, "0")}
                   </td>
                   <td className="py-3 px-3 text-slate-600">
-                    {item.tanggal_tindakan || "-"}
+                    {item.tanggal_tindakan_formatted || item.tanggal_tindakan || "-"}
                   </td>
                   <td className="py-3 px-3">
                     <div className="font-semibold text-slate-900">{item.nama_tindakan}</div>

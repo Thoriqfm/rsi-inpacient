@@ -10,6 +10,10 @@ const allocationSelect = {
     waktu_selesai: true,
     status_alokasi: true,
     id_antrean: true,
+    id_tarif_kamar: true,
+    kelas_perawatan_snapshot: true,
+    harga_per_malam_snapshot: true,
+    id_tagihan_kamar: true,
     created_at: true,
     updated_at: true,
     pasien: { select: { no_rm: true, nama_pasien: true } },
@@ -103,7 +107,7 @@ export function createAllocation(client, data) {
 
 // Conditional update: hanya alokasi yang masih Aktif yang boleh ditutup.
 export function closeAllocation(client, id_alokasi, status_alokasi) {
-    const now = new Date();
+    const now = new Date(Math.floor(Date.now() / 1000) * 1000);
 
     return client.rekamAlokasi.updateMany({
         where: { id_alokasi, status_alokasi: ALLOCATION_STATUS.AKTIF },

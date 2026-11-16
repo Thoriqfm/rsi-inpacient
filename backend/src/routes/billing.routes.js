@@ -7,6 +7,8 @@ import {
     cancel,
     index,
     indexTariffs,
+    indexRoomTariffs,
+    storeRoomTariff,
     preview,
     recalculate,
     show,
@@ -19,6 +21,7 @@ import {
     cancelBillingSchema,
     createBillingSchema,
     createTariffSchema,
+    createRoomTariffSchema,
     previewBillingSchema,
     recalculateBillingSchema,
     updateBillingStatusSchema,
@@ -35,6 +38,8 @@ router.use(authenticateToken);
 // Master tarif: Petugas Administrasi boleh membaca; hanya Super Admin yang boleh menulis.
 router.get("/tariffs", billingRole, indexTariffs);
 router.post("/tariffs", requireRole(ROLES.SUPER_ADMIN), validate(createTariffSchema), storeTariff);
+router.get("/room-tariffs", billingRole, indexRoomTariffs);
+router.post("/room-tariffs", requireRole(ROLES.SUPER_ADMIN), validate(createRoomTariffSchema), storeRoomTariff);
 
 // Harus sebelum /:id agar tidak tertangkap sebagai id tagihan.
 router.post("/preview", billingRole, validate(previewBillingSchema), preview);
