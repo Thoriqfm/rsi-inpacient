@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -46,6 +46,20 @@ export function TambahAntreanModal({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const activeWaitingIds = useMemo(
+    () =>
+      new Set(
+        existingQueues
+          .filter((q) => q.status === "Menunggu")
+          .map((q) => q.id_pasien)
+      ),
+    [existingQueues]
+  );
+  const waitingIdsRef = useRef(activeWaitingIds);
+  useEffect(() => {
+    waitingIdsRef.current = activeWaitingIds;
+  }, [activeWaitingIds]);
+
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
@@ -81,8 +95,14 @@ export function TambahAntreanModal({
             asal_instalasi: "IGD / Poli",
           }));
         setCandidateList(mapped);
+        const waitingSet = waitingIdsRef.current;
         const preferred =
-          mapped.find((m) => m.kondisi_pasien === "Stabil") || mapped[0] || null;
+          mapped.find(
+            (m) => m.kondisi_pasien === "Stabil" && !waitingSet.has(m.id_pasien)
+          ) ||
+          mapped.find((m) => m.kondisi_pasien === "Stabil") ||
+          mapped[0] ||
+          null;
         setSelectedPasien(preferred);
         if (preferred) {
           setKelasTarget(preferred.kelas_rekomendasi);
@@ -100,26 +120,23 @@ export function TambahAntreanModal({
     };
   }, [isOpen]);
 
-  const activeWaitingIds = useMemo(
-    () =>
-      new Set(
-        existingQueues
-          .filter((q) => q.status === "Menunggu")
-          .map((q) => q.id_pasien)
-      ),
-    [existingQueues]
-  );
-
   const filteredCandidates = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return candidateList;
-    return candidateList.filter(
-      (p) =>
-        p.nama_pasien.toLowerCase().includes(q) ||
-        p.no_rm.toLowerCase().includes(q) ||
-        p.diagnosa_masuk.toLowerCase().includes(q)
-    );
-  }, [searchQuery, candidateList]);
+    const list = !q
+      ? candidateList
+      : candidateList.filter(
+          (p) =>
+            p.nama_pasien.toLowerCase().includes(q) ||
+            p.no_rm.toLowerCase().includes(q) ||
+            p.diagnosa_masuk.toLowerCase().includes(q)
+        );
+    const rank = (p: PasienCandidate) => {
+      if (p.kondisi_pasien === "Darurat") return 2;
+      if (activeWaitingIds.has(p.id_pasien)) return 1;
+      return 0;
+    };
+    return [...list].sort((a, b) => rank(a) - rank(b));
+  }, [searchQuery, candidateList, activeWaitingIds]);
 
   if (!isOpen) return null;
 
