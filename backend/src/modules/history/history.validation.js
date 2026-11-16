@@ -4,6 +4,12 @@ import { HISTORY_STATUS_LIST } from "../../shared/constants/history.js";
 const pageSchema = z.coerce.number().int().min(1).default(1);
 const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 
+export const reconcileHistoryAllocationSchema = z.object({
+    id_alokasi: z.coerce.number().int().positive(),
+    alasan: z.string().trim().min(10).max(1000),
+    konfirmasi: z.literal(true),
+}).strict();
+
 export const createHistorySchema = z
     .object({
         id_pasien: z.coerce.number().int().positive("Pasien tidak valid."),
