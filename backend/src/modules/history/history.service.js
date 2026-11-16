@@ -6,6 +6,7 @@ import {
     HISTORY_TRANSITIONS,
 } from "../../shared/constants/history.js";
 import { createAuditLog } from "../../shared/utils/audit.js";
+import { resolveRecapAllocation } from "../../shared/utils/recap-allocation.js";
 import {
     buildHistoryWhere,
     countHistories,
@@ -137,11 +138,13 @@ export async function registerHistoryRecap({ id_pasien, id_riwayat, catatan, ket
     for (let attempt = 1; attempt <= MAX_REKAP_CODE_ATTEMPTS; attempt += 1) {
         try {
             return await prisma.$transaction(async (tx) => {
+                const allocation = await resolveRecapAllocation({ id_pasien, tanggal_dibuat: new Date(), detail_rekap_tindakan_list: snapshot }, tx);
                 const created = await createHistoryRecap(
                     tx,
                     {
                         kode_rekap: await findNextRekapCode(tx),
                         id_pasien,
+                        id_alokasi: allocation?.id_alokasi ?? null,
                         id_akun,
                         status: HISTORY_STATUS.DRAFT,
                         catatan: catatan ?? null,
@@ -159,6 +162,7 @@ export async function registerHistoryRecap({ id_pasien, id_riwayat, catatan, ket
                         status: HISTORY_STATUS.DRAFT,
                         id_pasien,
                         jumlah_tindakan: snapshot.length,
+                        id_alokasi: allocation?.id_alokasi ?? null,
                     },
                 });
 

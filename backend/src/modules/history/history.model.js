@@ -5,6 +5,7 @@ export const historyListSelect = {
     id_rekap: true,
     kode_rekap: true,
     id_pasien: true,
+    id_alokasi: true,
     status: true,
     catatan: true,
     keterangan: true,

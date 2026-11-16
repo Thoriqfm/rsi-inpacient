@@ -16,7 +16,6 @@ import { BillingPreviewResult, HistoryRecapItem, RoomAllocation, RoomTariff } fr
 import {
   createBillingApi,
   fetchHistoriesApi,
-  fetchRoomAllocationsApi,
   fetchRoomTariffsApi,
   reconcileRoomSnapshotApi,
   previewBillingApi,
@@ -39,8 +38,6 @@ function RincianBiayaPelayananContent() {
   const [creating, setCreating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [allocations, setAllocations] = useState<RoomAllocation[]>([]);
-  const [selectedAllocations, setSelectedAllocations] = useState<number[]>([]);
-  const [calculating, setCalculating] = useState(false);
   const [reconcileTarget, setReconcileTarget] = useState<number | null>(null);
   const [roomRates, setRoomRates] = useState<RoomTariff[]>([]);
   const [reconcileBusy, setReconcileBusy] = useState(false);
@@ -51,11 +48,8 @@ function RincianBiayaPelayananContent() {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const [hRes, rooms] = await Promise.all([
-        fetchHistoriesApi({ id_pasien: idPasien }), fetchRoomAllocationsApi(idPasien),
-      ]);
-      setAllocations(rooms);
-      setSelectedAllocations([]);
+      setAllocations([]);
+      const hRes = await fetchHistoriesApi({ id_pasien: idPasien });
       const targetRekap = queryIdRekap
         ? hRes.items.find((h) => h.id_rekap === Number(queryIdRekap))
         : hRes.items.find((h) => h.status === "Siap Billing") || hRes.items[0];
@@ -68,7 +62,11 @@ function RincianBiayaPelayananContent() {
 
       setRekapInfo(targetRekap);
       const prev = await previewBillingApi(targetRekap.id_rekap);
-      setPreview(prev);
+      setAllocations(prev.alokasi ? [prev.alokasi] : []);
+      if (prev.room_error) {
+        setPreview(null);
+        setErrorMsg(prev.room_error.message);
+      } else { setPreview(prev); }
     } catch (err: unknown) {
       setErrorMsg(
         err instanceof Error
@@ -90,19 +88,6 @@ function RincianBiayaPelayananContent() {
     };
   }, [loadData]);
 
-  const selectAllocations = async (ids: number[]) => {
-    if (!rekapInfo) return;
-    setSelectedAllocations(ids);
-    setCalculating(true);
-    setErrorMsg(null);
-    try {
-      setPreview(await previewBillingApi(rekapInfo.id_rekap, ids));
-    } catch (err) {
-      setPreview(null);
-      setErrorMsg(err instanceof Error ? err.message : "Gagal menghitung biaya kamar.");
-    } finally { setCalculating(false); }
-  };
-
   const openReconciliation = async (id: number) => {
     setReconcileTarget(id); setReconcileBusy(true); setReconcileError(null); setRoomRates([]);
     try { setRoomRates(await fetchRoomTariffsApi()); }
@@ -119,35 +104,32 @@ function RincianBiayaPelayananContent() {
       const updated = await reconcileRoomSnapshotApi(reconcileTarget, {
         id_tarif_kamar: Number(fields.get("tarif")), alasan: String(fields.get("alasan")), konfirmasi: fields.get("konfirmasi") === "on",
       });
-      setAllocations((items) => items.map((item) => item.id_alokasi === updated.id_alokasi ? updated : item));
+      setAllocations([updated]);
       setReconcileTarget(null);
-      setReconcileNotice("Tarif alokasi lama sudah dilengkapi. Waktu masuk tetap sama. Pilih alokasi untuk menghitung biaya kamar.");
+      await loadData();
+      setReconcileNotice("Tarif alokasi lama sudah dilengkapi. Waktu masuk tetap sama dan biaya kamar dihitung otomatis.");
     } catch (err) { setReconcileError(err instanceof Error ? err.message : "Gagal melengkapi tarif alokasi."); }
     finally { setReconcileBusy(false); }
   };
 
-  const hasActiveRoom = allocations.some((a) => selectedAllocations.includes(a.id_alokasi) && a.status_alokasi === "Aktif");
+  const hasActiveRoom = allocations.some((a) => a.status_alokasi === "Aktif");
   const roomSelector = (
-    <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs" aria-busy={calculating}>
+    <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
       <h2 className="font-semibold text-sm">Biaya kamar per malam</h2>
-      <p className="text-slate-600">Pilih alokasi untuk perawatan yang sedang ditagihkan. Setiap 24 jam dihitung satu malam; sisa waktu dibulatkan ke atas, minimal satu malam.</p>
+      <p className="text-slate-600">Kelas dan tarif kamar diambil otomatis dari alokasi pada rekap. Setiap 24 jam dihitung satu malam; sisa waktu dibulatkan ke atas, minimal satu malam.</p>
       {reconcileNotice && <p role="status" className="text-emerald-800">{reconcileNotice}</p>}
-      {allocations.length === 0 && <p>Belum ada alokasi kamar pasien.</p>}
+      {allocations.length === 0 && <p>Rekap ini tidak memiliki alokasi kamar terkait.</p>}
       {allocations.map((a) => {
-        const unavailable = a.status_alokasi === "Batal" || a.id_tagihan_kamar !== null || !a.harga_per_malam_snapshot;
         return <div key={a.id_alokasi} className="border border-slate-200 rounded-lg p-3 space-y-3">
-          <label className="flex items-start gap-3">
-          <input type="checkbox" className="mt-1" checked={selectedAllocations.includes(a.id_alokasi)}
-            disabled={unavailable || calculating || creating || reconcileBusy || !!rekapInfo?.tagihan.some((t) => t.status !== "Batal")}
-            onChange={(e) => void selectAllocations(e.target.checked ? [...selectedAllocations, a.id_alokasi] : selectedAllocations.filter((id) => id !== a.id_alokasi))} />
+          <div className="flex items-start gap-3">
           <span className="space-y-1">
             <span className="block font-medium">{a.bed.no_bed} · {a.kelas_perawatan_snapshot || "Tanpa snapshot kelas"} · {a.status_alokasi}</span>
             <span className="block text-slate-600">{new Date(a.waktu_alokasi).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} – {a.waktu_selesai ? new Date(a.waktu_selesai).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "Masih dirawat (estimasi)"}</span>
             <span className="block">{a.harga_per_malam_snapshot ? `${formatRupiah(Number(a.harga_per_malam_snapshot))} / malam` : "Tarif alokasi lama belum dilengkapi. Super Admin dapat merekonsiliasi tanpa membuat ulang alokasi."}{a.id_tagihan_kamar !== null ? " · Sudah ditagihkan" : ""}</span>
           </span>
-          </label>
+          </div>
           {user?.role === "SUPER_ADMIN" && !a.harga_per_malam_snapshot && a.status_alokasi !== "Batal" && a.id_tagihan_kamar === null && (
-            reconcileTarget !== a.id_alokasi ? <button type="button" disabled={reconcileBusy || calculating || creating} onClick={() => void openReconciliation(a.id_alokasi)} className="text-emerald-700 underline disabled:opacity-50">Lengkapi tarif alokasi lama</button> :
+            reconcileTarget !== a.id_alokasi ? <button type="button" disabled={reconcileBusy || creating} onClick={() => void openReconciliation(a.id_alokasi)} className="text-emerald-700 underline disabled:opacity-50">Lengkapi tarif alokasi lama</button> :
               <form onSubmit={submitReconciliation} className="space-y-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <p className="text-amber-900">Pastikan kelas dan harga sesuai perawatan pasien saat masuk. Tarif yang dipilih berlaku untuk seluruh durasi sejak waktu masuk asli, termasuk bila master tarif dibuat belakangan.</p>
                 {reconcileError && <p role="alert" className="text-red-700">{reconcileError} <button type="button" disabled={reconcileBusy} onClick={() => void openReconciliation(a.id_alokasi)} className="underline">Muat ulang tarif</button></p>}
@@ -165,7 +147,6 @@ function RincianBiayaPelayananContent() {
           )}
         </div>;
       })}
-      {calculating && <p role="status">Menghitung ulang rincian biaya...</p>}
       {hasActiveRoom && <p role="status" className="text-amber-800">Biaya kamar aktif masih estimasi. Selesaikan alokasi sebelum membuat draf tagihan.</p>}
     </section>
   );
@@ -185,7 +166,6 @@ function RincianBiayaPelayananContent() {
     try {
       const created = await createBillingApi({
         id_rekap: preview.id_rekap,
-        id_alokasi_list: selectedAllocations,
         catatan: `Draf tagihan awal dari rekap ${preview.kode_rekap} atas nama ${preview.pasien.nama_pasien}.`,
       });
       router.push(
@@ -444,6 +424,7 @@ function RincianBiayaPelayananContent() {
         </div>
       </div>
 
+      {hasActiveRoom && <p role="status" className="p-3 rounded-lg bg-amber-50 text-amber-900 text-xs">Periksa Tagihan belum tersedia: pasien masih menempati kamar. Selesaikan alokasi setelah pasien keluar; biaya final kemudian dihitung otomatis.</p>}
       {/* Bottom Navigation */}
       <div className="flex items-center justify-between pt-2">
         <Link
@@ -456,11 +437,11 @@ function RincianBiayaPelayananContent() {
 
         <button
           type="button"
-          disabled={creating || calculating || reconcileBusy || hasActiveRoom}
+          disabled={creating || reconcileBusy || hasActiveRoom}
           onClick={handleProceedToInspection}
           className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
         >
-          <span>{creating ? "Memproses Draf..." : "Periksa Tagihan"}</span>
+          <span>{creating ? "Memproses Draf..." : hasActiveRoom ? "Menunggu Alokasi Selesai" : "Periksa Tagihan"}</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
