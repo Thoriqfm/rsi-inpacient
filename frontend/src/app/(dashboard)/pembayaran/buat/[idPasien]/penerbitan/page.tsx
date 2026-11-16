@@ -19,6 +19,7 @@ import {
   fetchBillingsApi,
   updateBillingStatusApi,
 } from "@/lib/api-client";
+import { Badge, Button, Modal, PageHeader, Toast } from "@/components/ui";
 
 function PenerbitanInvoiceContent() {
   const { user } = useAuth();
@@ -123,7 +124,7 @@ function PenerbitanInvoiceContent() {
 
   if (loading) {
     return (
-      <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
+      <div className="py-20 text-center text-slate-400 text-xs font-sans">
         Memuat pratinjau penerbitan invoice resmi...
       </div>
     );
@@ -152,47 +153,25 @@ function PenerbitanInvoiceContent() {
 
   return (
     <div className="space-y-6 pb-12 font-sans text-slate-800 max-w-7xl mx-auto">
-      {/* Toast Alert */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
-          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
+      <Toast message={errorMsg} tone="error" onClose={() => setErrorMsg(null)} />
 
-      {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white px-5 py-3.5 rounded-xl shadow-xl border border-rose-500/40 flex items-center gap-3 animate-fadeIn">
-          <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Header & Print Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-1">
-            LANGKAH 3 — PENERBITAN INVOICE
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Penerbitan Invoice Resmi
-          </h1>
-          <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-            Tinjau lembar pratinjau invoice SIMRS sebelum diterbitkan sebagai dokumen tagihan resmi.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center gap-2 transition cursor-pointer shadow-xs shrink-0"
-        >
-          <Printer className="w-4 h-4 text-slate-500" />
-          <span>Pratinjau Cetak</span>
-        </button>
+      <div className="no-print">
+        <PageHeader
+          eyebrow="Langkah 3 — Penerbitan Invoice"
+          title="Penerbitan Invoice Resmi"
+          description="Tinjau lembar pratinjau invoice SIMRS sebelum diterbitkan sebagai dokumen tagihan resmi."
+          actions={
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="w-4 h-4 text-slate-500" />
+              <span>Pratinjau Cetak</span>
+            </Button>
+          }
+        />
       </div>
 
       {/* Verified Banner */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
+      <div className="no-print bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
         <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
           <Check className="w-4 h-4 stroke-[2.5]" />
         </div>
@@ -200,7 +179,7 @@ function PenerbitanInvoiceContent() {
           <div className="text-xs font-bold text-emerald-900">
             Tagihan Terverifikasi
           </div>
-          <p className="text-[11px] text-emerald-700 mt-0.5">
+          <p className="text-xs text-emerald-700 mt-0.5">
             Rincian biaya dikonfirmasi oleh {billing.dibuat_oleh || "Petugas Administrasi"} pada {billing.tanggal_diperbarui_formatted || "Hari ini"}.
           </p>
         </div>
@@ -237,26 +216,26 @@ function PenerbitanInvoiceContent() {
         {/* 2 Metadata Columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider block mb-1">
-              DITAGIHKAN KEPADA
+            <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider block mb-1">
+              Ditagihkan Kepada
             </span>
             <div className="font-bold text-sm text-slate-900">
               {billing.nama_pasien}
             </div>
-            <div className="text-slate-600 text-xs font-mono">{billing.no_rm}</div>
+            <div className="text-slate-600 text-xs font-mono tabular-nums">{billing.no_rm}</div>
             <div className="text-slate-600 text-xs">
               {billing.nama_kamar || `${billing.kelas_perawatan} • Bed`}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-            <span className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider block mb-1">
-              INFORMASI TAGIHAN
+            <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider block mb-1">
+              Informasi Tagihan
             </span>
             <div className="flex items-center justify-between py-0.5">
               <span className="text-slate-500">Tanggal Terbit</span>
               <span className="text-slate-900 font-medium">
-                {billing.tanggal_terbit_formatted || "24 Februari 2026"}
+                {billing.tanggal_terbit_formatted || "-"}
               </span>
             </div>
             <div className="flex items-center justify-between py-0.5">
@@ -267,9 +246,9 @@ function PenerbitanInvoiceContent() {
             </div>
             <div className="flex items-center justify-between py-0.5">
               <span className="text-slate-500">Status Awal</span>
-              <span className="text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">
+              <Badge tone="amber" dot>
                 Belum Dibayar
-              </span>
+              </Badge>
             </div>
           </div>
         </div>
@@ -278,20 +257,20 @@ function PenerbitanInvoiceContent() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
-                <th className="py-2.5 px-3 w-10 text-center">NO.</th>
-                <th className="py-2.5 px-3">TANGGAL</th>
-                <th className="py-2.5 px-3">NAMA TINDAKAN</th>
-                <th className="py-2.5 px-3">KATEGORI</th>
-                <th className="py-2.5 px-3">JUMLAH</th>
-                <th className="py-2.5 px-3">TARIF SATUAN</th>
-                <th className="py-2.5 px-3 text-right">SUBTOTAL</th>
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                <th className="py-2.5 px-3 w-10 text-center">No.</th>
+                <th className="py-2.5 px-3">Tanggal</th>
+                <th className="py-2.5 px-3">Nama Tindakan</th>
+                <th className="py-2.5 px-3">Kategori</th>
+                <th className="py-2.5 px-3">Jumlah</th>
+                <th className="py-2.5 px-3">Tarif Satuan</th>
+                <th className="py-2.5 px-3 text-right">Subtotal</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {billing.detail_tagihan_list.map((item, idx) => (
                 <tr key={idx}>
-                  <td className="py-3 px-3 text-slate-400 text-center">
+                  <td className="py-3 px-3 text-slate-400 text-center font-mono tabular-nums">
                     {String(idx + 1).padStart(2, "0")}
                   </td>
                   <td className="py-3 px-3 text-slate-600">
@@ -301,14 +280,12 @@ function PenerbitanInvoiceContent() {
                     <div className="font-semibold text-slate-900">{item.nama_tindakan}</div>
                   </td>
                   <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] text-slate-600">
-                      {item.kategori}
-                    </span>
+                    <Badge tone="slate">{item.kategori}</Badge>
                   </td>
-                  <td className="py-3 px-3 text-slate-700">
+                  <td className="py-3 px-3 font-mono tabular-nums text-slate-700">
                     {item.jumlah} {item.satuan}
                   </td>
-                  <td className="py-3 px-3 text-slate-700 font-mono">
+                  <td className="py-3 px-3 text-slate-700 font-mono tabular-nums">
                     {formatRupiah(item.harga_satuan_num)}
                   </td>
                   <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
@@ -323,37 +300,37 @@ function PenerbitanInvoiceContent() {
         {/* Invoice Summary Row */}
         <div className="pt-4 border-t border-slate-200 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
           <div className="space-y-1.5 max-w-sm text-xs">
-            <span className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider block">
-              CATATAN ADMINISTRASI
+            <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider block">
+              Catatan Administrasi
             </span>
             <p className="text-xs text-slate-600 leading-relaxed">
               {billing.catatan_penyesuaian || "Tidak ada catatan penyesuaian khusus."}
             </p>
-            <div className="text-[11px] text-slate-400 pt-1">
+            <div className="text-xs text-slate-500 pt-1">
               Diverifikasi oleh {billing.dibuat_oleh || "Petugas Administrasi"}
             </div>
           </div>
 
           {/* Total Box */}
           <div className="w-full md:w-80 bg-slate-900 text-white rounded-xl p-5 space-y-1 shadow-md">
-            <div className="text-xs text-slate-400">Total Tagihan Rumah Sakit</div>
+            <div className="text-xs text-slate-300">Total Tagihan Rumah Sakit</div>
             <div className="text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
               {formatRupiah(billing.total_biaya_num)}
             </div>
-            <div className="text-xs text-emerald-400 font-medium">
+            <div className="text-xs text-emerald-400 font-medium font-mono tabular-nums">
               {billing.detail_tagihan_list.length} item layanan terverifikasi
             </div>
           </div>
         </div>
 
         {/* Bottom Disclaimer */}
-        <div className="text-center text-[10px] text-slate-400 pt-4 border-t border-slate-100">
+        <div className="text-center text-xs text-slate-400 pt-4 border-t border-slate-100">
           Dokumen ini merupakan invoice resmi SIMRS Inpatient Care untuk dasar penagihan pasien rawat inap.
         </div>
       </div>
 
       {/* Bottom Bar Actions */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+      <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
         <Link
           href={`/pembayaran/buat/${idPasien}/pemeriksaan?id_tagihan=${billing.id_tagihan}`}
           className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition"
@@ -363,73 +340,60 @@ function PenerbitanInvoiceContent() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsConfirmModalOpen(true)}
-            className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition cursor-pointer shadow-xs"
-          >
+          <Button onClick={() => setIsConfirmModalOpen(true)}>
             <Receipt className="w-4 h-4" />
             <span>Terbitkan Invoice Resmi</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* MODAL: Konfirmasi Penerbitan Invoice */}
-      {isConfirmModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-5 animate-fadeIn">
-            {/* Top Icon */}
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Receipt className="w-6 h-6" />
-            </div>
-
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => !issuing && setIsConfirmModalOpen(false)}
+        title="Konfirmasi Penerbitan Invoice"
+        description="Invoice resmi akan disimpan ke database billing dan siap untuk pelunasan kasir."
+        maxWidthClass="max-w-md"
+      >
+        <div className="space-y-5">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Konfirmasi Penerbitan Invoice
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Invoice resmi akan disimpan ke database billing dan siap untuk pelunasan kasir.
-              </p>
+              <span className="text-slate-500 text-xs block">Pasien</span>
+              <span className="font-semibold text-slate-900 block">
+                {billing.nama_pasien}
+              </span>
+              <span className="text-xs text-slate-500 font-mono tabular-nums">
+                {billing.no_rm}
+              </span>
             </div>
-
-            {/* Target Box */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-slate-400 text-[10px] block">Pasien</span>
-                <span className="font-semibold text-slate-900 block">
-                  {billing.nama_pasien}
-                </span>
-                <span className="text-xs text-slate-500 font-mono">{billing.no_rm}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-slate-400 text-[10px] block">Total Tagihan</span>
-                <span className="font-mono font-bold text-emerald-700 text-sm block tabular-nums">
-                  {formatRupiah(billing.total_biaya_num)}
-                </span>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsConfirmModalOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                disabled={issuing}
-                onClick={handleConfirmIssue}
-                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-60 shadow-xs"
-              >
-                {issuing ? "Menerbitkan..." : "Ya, Terbitkan Invoice"}
-              </button>
+            <div className="text-right">
+              <span className="text-slate-500 text-xs block">Total Tagihan</span>
+              <span className="font-mono font-bold text-emerald-700 text-sm block tabular-nums">
+                {formatRupiah(billing.total_biaya_num)}
+              </span>
             </div>
           </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={issuing}
+              onClick={() => setIsConfirmModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              loading={issuing}
+              disabled={issuing}
+              onClick={handleConfirmIssue}
+            >
+              {issuing ? "Menerbitkan..." : "Ya, Terbitkan Invoice"}
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
@@ -443,7 +407,7 @@ export default function PenerbitanInvoicePage() {
   return (
     <Suspense
       fallback={
-        <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
+        <div className="py-20 text-center text-slate-400 text-xs font-sans">
           Memuat penerbitan invoice...
         </div>
       }

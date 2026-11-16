@@ -13,7 +13,6 @@ import {
   Check,
   Clock,
   ChevronLeft,
-  AlertTriangle,
 } from "lucide-react";
 import { BillingItem, BillingStatus } from "@/types";
 import {
@@ -21,6 +20,14 @@ import {
   fetchBillingByIdApi,
   updateBillingStatusApi,
 } from "@/lib/api-client";
+import {
+  AlertBanner,
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+  Toast,
+} from "@/components/ui";
 
 function DetailTagihanContent() {
   const { user } = useAuth();
@@ -143,7 +150,7 @@ function DetailTagihanContent() {
 
   if (loading) {
     return (
-      <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
+      <div className="py-20 text-center text-slate-400 text-xs font-sans">
         Memuat detail tagihan pasien...
       </div>
     );
@@ -152,12 +159,10 @@ function DetailTagihanContent() {
   if (!billing) {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-4 font-sans text-xs">
-        <div className="p-5 rounded-[12px] bg-[#fdf0f0] border border-[#fecaca] text-[#dc2626]">
-          <span className="font-semibold text-sm">Tagihan Tidak Ditemukan</span>
-        </div>
+        <AlertBanner tone="error" message="Tagihan tidak ditemukan." />
         <Link
           href="/pembayaran"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] border border-[#e5e7eb] bg-white text-[#4b5563] font-medium"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium transition"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Kembali ke Daftar Tagihan</span>
@@ -171,98 +176,63 @@ function DetailTagihanContent() {
 
   return (
     <div className="space-y-6 pb-12 font-sans text-slate-800 max-w-7xl mx-auto">
-      {/* Toast Alert */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
-          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
+      <Toast message={errorMsg} tone="error" onClose={() => setErrorMsg(null)} />
 
-      {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white px-5 py-3.5 rounded-xl shadow-xl border border-rose-500/40 flex items-center gap-3 animate-fadeIn">
-          <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Header & Print Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-1">
-            RINCIAN INVOICE TAGIHAN
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Detail Tagihan &amp; Pembayaran
-          </h1>
-          <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-            Lihat rincian biaya medis, status pelunasan kasir, dan jejak audit aktivitas invoice.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center gap-2 transition cursor-pointer shadow-xs shrink-0"
-        >
-          <Printer className="w-4 h-4 text-slate-500" />
-          <span>Cetak Invoice</span>
-        </button>
+      <div className="no-print">
+        <PageHeader
+          eyebrow="Rincian Invoice Tagihan"
+          title="Detail Tagihan & Pembayaran"
+          description="Lihat rincian biaya medis, status pelunasan kasir, dan jejak audit aktivitas invoice."
+          actions={
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="w-4 h-4 text-slate-500" />
+              <span>Cetak Invoice</span>
+            </Button>
+          }
+        />
       </div>
 
       {/* Alert Banner jika Tagihan Dibatalkan */}
       {isBatal && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
-          <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-            <X className="w-4 h-4 stroke-[2.5]" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-rose-800">
-              Tagihan telah dibatalkan
-            </div>
-            <p className="text-[11px] text-rose-700 mt-0.5">
-              Invoice ini disimpan sebagai riwayat audit dan dinonaktifkan dari penagihan kasir.
-            </p>
-          </div>
-        </div>
+        <AlertBanner
+          tone="error"
+          message="Tagihan telah dibatalkan: invoice ini disimpan sebagai riwayat audit dan dinonaktifkan dari penagihan kasir."
+        />
       )}
 
       {/* CARD 1: Top Invoice & Patient Summary Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="text-emerald-700 text-[10px] font-semibold uppercase tracking-wider block">
-              NO. INVOICE RESMI
+            <span className="text-emerald-700 text-xs font-semibold uppercase tracking-wider block">
+              No. Invoice Resmi
             </span>
-            <h2 className="text-slate-900 text-xl font-bold font-mono mt-0.5">
+            <h2 className="text-slate-900 text-xl font-bold font-mono tabular-nums mt-0.5">
               {billing.no_tagihan}
             </h2>
             <span className="text-xs text-slate-500">
-              Diterbitkan {billing.tanggal_terbit_formatted || "18 Feb 2026"} oleh {billing.dibuat_oleh || "Petugas Administrasi"}
+              Diterbitkan {billing.tanggal_terbit_formatted || "-"} oleh {billing.dibuat_oleh || "Petugas Administrasi"}
             </span>
           </div>
 
           <div>
             {billing.status === "Belum Dibayar" ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <Badge tone="amber" dot>
                 Belum Dibayar
-              </span>
+              </Badge>
             ) : billing.status === "Lunas" ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+              <Badge tone="emerald" dot>
                 Lunas
-              </span>
+              </Badge>
             ) : billing.status === "Batal" ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+              <Badge tone="rose" dot>
                 Batal
-              </span>
+              </Badge>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              <Badge tone="slate" dot>
                 Draft
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -270,24 +240,24 @@ function DetailTagihanContent() {
         {/* 4 Details Columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100 text-xs">
           <div>
-            <span className="text-slate-400 text-[11px] block">Nama Pasien</span>
+            <span className="text-slate-500 text-xs block">Nama Pasien</span>
             <span className="font-semibold text-slate-900">{billing.nama_pasien}</span>
           </div>
 
           <div>
-            <span className="text-slate-400 text-[11px] block">No. Rekam Medis</span>
-            <span className="font-mono font-medium text-slate-800">{billing.no_rm}</span>
+            <span className="text-slate-500 text-xs block">No. Rekam Medis</span>
+            <span className="font-mono tabular-nums font-medium text-slate-800">{billing.no_rm}</span>
           </div>
 
           <div>
-            <span className="text-slate-400 text-[11px] block">Periode Perawatan</span>
+            <span className="text-slate-500 text-xs block">Periode Perawatan</span>
             <span className="font-medium text-slate-800">
               {billing.periode_perawatan || "-"}
             </span>
           </div>
 
           <div>
-            <span className="text-slate-400 text-[11px] block">Total Tagihan</span>
+            <span className="text-slate-500 text-xs block">Total Tagihan</span>
             <span className="font-mono font-bold text-emerald-700 text-base tabular-nums">
               {formatRupiah(billing.total_biaya_num)}
             </span>
@@ -302,32 +272,30 @@ function DetailTagihanContent() {
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-semibold text-slate-800">Rincian Biaya Pelayanan</h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {billing.detail_tagihan_list.length} jenis layanan tercatat pada invoice resmi.
               </p>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-600">
-              Tersimpan
-            </span>
+            <Badge tone="slate">Tersimpan</Badge>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
-                  <th className="py-3 px-4 w-12 text-center">NO.</th>
-                  <th className="py-3 px-4">TANGGAL</th>
-                  <th className="py-3 px-4">NAMA TINDAKAN</th>
-                  <th className="py-3 px-4">KATEGORI</th>
-                  <th className="py-3 px-4">JUMLAH</th>
-                  <th className="py-3 px-4">TARIF SATUAN</th>
-                  <th className="py-3 px-5 text-right">SUBTOTAL</th>
+                <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
+                  <th className="py-3 px-4 w-12 text-center">No.</th>
+                  <th className="py-3 px-4">Tanggal</th>
+                  <th className="py-3 px-4">Nama Tindakan</th>
+                  <th className="py-3 px-4">Kategori</th>
+                  <th className="py-3 px-4">Jumlah</th>
+                  <th className="py-3 px-4">Tarif Satuan</th>
+                  <th className="py-3 px-5 text-right">Subtotal</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {billing.detail_tagihan_list.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/60 transition">
-                    <td className="py-3.5 px-4 text-slate-400 text-center font-normal">
+                    <td className="py-3.5 px-4 text-slate-400 text-center font-mono tabular-nums">
                       {String(idx + 1).padStart(2, "0")}
                     </td>
 
@@ -340,16 +308,14 @@ function DetailTagihanContent() {
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-medium text-slate-700">
-                        {item.kategori}
-                      </span>
+                      <Badge tone="slate">{item.kategori}</Badge>
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-700">
+                    <td className="py-3.5 px-4 font-mono tabular-nums text-slate-700">
                       {item.jumlah} {item.satuan}
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-700 font-mono">
+                    <td className="py-3.5 px-4 text-slate-700 font-mono tabular-nums">
                       {formatRupiah(item.harga_satuan_num)}
                     </td>
 
@@ -489,207 +455,186 @@ function DetailTagihanContent() {
       </div>
 
       {/* MODAL 1: Ubah Status Pembayaran */}
-      {isStatusModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[16px] max-w-md w-full shadow-2xl border border-[#e9ebf0] p-6 space-y-5 animate-fadeIn">
-            {/* Top Icon */}
-            <div className="w-10 h-10 rounded-full bg-[#e6f8f5] text-[#00b89f] flex items-center justify-center">
-              <RefreshCw className="w-5 h-5" />
-            </div>
-
+      <Modal
+        isOpen={isStatusModalOpen}
+        onClose={() => !updatingStatus && setIsStatusModalOpen(false)}
+        title="Ubah Status Pembayaran"
+        description="Perbarui status pembayaran invoice pasien."
+        maxWidthClass="max-w-md"
+      >
+        <div className="space-y-5">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <h3 className="text-base font-semibold text-[#1e1e1e]">Ubah Status Pembayaran</h3>
-              <p className="text-xs text-[#8c8c8c] mt-0.5">
-                Perbarui status pembayaran invoice pasien.
-              </p>
-            </div>
-
-            {/* Target Box */}
-            <div className="bg-[#f9fafb] rounded-[10px] p-4 border border-[#f0f2f5] grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-[#8c8c8c] text-[10px] block">No. Invoice</span>
-                <span className="font-semibold text-[#1e1e1e]">{billing.no_tagihan}</span>
-              </div>
-              <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Nama Pasien</span>
-                <span className="font-semibold text-[#1e1e1e]">{billing.nama_pasien}</span>
-              </div>
-              <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Total Tagihan</span>
-                <span className="font-bold text-[#00b89f]">
-                  {formatRupiah(billing.total_biaya_num)}
-                </span>
-              </div>
-              <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Status Saat Ini</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  {billing.status}
-                </span>
-              </div>
-            </div>
-
-            {/* Radio Selectors */}
-            <div className="space-y-2.5">
-              <span className="text-xs font-medium text-[#1e1e1e] block">
-                Pilih status pembayaran
+              <span className="text-slate-500 text-xs block">No. Invoice</span>
+              <span className="font-mono tabular-nums font-semibold text-slate-900">
+                {billing.no_tagihan}
               </span>
-
-              {/* Option Belum Dibayar */}
-              <label
-                onClick={() => setSelectedNewStatus("Belum Dibayar")}
-                className={`flex items-center justify-between p-3.5 rounded-[10px] border cursor-pointer transition ${
-                  selectedNewStatus === "Belum Dibayar"
-                    ? "border-[#00b89f] bg-[#f2fbf9]"
-                    : "border-[#e5e7eb] hover:bg-[#fafafa]"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedNewStatus === "Belum Dibayar"
-                        ? "border-[#00b89f] bg-[#00b89f]"
-                        : "border-[#d1d5db]"
-                    }`}
-                  >
-                    {selectedNewStatus === "Belum Dibayar" && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-[#1e1e1e]">Belum Dibayar</div>
-                    <div className="text-[10px] text-[#8c8c8c]">Pembayaran belum diterima</div>
-                  </div>
-                </div>
-                {selectedNewStatus === "Belum Dibayar" && (
-                  <Check className="w-4 h-4 text-[#00b89f]" />
-                )}
-              </label>
-
-              {/* Option Lunas */}
-              <label
-                onClick={() => setSelectedNewStatus("Lunas")}
-                className={`flex items-center justify-between p-3.5 rounded-[10px] border cursor-pointer transition ${
-                  selectedNewStatus === "Lunas"
-                    ? "border-[#00b89f] bg-[#f2fbf9]"
-                    : "border-[#e5e7eb] hover:bg-[#fafafa]"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedNewStatus === "Lunas"
-                        ? "border-[#00b89f] bg-[#00b89f]"
-                        : "border-[#d1d5db]"
-                    }`}
-                  >
-                    {selectedNewStatus === "Lunas" && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-[#1e1e1e]">Lunas</div>
-                    <div className="text-[10px] text-[#8c8c8c]">Pembayaran telah diselesaikan</div>
-                  </div>
-                </div>
-                {selectedNewStatus === "Lunas" && (
-                  <Check className="w-4 h-4 text-[#00b89f]" />
-                )}
-              </label>
             </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={updatingStatus}
-                onClick={() => setIsStatusModalOpen(false)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                disabled={updatingStatus}
-                onClick={handleSaveStatus}
-                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {updatingStatus ? "Menyimpan..." : "Simpan Perubahan"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: Batalkan Tagihan */}
-      {isCancelModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <form
-            onSubmit={handleConfirmCancel}
-            className="bg-white rounded-[16px] max-w-md w-full shadow-2xl border border-[#fee2e2] p-6 space-y-4 animate-fadeIn"
-          >
-            {/* Top Red Icon */}
-            <div className="w-10 h-10 rounded-full bg-[#fdf0f0] text-[#dc2626] flex items-center justify-center">
-              <X className="w-5 h-5" />
-            </div>
-
             <div>
-              <h3 className="text-base font-semibold text-[#1e1e1e]">Batalkan Tagihan?</h3>
-              <p className="text-xs text-[#8c8c8c] mt-0.5">
-                Tindakan ini akan mengubah status tagihan menjadi Batal dan tidak dapat dipulihkan.
-              </p>
+              <span className="text-slate-500 text-xs block">Nama Pasien</span>
+              <span className="font-semibold text-slate-900">{billing.nama_pasien}</span>
             </div>
-
-            {/* Target Info */}
-            <div className="bg-[#fef2f2]/60 rounded-[10px] p-3 border border-[#fecaca] text-xs flex items-center justify-between">
-              <div>
-                <span className="font-semibold text-[#1e1e1e] block">{billing.no_tagihan}</span>
-                <span className="text-[11px] text-[#4b5563]">{billing.nama_pasien}</span>
-              </div>
-              <span className="font-bold text-[#dc2626]">
+            <div>
+              <span className="text-slate-500 text-xs block">Total Tagihan</span>
+              <span className="font-mono tabular-nums font-bold text-emerald-700">
                 {formatRupiah(billing.total_biaya_num)}
               </span>
             </div>
-
-            {/* Reason Textarea */}
             <div>
-              <label className="block text-xs font-medium text-[#1e1e1e] mb-1.5">
-                Alasan pembatalan *
-              </label>
-              <textarea
-                rows={3}
-                required
-                maxLength={200}
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Tuliskan alasan pembatalan tagihan..."
-                className="w-full p-2.5 rounded-[8px] border border-[#e5e7eb] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-rose-500"
-              />
-              <div className="text-[10px] text-[#8c8c8c] text-right mt-1">
-                {cancelReason.length}/200 karakter
-              </div>
+              <span className="text-slate-500 text-xs block">Status Saat Ini</span>
+              <Badge tone={billing.status === "Lunas" ? "emerald" : "amber"} dot>
+                {billing.status}
+              </Badge>
             </div>
+          </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={cancelling}
-                onClick={() => setIsCancelModalOpen(false)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={cancelling}
-                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {cancelling ? "Membatalkan..." : "Ya, Batalkan Tagihan"}
-              </button>
-            </div>
-          </form>
+          <div className="space-y-2.5">
+            <span className="text-xs font-semibold text-slate-800 block">
+              Pilih status pembayaran
+            </span>
+
+            <label
+              onClick={() => setSelectedNewStatus("Belum Dibayar")}
+              className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
+                selectedNewStatus === "Belum Dibayar"
+                  ? "border-emerald-600 bg-emerald-50/50"
+                  : "border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    selectedNewStatus === "Belum Dibayar"
+                      ? "border-emerald-600 bg-emerald-600"
+                      : "border-slate-300"
+                  }`}
+                >
+                  {selectedNewStatus === "Belum Dibayar" && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-slate-900">Belum Dibayar</div>
+                  <div className="text-xs text-slate-500">Pembayaran belum diterima</div>
+                </div>
+              </div>
+              {selectedNewStatus === "Belum Dibayar" && (
+                <Check className="w-4 h-4 text-emerald-600" />
+              )}
+            </label>
+
+            <label
+              onClick={() => setSelectedNewStatus("Lunas")}
+              className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
+                selectedNewStatus === "Lunas"
+                  ? "border-emerald-600 bg-emerald-50/50"
+                  : "border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    selectedNewStatus === "Lunas"
+                      ? "border-emerald-600 bg-emerald-600"
+                      : "border-slate-300"
+                  }`}
+                >
+                  {selectedNewStatus === "Lunas" && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-slate-900">Lunas</div>
+                  <div className="text-xs text-slate-500">Pembayaran telah diselesaikan</div>
+                </div>
+              </div>
+              {selectedNewStatus === "Lunas" && (
+                <Check className="w-4 h-4 text-emerald-600" />
+              )}
+            </label>
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={updatingStatus}
+              onClick={() => setIsStatusModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              loading={updatingStatus}
+              disabled={updatingStatus}
+              onClick={handleSaveStatus}
+            >
+              {updatingStatus ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
+
+      {/* MODAL 2: Batalkan Tagihan */}
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => !cancelling && setIsCancelModalOpen(false)}
+        title="Batalkan Tagihan?"
+        description="Tindakan ini akan mengubah status tagihan menjadi Batal dan tidak dapat dipulihkan."
+        maxWidthClass="max-w-md"
+      >
+        <form onSubmit={handleConfirmCancel} className="space-y-4">
+          <div className="bg-rose-50/70 rounded-xl p-3.5 border border-rose-200 text-xs flex items-center justify-between">
+            <div>
+              <span className="font-mono tabular-nums font-semibold text-slate-900 block">
+                {billing.no_tagihan}
+              </span>
+              <span className="text-xs text-slate-600">{billing.nama_pasien}</span>
+            </div>
+            <span className="font-mono tabular-nums font-bold text-rose-700">
+              {formatRupiah(billing.total_biaya_num)}
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+              Alasan pembatalan *
+            </label>
+            <textarea
+              rows={3}
+              required
+              maxLength={200}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Tuliskan alasan pembatalan tagihan..."
+              className="w-full p-2.5 rounded-lg border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600"
+            />
+            <div className="text-xs font-mono tabular-nums text-slate-500 text-right mt-1">
+              {cancelReason.length}/200 karakter
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={cancelling}
+              onClick={() => setIsCancelModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              size="sm"
+              loading={cancelling}
+              disabled={cancelling}
+            >
+              {cancelling ? "Membatalkan..." : "Ya, Batalkan Tagihan"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

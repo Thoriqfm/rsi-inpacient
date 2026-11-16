@@ -41,17 +41,17 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const isPembayaranSection = pathname.startsWith("/pembayaran");
 
   const getItemClass = (isActive: boolean) =>
-    `relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+    `relative flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 ${
       isActive
-        ? "bg-emerald-600/25 text-white font-semibold border border-emerald-500/40 shadow-xs"
-        : "text-emerald-100/75 hover:text-white hover:bg-white/10"
+        ? "bg-white/15 text-white font-semibold border border-white/20 shadow-2xs"
+        : "text-emerald-100/80 hover:text-white hover:bg-white/10 border border-transparent"
     }`;
 
   const getSubItemClass = (isActive: boolean) =>
-    `flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer ${
+    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 ${
       isActive
-        ? "bg-emerald-500/20 text-emerald-300 font-semibold"
-        : "text-emerald-200/70 hover:text-white hover:bg-white/5"
+        ? "bg-emerald-500/25 text-white font-semibold"
+        : "text-emerald-100/75 hover:text-white hover:bg-white/10"
     }`;
 
   return (

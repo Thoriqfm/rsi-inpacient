@@ -13,10 +13,8 @@ import {
   MoreHorizontal,
   Plus,
   Calendar,
-  AlertTriangle,
   Receipt,
   Tag,
-  ChevronRight,
 } from "lucide-react";
 import {
   BillingItem,
@@ -29,6 +27,14 @@ import {
   fetchTariffsApi,
   updateBillingStatusApi,
 } from "@/lib/api-client";
+import {
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+  StatCard,
+  Toast,
+} from "@/components/ui";
 
 export default function PembayaranDashboardPage() {
   const { user } = useAuth();
@@ -189,149 +195,86 @@ export default function PembayaranDashboardPage() {
 
   return (
     <div className="space-y-6 pb-12 font-sans text-slate-800 max-w-7xl mx-auto">
-      {/* Toast Alert */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 flex items-center gap-3 animate-fadeIn">
-          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
+      <Toast message={errorMsg} tone="error" onClose={() => setErrorMsg(null)} />
 
-      {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-rose-900 text-white px-5 py-3.5 rounded-xl shadow-xl border border-rose-500/40 flex items-center gap-3 animate-fadeIn">
-          <AlertTriangle className="w-5 h-5 text-rose-300 shrink-0" />
-          <span className="text-xs sm:text-sm font-medium">{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-1">
-            MANAJEMEN TAGIHAN RAWAT INAP
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Pembayaran &amp; Tagihan Pasien
-          </h1>
-          <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-            Kelola perhitungan biaya pelayanan, penerbitan invoice kasir, dan status pelunasan pasien rawat inap.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <Link href="/pembayaran/tarif-kamar" className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-medium">Tarif Kamar</Link>
-          <button
-            type="button"
-            onClick={() => setIsTarifModalOpen(true)}
-            className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-          >
-            <Tag className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Master Tarif ({tariffs.length})</span>
-          </button>
-
-          <Link
-            href="/pembayaran/buat"
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Buat Tagihan</span>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Manajemen Tagihan Rawat Inap"
+        title="Pembayaran & Tagihan Pasien"
+        description="Kelola perhitungan biaya pelayanan, penerbitan invoice kasir, dan status pelunasan pasien rawat inap."
+        actions={
+          <>
+            <Link
+              href="/pembayaran/tarif-kamar"
+              className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition shadow-xs"
+            >
+              Tarif Kamar
+            </Link>
+            <Button variant="outline" size="sm" onClick={() => setIsTarifModalOpen(true)}>
+              <Tag className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Master Tarif ({tariffs.length})</span>
+            </Button>
+            <Link
+              href="/pembayaran/buat"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Tagihan</span>
+            </Link>
+          </>
+        }
+      />
 
       {/* 4 Financial & Status KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-        {/* Total Tagihan */}
-        <div
+        <StatCard
+          label="Total Tagihan"
+          subtitle="Seluruh invoice"
+          value={counts.semua}
+          tone="emerald"
+          active={activeTab === "Semua"}
           onClick={() => {
             setActiveTab("Semua");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-emerald-500 transition shadow-xs"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <Receipt className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-slate-800 text-xs font-semibold">Total Tagihan</div>
-              <div className="text-slate-500 text-[11px]">Seluruh invoice</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-900 text-2xl font-bold">{counts.semua}</span>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          </div>
-        </div>
-
-        {/* Belum Dibayar */}
-        <div
+          icon={<Receipt className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Belum Dibayar"
+          subtitle="Perlu ditindaklanjuti"
+          value={counts.belumDibayar}
+          tone="amber"
+          active={activeTab === "Belum Dibayar"}
           onClick={() => {
             setActiveTab("Belum Dibayar");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-amber-400 transition shadow-xs"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <Clock className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-slate-800 text-xs font-semibold">Belum Dibayar</div>
-              <div className="text-slate-500 text-[11px]">Perlu ditindaklanjuti</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-900 text-2xl font-bold">{counts.belumDibayar}</span>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          </div>
-        </div>
-
-        {/* Lunas */}
-        <div
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Lunas"
+          subtitle="Pembayaran selesai"
+          value={counts.lunas}
+          tone="emerald"
+          active={activeTab === "Lunas"}
           onClick={() => {
             setActiveTab("Lunas");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-emerald-500 transition shadow-xs"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
-              <Check className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-slate-800 text-xs font-semibold">Lunas</div>
-              <div className="text-slate-500 text-[11px]">Pembayaran selesai</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-900 text-2xl font-bold">{counts.lunas}</span>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          </div>
-        </div>
-
-        {/* Dibatalkan */}
-        <div
+          icon={<Check className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Dibatalkan"
+          subtitle="Invoice dibatalkan"
+          value={counts.batal}
+          tone="rose"
+          active={activeTab === "Batal"}
           onClick={() => {
             setActiveTab("Batal");
             setStatusDropdown("Semua status");
           }}
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:border-rose-400 transition shadow-xs"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-              <X className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-slate-800 text-xs font-semibold">Dibatalkan</div>
-              <div className="text-slate-500 text-[11px]">Invoice dibatalkan</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-900 text-2xl font-bold">{counts.batal}</span>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          </div>
-        </div>
+          icon={<X className="w-5 h-5" />}
+        />
       </div>
 
       {/* Main Container Card: Search, Tabs & Table */}
@@ -412,7 +355,7 @@ export default function PembayaranDashboardPage() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80">
                 <th className="py-3 px-4 w-12 text-center">NO.</th>
                 <th className="py-3 px-4">NO. INVOICE</th>
                 <th className="py-3 px-4">NAMA PASIEN</th>
@@ -475,25 +418,21 @@ export default function PembayaranDashboardPage() {
 
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {item.status === "Belum Dibayar" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <Badge tone="amber" dot>
                           Belum Dibayar
-                        </span>
+                        </Badge>
                       ) : item.status === "Lunas" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        <Badge tone="emerald" dot>
                           Lunas
-                        </span>
+                        </Badge>
                       ) : item.status === "Batal" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                        <Badge tone="rose" dot>
                           Batal
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <Badge tone="slate" dot>
                           Draft
-                        </span>
+                        </Badge>
                       )}
                     </td>
 
@@ -715,69 +654,65 @@ export default function PembayaranDashboardPage() {
         </div>
       </div>
 
-      {/* MODAL 1: Ubah Status Pembayaran (matches 228:16744) */}
-      {statusModalTarget && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[16px] max-w-md w-full shadow-2xl border border-[#e9ebf0] p-6 space-y-5 animate-fadeIn">
-            {/* Top Icon */}
-            <div className="w-10 h-10 rounded-full bg-[#e6f8f5] text-[#00b89f] flex items-center justify-center">
-              <RefreshCw className="w-5 h-5" />
-            </div>
-
-            {/* Titles */}
-            <div>
-              <h3 className="text-base font-semibold text-[#1e1e1e]">Ubah Status Pembayaran</h3>
-              <p className="text-xs text-[#8c8c8c] mt-0.5">
-                Perbarui status pembayaran invoice pasien.
-              </p>
-            </div>
-
-            {/* Info Summary Box */}
-            <div className="bg-[#f9fafb] rounded-[10px] p-4 border border-[#f0f2f5] grid grid-cols-2 gap-3 text-xs">
+      {/* MODAL 1: Ubah Status Pembayaran */}
+      <Modal
+        isOpen={!!statusModalTarget}
+        onClose={() => !savingStatus && setStatusModalTarget(null)}
+        title="Ubah Status Pembayaran"
+        description="Perbarui status pembayaran invoice pasien."
+        maxWidthClass="max-w-md"
+      >
+        {statusModalTarget && (
+          <div className="space-y-5">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-[#8c8c8c] text-[10px] block">No. Invoice</span>
-                <span className="font-semibold text-[#1e1e1e]">{statusModalTarget.no_tagihan}</span>
+                <span className="text-slate-500 text-xs block">No. Invoice</span>
+                <span className="font-mono tabular-nums font-semibold text-slate-900">
+                  {statusModalTarget.no_tagihan}
+                </span>
               </div>
               <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Nama Pasien</span>
-                <span className="font-semibold text-[#1e1e1e]">{statusModalTarget.nama_pasien}</span>
+                <span className="text-slate-500 text-xs block">Nama Pasien</span>
+                <span className="font-semibold text-slate-900">
+                  {statusModalTarget.nama_pasien}
+                </span>
               </div>
               <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Total Tagihan</span>
-                <span className="font-bold text-[#00b89f]">
+                <span className="text-slate-500 text-xs block">Total Tagihan</span>
+                <span className="font-mono tabular-nums font-bold text-emerald-700">
                   {formatRupiah(statusModalTarget.total_biaya_num)}
                 </span>
               </div>
               <div>
-                <span className="text-[#8c8c8c] text-[10px] block">Status Saat Ini</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="text-slate-500 text-xs block">Status Saat Ini</span>
+                <Badge
+                  tone={statusModalTarget.status === "Lunas" ? "emerald" : "amber"}
+                  dot
+                >
                   {statusModalTarget.status}
-                </span>
+                </Badge>
               </div>
             </div>
 
-            {/* Radio Selectors */}
             <div className="space-y-2.5">
-              <span className="text-xs font-medium text-[#1e1e1e] block">
+              <span className="text-xs font-semibold text-slate-800 block">
                 Pilih status pembayaran
               </span>
 
-              {/* Option Belum Dibayar */}
               <label
                 onClick={() => setSelectedNewStatus("Belum Dibayar")}
-                className={`flex items-center justify-between p-3.5 rounded-[10px] border cursor-pointer transition ${
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
                   selectedNewStatus === "Belum Dibayar"
-                    ? "border-[#00b89f] bg-[#f2fbf9]"
-                    : "border-[#e5e7eb] hover:bg-[#fafafa]"
+                    ? "border-emerald-600 bg-emerald-50/50"
+                    : "border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                       selectedNewStatus === "Belum Dibayar"
-                        ? "border-[#00b89f] bg-[#00b89f]"
-                        : "border-[#d1d5db]"
+                        ? "border-emerald-600 bg-emerald-600"
+                        : "border-slate-300"
                     }`}
                   >
                     {selectedNewStatus === "Belum Dibayar" && (
@@ -785,30 +720,29 @@ export default function PembayaranDashboardPage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-[#1e1e1e]">Belum Dibayar</div>
-                    <div className="text-[10px] text-[#8c8c8c]">Pembayaran belum diterima</div>
+                    <div className="text-xs font-semibold text-slate-900">Belum Dibayar</div>
+                    <div className="text-xs text-slate-500">Pembayaran belum diterima</div>
                   </div>
                 </div>
                 {selectedNewStatus === "Belum Dibayar" && (
-                  <Check className="w-4 h-4 text-[#00b89f]" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                 )}
               </label>
 
-              {/* Option Lunas */}
               <label
                 onClick={() => setSelectedNewStatus("Lunas")}
-                className={`flex items-center justify-between p-3.5 rounded-[10px] border cursor-pointer transition ${
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
                   selectedNewStatus === "Lunas"
-                    ? "border-[#00b89f] bg-[#f2fbf9]"
-                    : "border-[#e5e7eb] hover:bg-[#fafafa]"
+                    ? "border-emerald-600 bg-emerald-50/50"
+                    : "border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                       selectedNewStatus === "Lunas"
-                        ? "border-[#00b89f] bg-[#00b89f]"
-                        : "border-[#d1d5db]"
+                        ? "border-emerald-600 bg-emerald-600"
+                        : "border-slate-300"
                     }`}
                   >
                     {selectedNewStatus === "Lunas" && (
@@ -816,72 +750,62 @@ export default function PembayaranDashboardPage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-[#1e1e1e]">Lunas</div>
-                    <div className="text-[10px] text-[#8c8c8c]">Pembayaran telah diselesaikan</div>
+                    <div className="text-xs font-semibold text-slate-900">Lunas</div>
+                    <div className="text-xs text-slate-500">Pembayaran telah diselesaikan</div>
                   </div>
                 </div>
                 {selectedNewStatus === "Lunas" && (
-                  <Check className="w-4 h-4 text-[#00b89f]" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                 )}
               </label>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={savingStatus}
                 onClick={() => setStatusModalTarget(null)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                loading={savingStatus}
                 disabled={savingStatus}
                 onClick={handleSaveStatusChange}
-                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {savingStatus ? "Menyimpan..." : "Simpan Perubahan"}
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
-      {/* MODAL 2: Batalkan Tagihan (matches 228:17611) */}
-      {cancelTarget && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <form
-            onSubmit={handleConfirmCancel}
-            className="bg-white rounded-[16px] max-w-md w-full shadow-2xl border border-[#fee2e2] p-6 space-y-4 animate-fadeIn"
-          >
-            {/* Top Red Icon */}
-            <div className="w-10 h-10 rounded-full bg-[#fdf0f0] text-[#dc2626] flex items-center justify-center">
-              <X className="w-5 h-5" />
-            </div>
-
-            <div>
-              <h3 className="text-base font-semibold text-[#1e1e1e]">Batalkan Tagihan?</h3>
-              <p className="text-xs text-[#8c8c8c] mt-0.5">
-                Tindakan ini akan mengubah status tagihan menjadi Batal dan tidak dapat dipulihkan.
-              </p>
-            </div>
-
-            {/* Target Info */}
-            <div className="bg-[#fef2f2]/60 rounded-[10px] p-3 border border-[#fecaca] text-xs flex items-center justify-between">
+      {/* MODAL 2: Batalkan Tagihan */}
+      <Modal
+        isOpen={!!cancelTarget}
+        onClose={() => !cancelling && setCancelTarget(null)}
+        title="Batalkan Tagihan?"
+        description="Tindakan ini akan mengubah status tagihan menjadi Batal dan tidak dapat dipulihkan."
+        maxWidthClass="max-w-md"
+      >
+        {cancelTarget && (
+          <form onSubmit={handleConfirmCancel} className="space-y-4">
+            <div className="bg-rose-50/70 rounded-xl p-3.5 border border-rose-200 text-xs flex items-center justify-between">
               <div>
-                <span className="font-semibold text-[#1e1e1e] block">{cancelTarget.no_tagihan}</span>
-                <span className="text-[11px] text-[#4b5563]">{cancelTarget.nama_pasien}</span>
+                <span className="font-mono tabular-nums font-semibold text-slate-900 block">
+                  {cancelTarget.no_tagihan}
+                </span>
+                <span className="text-xs text-slate-600">{cancelTarget.nama_pasien}</span>
               </div>
-              <span className="font-bold text-[#dc2626]">
+              <span className="font-mono tabular-nums font-bold text-rose-700">
                 {formatRupiah(cancelTarget.total_biaya_num)}
               </span>
             </div>
 
-            {/* Reason Textarea */}
             <div>
-              <label className="block text-xs font-medium text-[#1e1e1e] mb-1.5">
+              <label className="block text-xs font-semibold text-slate-800 mb-1.5">
                 Alasan pembatalan *
               </label>
               <textarea
@@ -891,90 +815,73 @@ export default function PembayaranDashboardPage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Tuliskan alasan pembatalan tagihan..."
-                className="w-full p-2.5 rounded-[8px] border border-[#e5e7eb] text-xs text-[#1e1e1e] placeholder-[#9ca3af] focus:outline-none focus:border-rose-500"
+                className="w-full p-2.5 rounded-lg border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600"
               />
-              <div className="text-[10px] text-[#8c8c8c] text-right mt-1">
+              <div className="text-xs font-mono tabular-nums text-slate-500 text-right mt-1">
                 {cancelReason.length}/200 karakter
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={cancelling}
                 onClick={() => setCancelTarget(null)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="danger"
+                size="sm"
+                loading={cancelling}
                 disabled={cancelling}
-                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {cancelling ? "Membatalkan..." : "Ya, Batalkan Tagihan"}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* MODAL 3: Master Tarif */}
-      {isTarifModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[16px] max-w-2xl w-full shadow-2xl border border-[#e9ebf0] overflow-hidden animate-fadeIn">
-            <div className="px-6 py-4 border-b border-[#f0f2f5] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-[8px] bg-[#e7faf7] text-[#00b89f] flex items-center justify-center">
-                  <Tag className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-[#1e1e1e]">Master Tarif Pelayanan</h3>
-                  <p className="text-[11px] text-[#8c8c8c]">
-                    Acuan harga satuan otomatis untuk kalkulasi tagihan pasien rawat inap
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsTarifModalOpen(false)}
-                className="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#8c8c8c]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-4 max-h-[380px] overflow-y-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-[#f0f2f5] text-[10px] font-semibold text-[#8c8c8c] uppercase">
-                    <th className="py-2 px-3">Kode</th>
-                    <th className="py-2 px-3">Nama Layanan</th>
-                    <th className="py-2 px-3">Kategori</th>
-                    <th className="py-2 px-3 text-right">Tarif Satuan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f5f6f8]">
-                  {tariffs.map((t) => (
-                    <tr key={t.id_tarif} className="hover:bg-[#fafafa]">
-                      <td className="py-2.5 px-3 font-mono font-medium text-[#0fa18f]">
-                        {t.kode_tindakan}
-                      </td>
-                      <td className="py-2.5 px-3 font-medium text-[#1e1e1e]">
-                        {t.nama_tindakan}
-                      </td>
-                      <td className="py-2.5 px-3 text-[#4b5563]">{t.kategori}</td>
-                      <td className="py-2.5 px-3 text-right font-semibold text-[#1e1e1e]">
-                        {formatRupiah(t.harga_num)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <Modal
+        isOpen={isTarifModalOpen}
+        onClose={() => setIsTarifModalOpen(false)}
+        title="Master Tarif Pelayanan"
+        description="Acuan harga satuan otomatis untuk kalkulasi tagihan pasien rawat inap"
+        maxWidthClass="max-w-2xl"
+      >
+        <div className="max-h-[400px] overflow-y-auto overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                <th className="py-2.5 px-3">Kode</th>
+                <th className="py-2.5 px-3">Nama Layanan</th>
+                <th className="py-2.5 px-3">Kategori</th>
+                <th className="py-2.5 px-3 text-right">Tarif Satuan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {tariffs.map((t) => (
+                <tr key={t.id_tarif} className="hover:bg-slate-50/70">
+                  <td className="py-2.5 px-3 font-mono tabular-nums font-medium text-emerald-700">
+                    {t.kode_tindakan}
+                  </td>
+                  <td className="py-2.5 px-3 font-medium text-slate-900">
+                    {t.nama_tindakan}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-600">{t.kategori}</td>
+                  <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-slate-900">
+                    {formatRupiah(t.harga_num)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

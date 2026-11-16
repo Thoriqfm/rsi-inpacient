@@ -10,8 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  AlertTriangle,
 } from "lucide-react";
+import { AlertBanner, Badge, PageHeader } from "@/components/ui";
 import { BillingPreviewResult, HistoryRecapItem, RoomAllocation, RoomTariff } from "@/types";
 import {
   closeAllocationApi,
@@ -245,7 +245,7 @@ function RincianBiayaPelayananContent() {
 
   if (loading) {
     return (
-      <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
+      <div className="py-20 text-center text-slate-400 text-xs font-sans">
         Menghitung rincian biaya pelayanan pasien secara otomatis...
       </div>
     );
@@ -255,13 +255,10 @@ function RincianBiayaPelayananContent() {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-4 font-sans text-xs">
         {rekapInfo && roomSelector}
-        <div className="p-5 rounded-[12px] bg-[#fdf0f0] border border-[#fecaca] text-[#dc2626] space-y-2">
-          <div className="flex items-center gap-2 font-semibold text-sm">
-            <AlertTriangle className="w-4 h-4" />
-            <span>Perhitungan Biaya Tidak Dapat Dilanjutkan</span>
-          </div>
-          <p className="text-[11px] text-[#b91c1c]">{errorMsg}</p>
-        </div>
+        <AlertBanner
+          tone="error"
+          message={`Perhitungan biaya tidak dapat dilanjutkan: ${errorMsg}`}
+        />
         {linkNeeded && user?.role === "SUPER_ADMIN" && rekapInfo && (
           <section className="bg-white border rounded-xl p-5 space-y-3">
             <h2 className="font-semibold">Perbaiki hubungan alokasi</h2>
@@ -286,7 +283,7 @@ function RincianBiayaPelayananContent() {
         )}
         <Link
           href="/pembayaran/buat"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] border border-[#e5e7eb] bg-white text-[#4b5563] font-medium"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium transition"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Kembali ke Pilih Pasien</span>
@@ -296,81 +293,78 @@ function RincianBiayaPelayananContent() {
   }
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-[#1e1e1e]">
+    <div className="space-y-6 pb-12 font-sans text-slate-900 max-w-7xl mx-auto">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-[#8c8c8c]">
-        <Link href="/pembayaran" className="hover:text-[#00b89f] transition">
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <Link href="/pembayaran" className="hover:text-emerald-700 transition">
           Pembayaran (Billing)
         </Link>
         <span>/</span>
-        <Link href="/pembayaran/buat" className="hover:text-[#00b89f] transition">
+        <Link href="/pembayaran/buat" className="hover:text-emerald-700 transition">
           Buat Tagihan
         </Link>
         <span>/</span>
-        <span className="text-[#0fa18f] font-medium">{preview.pasien.nama_pasien}</span>
+        <span className="text-emerald-700 font-medium">{preview.pasien.nama_pasien}</span>
       </div>
 
-      {/* Header */}
-      <div>
-        <h1 className="text-[#1e1e1e] text-[27px] font-medium leading-[35px] tracking-[-0.675px]">
-          Rincian Biaya Pelayanan
-        </h1>
-        <p className="text-[#666] text-xs font-normal mt-0.5">
-          Periksa rincian layanan dan tindakan pasien berdasarkan data rekam medis elektronik.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Pratinjau Kalkulasi Tagihan"
+        title="Rincian Biaya Pelayanan"
+        description="Periksa rincian layanan dan tindakan pasien berdasarkan data rekam medis elektronik."
+      />
 
       {/* CARD 1: Informasi Pasien */}
-      <div className="bg-white rounded-[12px] border border-[#e9ebf0] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.03)] space-y-5">
-        <div className="flex items-start justify-between">
+      <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-full bg-[#e6f4ef] text-[#0fa18f] font-semibold text-sm flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-sm flex items-center justify-center shrink-0">
               {getInitials(preview.pasien.nama_pasien)}
             </div>
             <div>
-              <div className="text-[#0fa18f] text-[10px] font-semibold uppercase tracking-wider">
-                INFORMASI PASIEN
+              <div className="text-emerald-700 text-xs font-semibold uppercase tracking-wider">
+                Informasi Pasien
               </div>
-              <h2 className="text-[#1e1e1e] text-base font-semibold">
+              <h2 className="text-slate-900 text-base font-bold">
                 {preview.pasien.nama_pasien}
               </h2>
-              <span className="text-xs text-[#8c8c8c]">{preview.pasien.no_rm}</span>
+              <span className="text-xs font-mono tabular-nums text-slate-500">
+                {preview.pasien.no_rm}
+              </span>
             </div>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-[#e6f4ef] text-[#016b46] border border-[#cbe7dd]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+          <Badge tone="emerald" dot>
             Siap Billing
-          </span>
+          </Badge>
         </div>
 
         {/* 4 Details Columns */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-[#f0f2f5] text-xs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-slate-100 text-xs">
           <div>
-            <span className="text-[10px] text-[#8c8c8c] block">Periode Perawatan</span>
-            <span className="font-medium text-[#1e1e1e]">
+            <span className="text-xs text-slate-500 block">Periode Perawatan</span>
+            <span className="font-medium text-slate-900">
               {preview.pasien.periode_perawatan || "Lihat periode alokasi di bawah"}
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-[#8c8c8c] block">Kamar / Bed</span>
-            <span className="font-medium text-[#1e1e1e]">
+            <span className="text-xs text-slate-500 block">Kamar / Bed</span>
+            <span className="font-medium text-slate-900">
               {preview.pasien.nama_kamar || preview.items.filter((item) => item.jenis_item === "KAMAR").map((item) => item.kelas_perawatan_snapshot).join(", ") || "Belum memilih alokasi kamar"}
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-[#8c8c8c] block">ID Rekap</span>
-            <span className="font-medium text-[#1e1e1e] font-mono">
+            <span className="text-xs text-slate-500 block">ID Rekap</span>
+            <span className="font-medium text-slate-900 font-mono tabular-nums">
               {preview.kode_rekap}
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-[#8c8c8c] block">Sumber Data</span>
-            <span className="font-medium text-[#1e1e1e]">
-              RME & Rekap Layanan
+            <span className="text-xs text-slate-500 block">Sumber Data</span>
+            <span className="font-medium text-slate-900">
+              RME &amp; Rekap Layanan
             </span>
           </div>
         </div>
@@ -378,88 +372,69 @@ function RincianBiayaPelayananContent() {
 
       {/* Banner Perhitungan Biaya Otomatis */}
       {roomSelector}
-      <div className="bg-[#e7faf7] border border-[#ccefeb] rounded-[10px] p-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-white text-[#0fa18f] flex items-center justify-center shrink-0 shadow-xs">
-            <Info className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-[#0b796b]">
-              Perhitungan biaya otomatis
-            </div>
-            <p className="text-[11px] text-[#0fa18f]/90 mt-0.5">
-              Rincian biaya dihitung otomatis berdasarkan riwayat layanan dan tarif pelayanan yang berlaku.
-            </p>
-          </div>
-        </div>
-
-        <span className="px-3 py-1 rounded-full bg-white text-[10px] font-medium text-[#4b5563] border border-[#ccefeb] shrink-0">
-          Sumber: RME & Rekap Layanan
-        </span>
-      </div>
+      <AlertBanner
+        tone="success"
+        message="Perhitungan biaya otomatis: rincian biaya dihitung otomatis berdasarkan riwayat layanan RME dan tarif kamar yang berlaku."
+        action={<Badge tone="emerald">Sumber: RME &amp; Rekap Layanan</Badge>}
+      />
 
       {/* CARD 2: Rincian Layanan & Biaya (Table) */}
-      <div className="bg-white rounded-[12px] border border-[#e9ebf0] shadow-[0px_4px_8px_rgba(26,39,50,0.03)] overflow-hidden">
-        {/* Subheader */}
-        <div className="px-6 py-4 border-b border-[#f0f2f5] flex items-center justify-between">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-xs font-semibold text-[#1e1e1e]">Rincian layanan & biaya</h3>
-            <p className="text-[11px] text-[#8c8c8c] mt-0.5">
+            <h3 className="text-sm font-semibold text-slate-900">Rincian layanan &amp; biaya</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
               Tabel bersifat hanya baca. Perubahan tindakan dilakukan melalui modul RME.
             </p>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-[#8c8c8c]">
-            Hanya baca
-          </span>
+          <Badge tone="slate">Hanya baca</Badge>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[#f0f2f5] text-[10px] font-semibold text-[#8c8c8c] uppercase tracking-wider bg-white">
-                <th className="py-3 px-6 w-12">NO.</th>
-                <th className="py-3 px-4">TANGGAL LAYANAN</th>
-                <th className="py-3 px-4">NAMA LAYANAN / TINDAKAN</th>
-                <th className="py-3 px-4">KATEGORI</th>
-                <th className="py-3 px-4">JUMLAH</th>
-                <th className="py-3 px-4">TARIF SATUAN</th>
-                <th className="py-3 px-6 text-right">SUBTOTAL</th>
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                <th className="py-3 px-6 w-12">No.</th>
+                <th className="py-3 px-4">Tanggal Layanan</th>
+                <th className="py-3 px-4">Nama Layanan / Tindakan</th>
+                <th className="py-3 px-4">Kategori</th>
+                <th className="py-3 px-4">Jumlah</th>
+                <th className="py-3 px-4">Tarif Satuan</th>
+                <th className="py-3 px-6 text-right">Subtotal</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f5f6f8]">
+            <tbody className="divide-y divide-slate-100">
               {(preview.items || []).map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#fafbfb] transition">
-                  <td className="py-3.5 px-6 text-[#8c8c8c] font-medium">
+                <tr key={idx} className="hover:bg-slate-50/60 transition">
+                  <td className="py-3.5 px-6 text-slate-500 font-mono tabular-nums font-medium">
                     {String(idx + 1).padStart(2, "0")}
                   </td>
 
-                  <td className="py-3.5 px-4 text-[#4b5563]">
-                    {item.tanggal || item.tanggal_tindakan || "15–19 Feb 2026"}
+                  <td className="py-3.5 px-4 text-slate-600">
+                    {item.tanggal || item.tanggal_tindakan || "-"}
                   </td>
 
                   <td className="py-3.5 px-4">
-                    <div className="font-medium text-[#1e1e1e]">{item.nama_tindakan}</div>
-                    <div className="text-[10px] text-[#8c8c8c] mt-0.5">
+                    <div className="font-medium text-slate-900">{item.nama_tindakan}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">
                       {item.jenis_item === "KAMAR" ? "Biaya dari alokasi kamar pasien" : "Biaya dari rekap tindakan pasien"}
                     </div>
                   </td>
 
                   <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded-[6px] bg-[#f3f4f6] text-[10px] font-medium text-[#4b5563]">
-                      {item.kategori || "Tindakan Medis"}
-                    </span>
+                    <Badge tone="slate">{item.kategori || "Tindakan Medis"}</Badge>
                   </td>
 
-                  <td className="py-3.5 px-4 text-[#4b5563]">
+                  <td className="py-3.5 px-4 font-mono tabular-nums text-slate-600">
                     {item.jumlah} {item.satuan || "Tindakan"}
                   </td>
 
-                  <td className="py-3.5 px-4 text-[#4b5563]">
+                  <td className="py-3.5 px-4 font-mono tabular-nums text-slate-600">
                     {formatRupiah(item.harga_satuan_num)}
                   </td>
 
-                  <td className="py-3.5 px-6 text-right font-medium text-[#1e1e1e]">
+                  <td className="py-3.5 px-6 text-right font-mono tabular-nums font-semibold text-slate-900">
                     {formatRupiah(item.subtotal_num)}
                   </td>
                 </tr>
@@ -469,30 +444,30 @@ function RincianBiayaPelayananContent() {
         </div>
 
         {/* Footer info & calculation totals */}
-        <div className="p-6 border-t border-[#f0f2f5] flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
-          <div className="text-[11px] text-[#8c8c8c] flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-[#9ca3af]" />
+        <div className="p-5 sm:p-6 border-t border-slate-100 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+          <div className="text-xs text-slate-500 flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>Harga kamar dikunci saat masuk. Rincian dihitung oleh sistem berdasarkan tarif dan alokasi pasien.</span>
           </div>
 
           <div className="w-full md:w-80 space-y-2 text-xs">
-            <div className="flex items-center justify-between text-[#8c8c8c]">
+            <div className="flex items-center justify-between text-slate-500">
               <span>Total Item Layanan</span>
-              <span className="text-[#1e1e1e] font-medium">
+              <span className="text-slate-900 font-mono tabular-nums font-medium">
                 {(preview.items || []).length} jenis layanan
               </span>
             </div>
 
-            <div className="flex items-center justify-between text-[#8c8c8c]">
+            <div className="flex items-center justify-between text-slate-500">
               <span>Total Biaya Pelayanan</span>
-              <span className="text-[#1e1e1e] font-medium">
+              <span className="text-slate-900 font-mono tabular-nums font-medium">
                 {formatRupiah(preview.total_biaya_num)}
               </span>
             </div>
 
-            <div className="pt-2 border-t border-[#f0f2f5] flex items-baseline justify-between">
-              <span className="text-xs font-semibold text-[#1e1e1e]">Total Tagihan</span>
-              <span className="text-xl font-bold text-[#00b89f]">
+            <div className="pt-2 border-t border-slate-200 flex items-baseline justify-between">
+              <span className="text-xs font-semibold text-slate-900">Total Tagihan</span>
+              <span className="text-xl font-mono tabular-nums font-bold text-emerald-700">
                 {formatRupiah(preview.total_biaya_num)}
               </span>
             </div>
@@ -548,7 +523,7 @@ export default function RincianBiayaPelayananPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
+        <div className="py-20 text-center text-slate-400 text-xs font-sans">
           Memuat rincian perhitungan biaya pelayanan...
         </div>
       }

@@ -18,6 +18,13 @@ import {
   fetchPatientRmeApi,
   fetchTariffsApi,
 } from "@/lib/api-client";
+import {
+  AlertBanner,
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+} from "@/components/ui";
 
 function InformasiDataPasienContent() {
   const { user } = useAuth();
@@ -149,150 +156,132 @@ function InformasiDataPasienContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-800">
-      {/* Header */}
-      <div className="space-y-1">
-        <p className="font-semibold text-emerald-700 text-xs tracking-wider uppercase">
-          DATA PASIEN &amp; RIWAYAT RME
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-          Data Pasien &amp; Riwayat Medis
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-          Periksa identitas pasien dan riwayat layanan dari RME sebelum membuat rekap billing.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Data Pasien & Riwayat RME"
+        title="Data Pasien & Riwayat Medis"
+        description="Periksa identitas pasien dan riwayat layanan dari RME sebelum membuat rekap billing."
+      />
 
-      {/* Card 1: Data Pasien Rawat Inap (Figma 144:4512) */}
-      <div className="bg-white border border-[#e9ebf0] rounded-[12px] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.05)] space-y-6">
+      {/* Card 1: Data Pasien Rawat Inap */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-center gap-4">
-            <div className="w-[52px] h-[52px] rounded-[14px] bg-[#e7faf7] text-[#07594f] font-semibold text-[16px] flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-base flex items-center justify-center shrink-0">
               {getInitials(pasien.nama_pasien)}
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#667085] tracking-wider uppercase">
-                DATA PASIEN RAWAT INAP
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase">
+                Data Pasien Rawat Inap
               </p>
-              <h2 className="text-[20px] font-bold text-[#1e1e1e] mt-0.5">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
                 {pasien.nama_pasien}
               </h2>
-              <p className="text-[12px] text-[#667085]">{pasien.no_rm}</p>
+              <p className="text-xs font-mono tabular-nums text-slate-500">
+                {pasien.no_rm}
+              </p>
             </div>
           </div>
 
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e7faf7] border border-[#ccefeb] text-[#0b796b] text-[11px] font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0fa18f]" />
-              <span>Memenuhi syarat rekap</span>
-            </span>
-          </div>
+          <Badge tone={rmeItems.length > 0 ? "emerald" : "amber"} dot>
+            {rmeItems.length > 0 ? "Memenuhi syarat rekap" : "Menunggu tindakan RME"}
+          </Badge>
         </div>
 
-        {/* 6-item Grid Details */}
+        {/* Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-5 gap-x-8 text-xs">
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Nama Pasien</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
+            <span className="text-xs text-slate-500 block">Nama Pasien</span>
+            <span className="text-sm font-medium text-slate-900 mt-0.5 block">
               {pasien.nama_pasien}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Nomor Rekam Medis</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
+            <span className="text-xs text-slate-500 block">Nomor Rekam Medis</span>
+            <span className="text-sm font-mono tabular-nums font-medium text-slate-900 mt-0.5 block">
               {pasien.no_rm}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Jenis Kelamin</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-              {pasien.jenis_kelamin_usia.startsWith("L")
-                ? "Laki-laki"
-                : "Perempuan"}
+            <span className="text-xs text-slate-500 block">Jenis Kelamin &amp; Usia</span>
+            <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+              {pasien.jenis_kelamin_usia || "-"}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Tanggal Lahir / Usia</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-              12 Mei 1994 ({pasien.jenis_kelamin_usia})
+            <span className="text-xs text-slate-500 block">Dokter DPJP</span>
+            <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+              {pasien.dokter_dpjp || "-"}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Periode Perawatan</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-              18–22 Februari 2026
+            <span className="text-xs text-slate-500 block">Diagnosa Masuk</span>
+            <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+              {pasien.diagnosa_masuk || "-"}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[#98a2b3] block">Ruang Perawatan</span>
-            <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-              {pasien.kelas_rekomendasi} • Kamar 204
+            <span className="text-xs text-slate-500 block">Kelas Perawatan</span>
+            <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+              {pasien.kelas_rekomendasi} ({pasien.hak_kelas_jaminan})
             </span>
           </div>
         </div>
       </div>
 
-      {/* Card 2: Blue Info Banner (Figma 144:4542) */}
-      <div className="rounded-[12px] bg-[#eff8ff] border border-[#b2ddff] p-4 flex items-start gap-3 text-xs text-[#175cd3]">
-        <Info className="w-5 h-5 text-[#2e90fa] shrink-0 mt-0.5" />
-        <div className="space-y-0.5">
-          <p className="font-semibold text-[12px]">Data medis hanya dapat dilihat</p>
-          <p className="text-[11px] text-[#175cd3]/90 leading-relaxed">
-            Data layanan dan tindakan bersumber dari RME dan hanya dapat dilihat
-            melalui fitur ini. Perubahan data medis harus dilakukan melalui sistem
-            RME yang berwenang.
-          </p>
-        </div>
-      </div>
+      {/* Info Banner */}
+      <AlertBanner
+        tone="info"
+        message="Data medis hanya dapat dilihat: data layanan dan tindakan bersumber dari RME bangsal. Perubahan data medis dilakukan melalui sistem RME yang berwenang."
+      />
 
-      {/* Card 3: Table Riwayat Layanan & Tindakan dari RME (Figma 144:4550) */}
-      <div className="bg-white border border-[#e9ebf0] rounded-[12px] shadow-[0px_4px_8px_rgba(26,39,50,0.05)] overflow-hidden">
-        <div className="p-5 border-b border-[#e9ebf0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {/* Card 3: Table Riwayat Layanan & Tindakan dari RME */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#1e1e1e]">
+            <h2 className="text-base font-semibold text-slate-900">
               Riwayat Layanan &amp; Tindakan dari RME
             </h2>
-            <p className="text-[11px] text-[#667085] mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               {rmeItems.length} item tercatat selama periode perawatan
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {user?.role === "SUPER_ADMIN" && (
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={() => {
                   setRmeError(null);
                   setShowAddRmeModal(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Tambah Tindakan RME</span>
-              </button>
+              </Button>
             )}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium">
+            <Badge tone="slate">
               <Info className="w-3.5 h-3.5" />
               <span>Data read-only</span>
-            </span>
+            </Badge>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#f8faf9] border-b border-[#e9ebf0] text-[9px] font-medium text-[#667085] uppercase tracking-[0.225px]">
-                <th className="py-3 pl-5 pr-3 w-[50px]">No.</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="py-3 pl-5 pr-3 w-12">No.</th>
                 <th className="py-3 px-3">Jenis Layanan / Tindakan</th>
                 <th className="py-3 px-3">Tanggal &amp; Waktu</th>
                 <th className="py-3 px-3">Tenaga Kesehatan</th>
                 <th className="py-3 pl-3 pr-5">Keterangan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#edf0f1] text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {rmeItems.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-8 px-4 text-center text-slate-500">
@@ -304,20 +293,20 @@ function InformasiDataPasienContent() {
                 </tr>
               ) : (
                 rmeItems.map((r, idx) => (
-                  <tr key={r.id_riwayat} className="hover:bg-[#fbfcfc] transition">
-                    <td className="py-3.5 pl-5 pr-3 text-[#475467] font-normal">
+                  <tr key={r.id_riwayat} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3.5 pl-5 pr-3 text-slate-500 font-mono tabular-nums">
                       {idx + 1}
                     </td>
-                    <td className="py-3.5 px-3 font-medium text-[#1e1e1e]">
+                    <td className="py-3.5 px-3 font-medium text-slate-900">
                       {r.nama_tindakan}
                     </td>
-                    <td className="py-3.5 px-3 text-[#475467]">
+                    <td className="py-3.5 px-3 text-slate-600">
                       {r.tanggal_tindakan_formatted || "-"}
                     </td>
-                    <td className="py-3.5 px-3 text-[#475467]">
+                    <td className="py-3.5 px-3 text-slate-600">
                       {r.dokter_pelaksana || "DPJP Rawat Inap"}
                     </td>
-                    <td className="py-3.5 pl-3 pr-5 text-[#667085]">
+                    <td className="py-3.5 pl-3 pr-5 text-slate-500">
                       {r.keterangan || r.catatan_medis || "Pemeriksaan rawat inap"}
                     </td>
                   </tr>
@@ -329,10 +318,10 @@ function InformasiDataPasienContent() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <Link
           href="/rekap-layanan"
-          className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
+          className="px-5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
         >
           ← Kembali
         </Link>
@@ -340,123 +329,110 @@ function InformasiDataPasienContent() {
         {activeRekap ? (
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-              Rekap sudah dibuat: {activeRekap.kode_rekap} ({activeRekap.status})
+              Rekap sudah dibuat:{" "}
+              <span className="font-mono tabular-nums">{activeRekap.kode_rekap}</span> (
+              {activeRekap.status})
             </span>
             <Link
               href={`/rekap-layanan/${activeRekap.id_rekap}`}
-              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
             >
               <span>Buka Dokumen Rekap</span>
             </Link>
           </div>
         ) : rmeItems.length === 0 ? (
-          <button
-            type="button"
-            disabled
-            className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-500 font-medium text-xs flex items-center gap-2 cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Button disabled variant="secondary" size="sm">
+            <Plus className="w-4 h-4" />
             <span>Buat Rekap Baru (Butuh Minimal 1 RME)</span>
-          </button>
+          </Button>
         ) : (
           <Link
             href={`/rekap-layanan/pasien/${pasien.id_pasien}/buat`}
-            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
+            className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-2 shadow-xs transition"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.25]" />
             <span>Buat Rekap Baru</span>
           </Link>
         )}
       </div>
 
       {/* Modal Tambah Tindakan RME (Super Admin) */}
-      {showAddRmeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <form
-            onSubmit={handleAddRme}
-            className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4"
-          >
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Tambah Tindakan RME (Simulasi)
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Catat tindakan klinis untuk <strong>{pasien.nama_pasien}</strong> agar dapat direkap dan ditagihkan.
-              </p>
-            </div>
+      <Modal
+        isOpen={showAddRmeModal}
+        onClose={() => !addingRme && setShowAddRmeModal(false)}
+        title="Tambah Tindakan RME (Simulasi)"
+        description={`Catat tindakan klinis untuk ${pasien.nama_pasien} agar dapat direkap dan ditagihkan.`}
+        maxWidthClass="max-w-md"
+      >
+        <form onSubmit={handleAddRme} className="space-y-4">
+          {rmeError && <AlertBanner tone="error" message={rmeError} />}
 
-            {rmeError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
-                {rmeError}
-              </div>
-            )}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Jenis Tindakan (Master Tarif) *
+            </label>
+            <select
+              required
+              value={selectedTarifCode}
+              onChange={(e) => setSelectedTarifCode(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            >
+              {tariffs.map((t) => (
+                <option key={t.id_tarif} value={t.kode_tindakan}>
+                  {t.kode_tindakan} — {t.nama_tindakan}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Jenis Tindakan (Master Tarif) *
-              </label>
-              <select
-                required
-                value={selectedTarifCode}
-                onChange={(e) => setSelectedTarifCode(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-emerald-500"
-              >
-                {tariffs.map((t) => (
-                  <option key={t.id_tarif} value={t.kode_tindakan}>
-                    {t.kode_tindakan} — {t.nama_tindakan}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Jumlah *
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              required
+              value={rmeJumlah}
+              onChange={(e) => setRmeJumlah(Math.max(1, Number(e.target.value) || 1))}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Jumlah *
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={99}
-                required
-                value={rmeJumlah}
-                onChange={(e) => setRmeJumlah(Math.max(1, Number(e.target.value) || 1))}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:border-emerald-500"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Keterangan Klinis (Opsional)
+            </label>
+            <textarea
+              rows={2}
+              value={rmeKeterangan}
+              onChange={(e) => setRmeKeterangan(e.target.value)}
+              placeholder="Catatan dokter / tindakan perawatan..."
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+            />
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Keterangan Klinis (Opsional)
-              </label>
-              <textarea
-                rows={2}
-                value={rmeKeterangan}
-                onChange={(e) => setRmeKeterangan(e.target.value)}
-                placeholder="Catatan dokter / tindakan perawatan..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={addingRme}
-                onClick={() => setShowAddRmeModal(false)}
-                className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={addingRme || !selectedTarifCode}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-60"
-              >
-                {addingRme ? "Menyimpan..." : "Simpan Tindakan RME"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={addingRme}
+              onClick={() => setShowAddRmeModal(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              loading={addingRme}
+              disabled={addingRme || !selectedTarifCode}
+            >
+              {addingRme ? "Menyimpan..." : "Simpan Tindakan RME"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

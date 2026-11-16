@@ -65,10 +65,10 @@ export function AntrianTabs({
             <span>{tab.label}</span>
             {typeof tab.count === "number" && (
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                className={`px-2 py-0.5 rounded-full text-xs font-mono tabular-nums transition-colors ${
                   isActive
                     ? "bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200"
-                    : "bg-slate-100 text-slate-600"
+                    : "bg-slate-100 text-slate-600 font-medium"
                 }`}
               >
                 {tab.count}

@@ -27,9 +27,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen w-full flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-3 text-slate-600">
-          <div className="w-9 h-9 border-3 border-emerald-600/25 border-t-emerald-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-emerald-600/25 border-t-emerald-600 rounded-full animate-spin" />
           <p className="text-xs font-medium">Memverifikasi sesi petugas...</p>
         </div>
       </div>
@@ -37,7 +37,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-full overflow-hidden bg-white">
       {/* Mobile Backdrop Overlay */}
       {isMobileNavOpen && (
         <div
@@ -53,12 +53,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </Suspense>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-white">
         <Suspense fallback={<div className="h-[72px] bg-white border-b border-slate-200" />}>
           <Topbar onToggleMenu={handleToggle} />
         </Suspense>
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-slate-50/60 overflow-x-hidden">
-          <Suspense fallback={<div className="py-12 text-center text-xs text-slate-400">Memuat konten...</div>}>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-white overflow-x-hidden">
+          <Suspense fallback={<div className="py-12 text-center text-xs text-slate-500">Memuat konten...</div>}>
             {children}
           </Suspense>
         </main>
