@@ -13,11 +13,8 @@ import {
   XCircle,
   AlertTriangle,
   Bed,
-  ArrowUpRight,
   Users,
-  ShieldCheck,
   RefreshCw,
-  Eye,
   ArrowRight,
   Info,
 } from "lucide-react";
@@ -50,7 +47,9 @@ export default function DaftarTungguPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<QueueItem | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -59,6 +58,7 @@ export default function DaftarTungguPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const [qRes, bRes, rRes] = await Promise.all([
         fetchQueuesApi(),
@@ -70,6 +70,12 @@ export default function DaftarTungguPage() {
       setQueues(sorted);
       setAvailableBeds(bRes.items);
       setReferralCount(rRes.items.length);
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data daftar tunggu dan bed tersedia."
+      );
     } finally {
       setLoading(false);
     }
@@ -117,6 +123,7 @@ export default function DaftarTungguPage() {
   }, [queues, statusFilter, kelasFilter, searchQuery]);
 
   const handleQuickCancel = async (item: QueueItem) => {
+    if (cancellingId === item.id_antrean) return;
     if (
       !confirm(
         `Batalkan antrean ${item.no_antrean_formatted} atas nama ${item.nama_pasien}?`
@@ -124,6 +131,8 @@ export default function DaftarTungguPage() {
     ) {
       return;
     }
+    setCancellingId(item.id_antrean);
+    setErrorMsg(null);
     try {
       await cancelQueueApi(item.id_antrean);
       showToast(
@@ -131,9 +140,11 @@ export default function DaftarTungguPage() {
       );
       loadData();
     } catch (err: unknown) {
-      alert(
+      setErrorMsg(
         err instanceof Error ? err.message : "Gagal membatalkan antrean."
       );
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -148,6 +159,22 @@ export default function DaftarTungguPage() {
         <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-sm font-medium">{toastMsg}</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
+          >
+            Muat Ulang
+          </button>
         </div>
       )}
 
@@ -522,9 +549,10 @@ export default function DaftarTungguPage() {
                               </button>
                               <button
                                 type="button"
+                                disabled={cancellingId === q.id_antrean}
                                 onClick={() => handleQuickCancel(q)}
                                 title="Batalkan Antrean"
-                                className="p-1.5 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                className="p-1.5 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                               </button>
@@ -659,6 +687,7 @@ export default function DaftarTungguPage() {
       />
 
       <DetailAntreanModal
+        key={selectedQueue?.id_antrean ?? "closed"}
         item={selectedQueue}
         availableBeds={availableBeds}
         onClose={() => setSelectedQueue(null)}

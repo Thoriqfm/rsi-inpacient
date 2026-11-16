@@ -22,14 +22,18 @@ export default function PilihPasienBillingPage() {
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetchHistoriesApi();
       setHistories(res.items);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Gagal memuat daftar pasien billing."
+      );
     } finally {
       setLoading(false);
     }
@@ -83,6 +87,18 @@ export default function PilihPasienBillingPage() {
       </div>
 
       {/* Main Container Card */}
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
+          >
+            Muat Ulang
+          </button>
+        </div>
+      )}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Search Header Row */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

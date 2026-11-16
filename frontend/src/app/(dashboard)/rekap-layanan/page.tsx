@@ -4,7 +4,6 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   FileText,
   Clock,
@@ -17,9 +16,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   X,
-  FileCheck2,
   Eye,
-  Plus,
 } from "lucide-react";
 import {
   HistoryPatientSummary,
@@ -33,12 +30,12 @@ import {
 } from "@/lib/api-client";
 
 export default function RekapLayananPage() {
-  const router = useRouter();
   const { user } = useAuth();
 
   const [histories, setHistories] = useState<HistoryRecapItem[]>([]);
   const [patients, setPatients] = useState<HistoryPatientSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +61,7 @@ export default function RekapLayananPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [hRes, pList] = await Promise.all([
         fetchHistoriesApi(),
@@ -71,6 +69,12 @@ export default function RekapLayananPage() {
       ]);
       setHistories(hRes.items);
       setPatients(pList);
+    } catch (err: unknown) {
+      setLoadError(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data rekap layanan dan daftar pasien."
+      );
     } finally {
       setLoading(false);
     }
@@ -207,6 +211,22 @@ export default function RekapLayananPage() {
           Kelola dan periksa rekap layanan serta tindakan pasien rawat inap sebagai dasar proses billing.
         </p>
       </div>
+
+      {loadError && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
+          >
+            Muat Ulang
+          </button>
+        </div>
+      )}
 
       {/* 3 Status Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">

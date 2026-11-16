@@ -5,7 +5,7 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BedItem, KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
+import { BedItem, PasienCandidate, QueueItem } from "@/types";
 import {
   fetchAvailableBedsApi,
   fetchActiveAllocatedPatientIdsApi,
@@ -16,19 +16,13 @@ import {
 } from "@/lib/api-client";
 import {
   ArrowLeft,
-  Bed,
   CheckCircle2,
-  Clock,
   Lock,
   Search,
   ShieldCheck,
   User,
-  Stethoscope,
-  FileText,
   AlertCircle,
-  RefreshCw,
   Check,
-  Sparkles,
 } from "lucide-react";
 
 export default function AlokasiBedPage() {
@@ -64,6 +58,7 @@ export default function AlokasiBedPage() {
 
   // Load beds and waiting queue patients
   useEffect(() => {
+    let active = true;
     async function load() {
       setIsLoading(true);
       try {
@@ -74,6 +69,8 @@ export default function AlokasiBedPage() {
             searchHistoryPatientsApi(""),
             fetchActiveAllocatedPatientIdsApi(),
           ]);
+
+        if (!active) return;
 
         if (bedsRes.status === "fulfilled") {
           setBeds(bedsRes.value.items);
@@ -146,29 +143,38 @@ export default function AlokasiBedPage() {
           }
         }
 
+        if (!active) return;
         if (merged.length > 0) {
           setCandidates(merged);
           setSelectedPatientId(merged[0].id_pasien);
         }
       } catch (err) {
-        setErrorMsg(
-          err instanceof Error ? err.message : "Gagal memuat data alokasi."
-        );
+        if (active) {
+          setErrorMsg(
+            err instanceof Error ? err.message : "Gagal memuat data alokasi."
+          );
+        }
       } finally {
-        setIsLoading(false);
+        if (active) {
+          setIsLoading(false);
+        }
       }
     }
     load();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Row-level lock countdown interval
+  // Row-level lock countdown interval (re-created only when active state changes)
+  const isLockActive = lockSeconds > 0;
   useEffect(() => {
-    if (lockSeconds <= 0) return;
+    if (!isLockActive) return;
     const interval = setInterval(() => {
       setLockSeconds((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [lockSeconds]);
+  }, [isLockActive]);
 
   // Format seconds into MM:SS
   const formatTimer = (totalSec: number) => {

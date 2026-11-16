@@ -17,18 +17,15 @@ import {
   Receipt,
   Tag,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 import {
   BillingItem,
   BillingStatus,
-  HistoryRecapItem,
   TarifItem,
 } from "@/types";
 import {
   cancelBillingApi,
   fetchBillingsApi,
-  fetchHistoriesApi,
   fetchTariffsApi,
   updateBillingStatusApi,
 } from "@/lib/api-client";
@@ -37,7 +34,6 @@ export default function PembayaranDashboardPage() {
   const { user } = useAuth();
 
   const [billings, setBillings] = useState<BillingItem[]>([]);
-  const [readyRecaps, setReadyRecaps] = useState<HistoryRecapItem[]>([]);
   const [tariffs, setTariffs] = useState<TarifItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,14 +41,16 @@ export default function PembayaranDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"Semua" | "Belum Dibayar" | "Lunas" | "Batal">("Semua");
   const [statusDropdown, setStatusDropdown] = useState<string>("Semua status");
-  const [dateRange, setDateRange] = useState("01-28 Feb 2026");
+  const dateRange = "Periode Aktif";
 
   // Modals state
   const [isTarifModalOpen, setIsTarifModalOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<BillingItem | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
   const [statusModalTarget, setStatusModalTarget] = useState<BillingItem | null>(null);
   const [selectedNewStatus, setSelectedNewStatus] = useState<BillingStatus>("Belum Dibayar");
+  const [savingStatus, setSavingStatus] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   // Notifications
@@ -72,16 +70,11 @@ export default function PembayaranDashboardPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [bRes, hRes, tList] = await Promise.all([
+      const [bRes, tList] = await Promise.all([
         fetchBillingsApi(),
-        fetchHistoriesApi({ status: "Siap Billing" }),
         fetchTariffsApi(),
       ]);
       setBillings(bRes.items);
-      const uninvoiced = hRes.items.filter(
-        (r) => !r.tagihan.some((t) => t.status !== "Batal")
-      );
-      setReadyRecaps(uninvoiced);
       setTariffs(tList);
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : "Gagal memuat data tagihan.");
@@ -138,7 +131,8 @@ export default function PembayaranDashboardPage() {
 
   // Status Change handler
   const handleSaveStatusChange = async () => {
-    if (!statusModalTarget) return;
+    if (!statusModalTarget || savingStatus) return;
+    setSavingStatus(true);
     try {
       await updateBillingStatusApi(statusModalTarget.id_tagihan, selectedNewStatus);
       showToast(
@@ -148,18 +142,21 @@ export default function PembayaranDashboardPage() {
       loadData();
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : "Gagal memperbarui status tagihan.");
+    } finally {
+      setSavingStatus(false);
     }
   };
 
   // Cancel Invoice handler
   const handleConfirmCancel = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cancelTarget) return;
+    if (!cancelTarget || cancelling) return;
     if (!cancelReason.trim()) {
       showError("Alasan pembatalan tagihan wajib diisi.");
       return;
     }
 
+    setCancelling(true);
     try {
       await cancelBillingApi(cancelTarget.id_tagihan, cancelReason);
       showToast(`Tagihan ${cancelTarget.no_tagihan} berhasil dibatalkan.`);
@@ -168,6 +165,8 @@ export default function PembayaranDashboardPage() {
       loadData();
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : "Gagal membatalkan tagihan.");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -831,17 +830,19 @@ export default function PembayaranDashboardPage() {
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
+                disabled={savingStatus}
                 onClick={() => setStatusModalTarget(null)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
+                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="button"
+                disabled={savingStatus}
                 onClick={handleSaveStatusChange}
-                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Simpan Perubahan
+                {savingStatus ? "Menyimpan..." : "Simpan Perubahan"}
               </button>
             </div>
           </div>
@@ -900,16 +901,18 @@ export default function PembayaranDashboardPage() {
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
+                disabled={cancelling}
                 onClick={() => setCancelTarget(null)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
+                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer"
+                disabled={cancelling}
+                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Ya, Batalkan Tagihan
+                {cancelling ? "Membatalkan..." : "Ya, Batalkan Tagihan"}
               </button>
             </div>
           </form>

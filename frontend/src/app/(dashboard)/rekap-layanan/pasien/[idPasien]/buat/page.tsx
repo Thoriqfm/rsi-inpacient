@@ -7,7 +7,6 @@ import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Info,
   User,
   FileText,
@@ -37,10 +36,17 @@ function BuatRekapBaruContent() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetchPatientRmeApi(idPasien);
       setPasien(res.pasien);
       setRmeItems(res.items);
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data pasien untuk pembuatan rekap."
+      );
     } finally {
       setLoading(false);
     }
@@ -82,10 +88,30 @@ function BuatRekapBaruContent() {
     return <RoleAccessDenied moduleName="Buat Rekap Tindakan Baru" />;
   }
 
-  if (loading || !pasien) {
+  if (loading) {
     return (
       <div className="max-w-[1200px] mx-auto py-16 text-center text-slate-500 text-sm">
         Memuat data rekap dan formulir pembuatan...
+      </div>
+    );
+  }
+
+  if (!pasien) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 space-y-4 text-xs">
+        <div className="p-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 space-y-1.5">
+          <div className="flex items-center gap-2 font-semibold text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Gagal Memuat Data Pasien</span>
+          </div>
+          <p>{errorMsg || "Data pasien tidak ditemukan."}</p>
+        </div>
+        <Link
+          href="/rekap-layanan"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium"
+        >
+          ← Kembali ke Rekap Layanan
+        </Link>
       </div>
     );
   }

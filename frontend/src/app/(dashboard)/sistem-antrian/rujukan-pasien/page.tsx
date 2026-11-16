@@ -15,13 +15,9 @@ import {
   RefreshCw,
   HeartPulse,
   Stethoscope,
-  Send,
   Printer,
-  ChevronRight,
   User,
   ShieldCheck,
-  Activity,
-  Check,
 } from "lucide-react";
 import {
   HospitalAvailability,
@@ -84,6 +80,7 @@ export default function RujukanPasienPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const [hRes, rRes, qRes, pRes, activeAllocIds] = await Promise.all([
         fetchReferralHospitalsApi(),
@@ -149,6 +146,12 @@ export default function RujukanPasienPage() {
       if (firstAvail) {
         setSelectedHospitalId((prev) => prev || firstAvail.id_rs);
       }
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data rumah sakit rujukan dan pasien darurat."
+      );
     } finally {
       setLoading(false);
     }
@@ -221,6 +224,12 @@ export default function RujukanPasienPage() {
       );
       showToast(
         `Status ketersediaan ${hospital.nama_rs} diperbarui menjadi "${nextStatus}".`
+      );
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : `Gagal memperbarui status ketersediaan ${hospital.nama_rs}.`
       );
     } finally {
       setUpdatingHospitalId(null);

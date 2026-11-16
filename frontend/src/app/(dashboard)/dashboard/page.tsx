@@ -7,13 +7,9 @@ import {
   Users,
   CreditCard,
   ArrowRight,
-  CheckCircle2,
   FileText,
   TrendingUp,
   ChevronRight,
-  Building2,
-  Clock,
-  ShieldCheck,
 } from "lucide-react";
 import {
   fetchBedsApi,
@@ -71,8 +67,6 @@ export default function MainSimrsDashboardPage() {
     }).format(val);
 
   const bedTersedia = beds.filter((b) => b.status === "Tersedia").length;
-  const bedTerisi = beds.filter((b) => b.status === "Terisi").length;
-  const bedPembersihan = beds.filter((b) => b.status === "Pembersihan").length;
 
   const waitingQueues = queues.filter((q) => q.status === "Menunggu");
   const emergencyQueues = waitingQueues.filter(

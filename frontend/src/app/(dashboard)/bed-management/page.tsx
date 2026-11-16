@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
-import { BedItem, BedStatus, KelasPerawatan } from "@/types";
+import { BedItem, BedStatus } from "@/types";
 import {
   ActiveAllocationSummary,
   closeAllocationApi,
@@ -23,16 +23,12 @@ import {
   Star,
   ChevronDown,
   ChevronRight,
-  Clock,
   Trash2,
-  Edit3,
   CheckCircle2,
-  Activity,
   AlertCircle,
   Wrench,
   Sparkles,
   ArrowRight,
-  Filter,
   ShieldAlert,
   Lock,
 } from "lucide-react";
@@ -43,7 +39,6 @@ export default function BedManagementPage() {
   const canManageMasterBed =
     user?.role === "PETUGAS_BED_MANAGEMENT" || isSuperAdmin;
   const canAllocateBed = user?.role === "PETUGAS_ADMINISTRASI" || isSuperAdmin;
-  const isBedManager = user?.role === "PETUGAS_BED_MANAGEMENT";
 
   const [beds, setBeds] = useState<BedItem[]>([]);
   const [activeAllocMap, setActiveAllocMap] = useState<

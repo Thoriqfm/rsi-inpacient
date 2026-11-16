@@ -51,10 +51,6 @@ export function getStoredToken(): string | null {
   return token;
 }
 
-export async function getValidToken(): Promise<string | null> {
-  return getStoredToken();
-}
-
 function getStoredUserRole(): string | null {
   if (typeof window === "undefined") return null;
   try {
