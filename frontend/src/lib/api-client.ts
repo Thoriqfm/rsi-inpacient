@@ -1507,6 +1507,15 @@ export async function fetchBillingByIdApi(
   );
 }
 
+export async function reconcileRecapAllocationApi(id_rekap: number, payload: {
+  id_alokasi: number; alasan: string; konfirmasi: boolean;
+}): Promise<void> {
+  const res = await apiFetch(`/histories/${id_rekap}/allocation-link`, {
+    method: "POST", body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await readErrorMessage(res, "Gagal memperbaiki hubungan alokasi."));
+}
+
 export async function previewBillingApi(
   id_rekap: number
 ): Promise<BillingPreviewResult> {
@@ -1516,9 +1525,10 @@ export async function previewBillingApi(
   });
 
   if (!res.ok) {
-    throw new Error(
-      await readErrorMessage(res, "Gagal melakukan kalkulasi preview tagihan")
-    );
+    const body = await res.clone().json().catch(() => null);
+    throw Object.assign(new Error(await readErrorMessage(res, "Gagal melakukan kalkulasi preview tagihan")), {
+      code: body?.error?.code,
+    });
   }
 
   const json = await res.json();

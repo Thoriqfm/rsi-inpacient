@@ -1,6 +1,7 @@
 import { parseId } from "../../shared/utils/parse-id.js";
 import {
     getHistoryRecap,
+    reconcileHistoryAllocation,
     listHistories,
     listPatientRme,
     registerHistoryRecap,
@@ -8,6 +9,11 @@ import {
     searchPatients,
     updateHistoryRecapById,
 } from "./history.service.js";
+
+export async function reconcileAllocation(req, res) {
+    const result = await reconcileHistoryAllocation(parseId(req.params.id), req.validated, req.user.id_akun);
+    res.status(200).json({ data: result, meta: null });
+}
 
 export async function index(req, res) {
     const result = await listHistories(req.validatedQuery);

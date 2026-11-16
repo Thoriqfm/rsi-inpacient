@@ -4,6 +4,16 @@ import { countRoomNights, jakartaDate } from "../src/shared/utils/room-billing.j
 import { createRoomTariffSchema, previewBillingSchema } from "../src/modules/billing/billing.validation.js";
 import { reconcileRoomSnapshotSchema } from "../src/modules/allocation/allocation.validation.js";
 import { matchRecapAllocation } from "../src/shared/utils/recap-allocation.js";
+import { reconcileHistoryAllocationSchema } from "../src/modules/history/history.validation.js";
+
+test("koreksi hubungan rekap memerlukan alasan dan konfirmasi tanpa menerima perubahan tanggal/harga", () => {
+    const body = { id_alokasi: 1, alasan: "Verifikasi alokasi dari perawatan yang sama", konfirmasi: true };
+    assert.equal(reconcileHistoryAllocationSchema.safeParse(body).success, true);
+    for (const change of [{ id_alokasi: 0 }, { alasan: " " }, { konfirmasi: false }, { konfirmasi: undefined },
+        { waktu_alokasi: new Date().toISOString() }, { harga_per_malam: "1" }]) {
+        assert.equal(reconcileHistoryAllocationSchema.safeParse({ ...body, ...change }).success, false);
+    }
+});
 
 test("kamar: elapsed 24 jam, pembulatan ke atas dan minimal satu malam", () => {
     const start = new Date("2026-11-01T23:00:00+07:00");

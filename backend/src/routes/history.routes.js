@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     destroy,
+    reconcileAllocation,
     index,
     patients,
     rme,
@@ -10,6 +11,7 @@ import {
 } from "../modules/history/history.controller.js";
 import {
     createHistorySchema,
+    reconcileHistoryAllocationSchema,
     historyListQuerySchema,
     patientRmeQuerySchema,
     patientSearchQuerySchema,
@@ -34,6 +36,7 @@ router.get("/rme", historyRole, validateQuery(patientRmeQuerySchema), rme);
 
 router.get("/", historyRole, validateQuery(historyListQuerySchema), index);
 router.post("/", historyRole, validate(createHistorySchema), store);
+router.post("/:id/allocation-link", requireRole(ROLES.SUPER_ADMIN), validate(reconcileHistoryAllocationSchema), reconcileAllocation);
 router.get("/:id", historyRole, show);
 router.patch("/:id", historyRole, validate(updateHistorySchema), update);
 router.delete("/:id", historyRole, destroy);

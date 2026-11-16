@@ -7,6 +7,7 @@ import {
 } from "../../shared/constants/history.js";
 import { createAuditLog } from "../../shared/utils/audit.js";
 import { resolveRecapAllocation } from "../../shared/utils/recap-allocation.js";
+import { lockRoomAllocations } from "../billing/billing.model.js";
 import {
     buildHistoryWhere,
     countHistories,
@@ -24,6 +25,47 @@ import {
 } from "./history.model.js";
 
 const MAX_REKAP_CODE_ATTEMPTS = 5;
+
+// Explicit repair for legacy dates only. Normal billing keeps automatic matching.
+export async function reconcileHistoryAllocation(id_rekap, { id_alokasi, alasan }, id_akun) {
+    return prisma.$transaction(async (tx) => {
+        await lockHistoryRow(tx, id_rekap);
+        const recap = await findHistoryById(id_rekap, tx);
+        if (!recap) throw new HttpError(404, "HISTORY_NOT_FOUND", "Rekap tidak ditemukan.");
+        if (recap.id_alokasi !== null || recap.tagihan_list.length) {
+            throw new HttpError(409, "HISTORY_ALLOCATION_LOCKED", "Rekap sudah terhubung atau pernah ditagihkan; hubungan alokasi tidak dapat ditimpa.");
+        }
+        let needsRepair = false;
+        try { await resolveRecapAllocation(recap, tx); }
+        catch (err) {
+            if (!["ROOM_ALLOCATION_UNMATCHED", "ROOM_ALLOCATION_AMBIGUOUS"].includes(err.code)) throw err;
+            needsRepair = true;
+        }
+        if (!needsRepair) throw new HttpError(409, "HISTORY_ALLOCATION_AUTOMATIC", "Alokasi rekap dapat ditentukan otomatis; koreksi manual tidak diperlukan.");
+
+        await lockRoomAllocations(tx, [id_alokasi]);
+        const allocation = await tx.rekamAlokasi.findUnique({ where: { id_alokasi } });
+        if (!allocation || allocation.id_pasien !== recap.id_pasien || allocation.status_alokasi === "Batal") {
+            throw new HttpError(422, "ROOM_ALLOCATION_INVALID", "Pilih alokasi non-Batal milik pasien yang sama.");
+        }
+        if (allocation.id_tagihan_kamar !== null) {
+            throw new HttpError(409, "ROOM_ALREADY_BILLED", "Alokasi sudah digunakan pada tagihan lain.");
+        }
+        const updated = await tx.rekapTindakan.updateMany({
+            where: { id_rekap, id_alokasi: null, deleted_at: null },
+            data: { id_alokasi, tanggal_diperbarui: new Date() },
+        });
+        if (!updated.count) throw new HttpError(409, "HISTORY_CONFLICT", "Rekap sudah diubah petugas lain.");
+        await createAuditLog(tx, {
+            id_akun, nama_tabel: HISTORY_AUDIT_TABLE, id_referensi: id_rekap,
+            aksi: "RECONCILE_ALLOCATION", data_sebelum: { id_alokasi: null },
+            data_sesudah: { id_alokasi, alasan, konfirmasi: true,
+                waktu_alokasi: allocation.waktu_alokasi, waktu_selesai: allocation.waktu_selesai,
+                tanggal_tindakan: recap.detail_rekap_tindakan_list.map((item) => item.tanggal_tindakan) },
+        });
+        return toHistoryDetail(await findHistoryById(id_rekap, tx));
+    }, { isolationLevel: "ReadCommitted" });
+}
 
 function toHistoryItem(row) {
     const { akun, _count, ...rest } = row;

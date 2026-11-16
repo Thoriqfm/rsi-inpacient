@@ -10,6 +10,16 @@ Migration ini menambahkan nullable FK `rekap_tindakan.id_alokasi` ke `rekam_alok
 - Invoice non-Batal yang sudah ada ditampilkan dari snapshot tersimpan. Hitung ulang tidak menambah kamar ke invoice tindakan lama; cancel dan klaim satu invoice per alokasi tetap berlaku.
 - Tidak membutuhkan dependency baru dan tidak mengubah tabel pasien/kelas atau struktur TarifKamar yang sudah tersedia.
 
+## Koreksi hubungan rekap legacy tanpa menghapus data
+
+Jika preview gagal dengan `ROOM_ALLOCATION_UNMATCHED` atau `ROOM_ALLOCATION_AMBIGUOUS`, Super Admin dapat membuka **Perbaiki hubungan alokasi** pada halaman rincian biaya. Periksa rincian rekap serta riwayat pasien, pilih alokasi dari perawatan yang sama, tulis alasan minimal 10 karakter dan centang konfirmasi. Ini koreksi sekali untuk rekap lama; setelah disimpan biaya kamar kembali otomatis. Jangan menghubungkan tindakan dari kunjungan berbeda untuk sekadar melewati validasi.
+
+Endpoint `POST /api/histories/:id/allocation-link` menerima body strict `{ "id_alokasi": 1, "alasan": "Rekap lama telah diperiksa terhadap perawatan pasien", "konfirmasi": true }`, hanya Super Admin. Hanya diizinkan bila pencocokan otomatis gagal, FK rekap masih null dan rekap belum pernah memiliki invoice (termasuk Batal). Alokasi wajib non-Batal, pasien sama, dan tidak sedang diklaim invoice. Rekap dan alokasi dikunci; penyimpanan FK serta audit `RECONCILE_ALLOCATION` atomik. Sumber yang sudah terhubung tidak dapat ditimpa.
+
+Data pasien, tindakan/RME, tanggal layanan, waktu masuk/selesai, status, snapshot harga dan invoice tidak diubah. Tidak membutuhkan migration baru, seed, reset atau SQL perbaikan manual. Jika snapshot tarif masih kosong, lanjutkan **Lengkapi tarif alokasi lama**; alokasi Aktif tetap estimasi sampai Selesai. Deploy backend dan frontend sebelum memakai tombol baru. Sesi agent tidak mengubah database production.
+
+Verifikasi koreksi: 83 test backend lulus tanpa skip pada MySQL lokal terisolasi, termasuk koreksi serentak, audit tunggal, penolakan role lain/pasien lain/Batal/tertagih, perlindungan invoice Batal, dan perbandingan data sebelum/sesudah untuk membuktikan tanggal serta jumlah baris tetap. Lint source frontend dan build production lulus. Jalur PostgreSQL belum diuji pada server PostgreSQL.
+
 ## Verifikasi
 
 Gunakan database test terisolasi dan client sesuai provider. Test API menggunakan TEST_DATABASE_URL eksplisit; suite backend dijalankan dengan `node --test --test-concurrency=1 "test/*.test.js"`. Jangan memakai koneksi production/shared untuk integration test.

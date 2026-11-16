@@ -103,6 +103,70 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         await prisma.$disconnect();
     });
 
+    test("koreksi rekap legacy mempertahankan data, tanggal, snapshot dan billing otomatis", async () => {
+        const p = await makePatient(); const recap = await makeRecap(p.id_pasien);
+        const allocation = await makeAllocation({ id_pasien: p.id_pasien });
+        const rme = await addAction(recap, p.id_pasien, new Date("2026-10-01T10:00:00Z"));
+        const path = `/histories/${recap.id_rekap}/allocation-link`;
+        const body = { id_alokasi: allocation.id_alokasi, alasan: "Diperiksa: rekap lama berasal dari perawatan yang sama", konfirmasi: true };
+        const failed = await api("POST", "/billing/preview", { id_rekap: recap.id_rekap });
+        assert.equal(failed.body.error.code, "ROOM_ALLOCATION_UNMATCHED");
+        assert.equal((await api("POST", path, body, null)).status, 401);
+        assert.equal((await api("POST", path, body, admin)).status, 403);
+        assert.equal((await api("POST", path, body, manager)).status, 403);
+        assert.equal((await api("POST", path, { ...body, konfirmasi: false }, superAdmin)).status, 400);
+        const beforeRecap = await prisma.rekapTindakan.findUnique({ where: { id_rekap: recap.id_rekap }, include: { detail_rekap_tindakan_list: true } });
+        const beforeCounts = await Promise.all([prisma.pasien.count(), prisma.rekapTindakan.count(), prisma.rmeDummy.count(), prisma.rekamAlokasi.count(), prisma.tagihan.count()]);
+        const results = await Promise.all([api("POST", path, body, superAdmin), api("POST", path, body, superAdmin)]);
+        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+        const afterRecap = await prisma.rekapTindakan.findUnique({ where: { id_rekap: recap.id_rekap }, include: { detail_rekap_tindakan_list: true } });
+        assert.equal(afterRecap.id_alokasi, allocation.id_alokasi);
+        assert.deepEqual({ ...afterRecap, id_alokasi: null, tanggal_diperbarui: beforeRecap.tanggal_diperbarui }, beforeRecap);
+        assert.deepEqual(await prisma.rekamAlokasi.findUnique({ where: { id_alokasi: allocation.id_alokasi } }), allocation);
+        assert.deepEqual(await prisma.rmeDummy.findUnique({ where: { id_riwayat: rme.id_riwayat } }), rme);
+        assert.deepEqual(await Promise.all([prisma.pasien.count(), prisma.rekapTindakan.count(), prisma.rmeDummy.count(), prisma.rekamAlokasi.count(), prisma.tagihan.count()]), beforeCounts);
+        const logs = await prisma.logAudit.findMany({ where: { id_referensi: recap.id_rekap, aksi: "RECONCILE_ALLOCATION" } });
+        assert.equal(logs.length, 1);
+        assert.equal(JSON.parse(logs[0].data_sesudah).alasan, body.alasan);
+        const preview = await api("POST", "/billing/preview", { id_rekap: recap.id_rekap });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.alokasi.id_alokasi, allocation.id_alokasi);
+        assert.equal(preview.body.data.total_biaya, "800100.75");
+        assert.equal((await api("POST", "/billing", { id_rekap: recap.id_rekap })).status, 201);
+    });
+
+    test("koreksi tidak menerima pasien lain, alokasi batal, klaim invoice atau rekap hilang", async () => {
+        const p = await makePatient(); const recap = await makeRecap(p.id_pasien);
+        await makeAllocation({ id_pasien: p.id_pasien });
+        await addAction(recap, p.id_pasien, new Date("2026-10-01"));
+        const path = `/histories/${recap.id_rekap}/allocation-link`;
+        const body = { alasan: "Periksa hubungan rekap legacy", konfirmasi: true };
+        const other = await makeAllocation(); const cancelled = await makeAllocation({ id_pasien: p.id_pasien, status: "Batal" });
+        for (const id_alokasi of [2147483647, other.id_alokasi, cancelled.id_alokasi]) {
+            assert.equal((await api("POST", path, { ...body, id_alokasi }, superAdmin)).status, 422);
+        }
+        assert.equal((await api("POST", "/histories/2147483647/allocation-link", { ...body, id_alokasi: other.id_alokasi }, superAdmin)).status, 404);
+        const billed = await makeAllocation({ id_pasien: p.id_pasien }); const billedRecap = await makeRecap(p.id_pasien);
+        assert.equal((await api("POST", "/billing", await roomBody(billedRecap, billed))).status, 201);
+        assert.equal((await api("POST", path, { ...body, id_alokasi: billed.id_alokasi }, superAdmin)).body.error.code, "ROOM_ALREADY_BILLED");
+        assert.equal((await prisma.rekapTindakan.findUnique({ where: { id_rekap: recap.id_rekap } })).id_alokasi, null);
+    });
+
+    test("koreksi tidak menimpa sumber otomatis atau rekap yang pernah ditagihkan", async () => {
+        const p = await makePatient(); const recap = await makeRecap(p.id_pasien);
+        const allocation = await makeAllocation({ id_pasien: p.id_pasien });
+        await addAction(recap, p.id_pasien, new Date("2026-11-01T12:00:00Z"));
+        const body = { id_alokasi: allocation.id_alokasi, alasan: "Periksa hubungan rekap legacy", konfirmasi: true };
+        const path = `/histories/${recap.id_rekap}/allocation-link`;
+        assert.equal((await api("POST", path, body, superAdmin)).body.error.code, "HISTORY_ALLOCATION_AUTOMATIC");
+        const invoice = await api("POST", "/billing", { id_rekap: recap.id_rekap });
+        assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
+        assert.equal((await api("POST", `/billing/${invoice.body.data.id_tagihan}/cancel`, { alasan: "Uji perlindungan riwayat" })).status, 200);
+        // Simulate an old invoice whose recap FK was never populated.
+        await prisma.rekapTindakan.update({ where: { id_rekap: recap.id_rekap }, data: { id_alokasi: null } });
+        assert.equal((await api("POST", path, body, superAdmin)).body.error.code, "HISTORY_ALLOCATION_LOCKED");
+    });
+
     test("auth, role dan input harga tetap diperiksa backend", async () => {
         assert.equal((await api("GET", "/billing/room-tariffs", undefined, null)).status, 401);
         assert.equal((await api("GET", "/billing/room-tariffs", undefined, manager)).status, 403);

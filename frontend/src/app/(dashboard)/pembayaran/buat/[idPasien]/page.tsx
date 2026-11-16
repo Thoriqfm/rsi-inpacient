@@ -17,6 +17,8 @@ import {
   createBillingApi,
   fetchHistoriesApi,
   fetchRoomTariffsApi,
+  fetchRoomAllocationsApi,
+  reconcileRecapAllocationApi,
   reconcileRoomSnapshotApi,
   previewBillingApi,
 } from "@/lib/api-client";
@@ -43,10 +45,17 @@ function RincianBiayaPelayananContent() {
   const [reconcileBusy, setReconcileBusy] = useState(false);
   const [reconcileError, setReconcileError] = useState<string | null>(null);
   const [reconcileNotice, setReconcileNotice] = useState<string | null>(null);
+  const [linkNeeded, setLinkNeeded] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkCandidates, setLinkCandidates] = useState<RoomAllocation[]>([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setErrorMsg(null);
+    setLinkNeeded(false);
+    setPreview(null);
     try {
       setAllocations([]);
       const hRes = await fetchHistoriesApi({ id_pasien: idPasien });
@@ -68,6 +77,8 @@ function RincianBiayaPelayananContent() {
         setErrorMsg(prev.room_error.message);
       } else { setPreview(prev); }
     } catch (err: unknown) {
+      const code = err instanceof Error && "code" in err ? err.code : null;
+      setLinkNeeded(code === "ROOM_ALLOCATION_UNMATCHED" || code === "ROOM_ALLOCATION_AMBIGUOUS");
       setErrorMsg(
         err instanceof Error
           ? err.message
@@ -113,6 +124,30 @@ function RincianBiayaPelayananContent() {
   };
 
   const hasActiveRoom = allocations.some((a) => a.status_alokasi === "Aktif");
+  const openAllocationLink = async () => {
+    setLinkOpen(true); setLinkBusy(true); setLinkError(null); setLinkCandidates([]);
+    try {
+      const rows = await fetchRoomAllocationsApi(idPasien);
+      setLinkCandidates(rows.filter((a) => a.status_alokasi !== "Batal" && a.id_tagihan_kamar === null));
+    } catch (err) { setLinkError(err instanceof Error ? err.message : "Gagal memuat riwayat alokasi."); }
+    finally { setLinkBusy(false); }
+  };
+
+  const submitAllocationLink = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!rekapInfo) return;
+    const fields = new FormData(event.currentTarget);
+    setLinkBusy(true); setLinkError(null);
+    try {
+      await reconcileRecapAllocationApi(rekapInfo.id_rekap, {
+        id_alokasi: Number(fields.get("alokasi")), alasan: String(fields.get("alasan")), konfirmasi: fields.get("konfirmasi") === "on",
+      });
+      setLinkOpen(false);
+      await loadData();
+      setReconcileNotice("Hubungan rekap dan alokasi telah diperbaiki. Data layanan dan tanggal perawatan tetap; biaya kamar diambil otomatis.");
+    } catch (err) { setLinkError(err instanceof Error ? err.message : "Gagal memperbaiki hubungan alokasi."); }
+    finally { setLinkBusy(false); }
+  };
   const roomSelector = (
     <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
       <h2 className="font-semibold text-sm">Biaya kamar per malam</h2>
@@ -208,6 +243,28 @@ function RincianBiayaPelayananContent() {
           </div>
           <p className="text-[11px] text-[#b91c1c]">{errorMsg}</p>
         </div>
+        {linkNeeded && user?.role === "SUPER_ADMIN" && rekapInfo && (
+          <section className="bg-white border rounded-xl p-5 space-y-3">
+            <h2 className="font-semibold">Perbaiki hubungan alokasi</h2>
+            <p>Rekap {rekapInfo.kode_rekap} belum memiliki hubungan alokasi yang jelas. Periksa <Link href={`/rekap-layanan/${rekapInfo.id_rekap}`} className="underline">rincian rekap</Link> dan riwayat rawat inap sebelum menghubungkan. Tanggal layanan dan waktu masuk tidak akan diubah.</p>
+            {!linkOpen ? <button type="button" onClick={() => void openAllocationLink()} className="text-emerald-700 underline">Perbaiki hubungan alokasi</button> : (
+              <form onSubmit={submitAllocationLink} className="space-y-3">
+                {linkError && <p role="alert" className="text-red-700">{linkError} <button type="button" disabled={linkBusy} onClick={() => void openAllocationLink()} className="underline">Muat ulang alokasi</button></p>}
+                {linkBusy && <p role="status">Memproses...</p>}
+                <fieldset disabled={linkBusy} className="space-y-3 disabled:opacity-60">
+                  <label className="block">Alokasi dari perawatan yang sama<select name="alokasi" required defaultValue="" className="block w-full mt-1 border rounded-lg p-2">
+                    <option value="">Pilih alokasi yang sudah diperiksa</option>
+                    {linkCandidates.map((a) => <option key={a.id_alokasi} value={a.id_alokasi}>#{a.id_alokasi} · {a.bed.no_bed} · {a.kelas_perawatan_snapshot || "Tarif belum lengkap"} · {new Date(a.waktu_alokasi).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} – {a.waktu_selesai ? new Date(a.waktu_selesai).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "Masih dirawat"} · {a.status_alokasi}</option>)}
+                  </select></label>
+                  {!linkBusy && linkCandidates.length === 0 && <p>Tidak ada alokasi non-Batal yang belum ditagihkan untuk pasien ini.</p>}
+                  <label className="block">Alasan koreksi<textarea name="alasan" required minLength={10} maxLength={1000} className="block w-full mt-1 border rounded-lg p-2" /></label>
+                  <label className="flex gap-2 items-start"><input type="checkbox" name="konfirmasi" required /><span>Saya telah memeriksa bahwa tindakan pada rekap berasal dari perawatan yang sama dengan alokasi ini. Koreksi dicatat dalam audit.</span></label>
+                  <div className="flex gap-3"><button type="submit" disabled={!linkCandidates.length} className="bg-emerald-700 text-white rounded-lg px-3 py-2 disabled:opacity-50">Simpan hubungan alokasi</button><button type="button" onClick={() => setLinkOpen(false)}>Batal</button></div>
+                </fieldset>
+              </form>
+            )}
+          </section>
+        )}
         <Link
           href="/pembayaran/buat"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] border border-[#e5e7eb] bg-white text-[#4b5563] font-medium"
