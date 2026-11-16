@@ -14,7 +14,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
-import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
 import { createQueueApi, searchHistoryPatientsApi } from "@/lib/api-client";
 
 interface TambahAntreanModalProps {
@@ -32,15 +31,11 @@ export function TambahAntreanModal({
 }: TambahAntreanModalProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [candidateList, setCandidateList] = useState<PasienCandidate[]>(
-    INITIAL_PASIEN_CANDIDATES
-  );
+  const [candidateList, setCandidateList] = useState<PasienCandidate[]>([]);
   const [selectedPasien, setSelectedPasien] = useState<PasienCandidate | null>(
-    INITIAL_PASIEN_CANDIDATES[3] // Dewi Lestari (Stabil, belum antre)
+    null
   );
-  const [kelasTarget, setKelasTarget] = useState<KelasPerawatan>(
-    INITIAL_PASIEN_CANDIDATES[3].kelas_rekomendasi
-  );
+  const [kelasTarget, setKelasTarget] = useState<KelasPerawatan>("Kelas 1");
   const [catatan, setCatatan] = useState(
     "Menunggu ketersediaan kamar rawat inap sesuai hak kelas pasien (urutan FIFO)."
   );
@@ -52,13 +47,13 @@ export function TambahAntreanModal({
     let active = true;
     searchHistoryPatientsApi("")
       .then((rows) => {
-        if (!active || rows.length === 0) return;
+        if (!active) return;
         const mapped: PasienCandidate[] = rows.map((p) => ({
           id_pasien: p.id_pasien,
           no_rm: p.no_rm,
           nama_pasien: p.nama_pasien,
-          jenis_kelamin_usia: p.jenis_kelamin_usia || "L/P",
-          dokter_dpjp: p.dokter_dpjp || "dr. DPJP",
+          jenis_kelamin_usia: p.jenis_kelamin_usia || "-",
+          dokter_dpjp: p.dokter_dpjp || "DPJP Rawat Inap",
           hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
           kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
           diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
@@ -69,17 +64,7 @@ export function TambahAntreanModal({
             (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
             "Menunggu",
           asal_instalasi: "IGD / Poli",
-          tanda_vital: "TD: 120/80 mmHg",
         }));
-        for (const seed of INITIAL_PASIEN_CANDIDATES) {
-          if (
-            !mapped.some(
-              (m) => m.id_pasien === seed.id_pasien || m.no_rm === seed.no_rm
-            )
-          ) {
-            mapped.push(seed);
-          }
-        }
         setCandidateList(mapped);
         const preferred =
           mapped.find((m) => m.kondisi_pasien === "Stabil") || mapped[0];
@@ -88,7 +73,13 @@ export function TambahAntreanModal({
           setKelasTarget(preferred.kelas_rekomendasi);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (active) {
+          setErrorMsg(
+            err instanceof Error ? err.message : "Gagal memuat daftar pasien."
+          );
+        }
+      });
     return () => {
       active = false;
     };

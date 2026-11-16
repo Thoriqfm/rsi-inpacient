@@ -97,7 +97,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </div>
             <nav className="space-y-1">
               {/* Strict RBAC: Petugas Bed Management ONLY manages Bed Management */}
-              {user?.role === "PETUGAS_BED_MANAGEMENT" ? (
+              {!user ? null : user.role === "PETUGAS_BED_MANAGEMENT" ? (
                 <>
                   {/* Bed Management (Primary Workspace) */}
                   <Link
@@ -318,16 +318,16 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative">
               <div className="w-9 h-9 rounded-full bg-emerald-200 text-emerald-950 font-bold text-xs flex items-center justify-center shrink-0 ring-2 ring-emerald-500/40">
-                {user?.inisial || "BS"}
+                {user?.inisial || "-"}
               </div>
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#053b2d]" />
             </div>
             <div className="overflow-hidden min-w-0">
               <div className="text-xs font-semibold text-white truncate">
-                {user?.nama_petugas || "Budi Santoso"}
+                {user?.nama_petugas || "Petugas"}
               </div>
               <div className="text-[10px] text-emerald-200/80 truncate">
-                {user?.jabatan_label || "Petugas Bed Management"}
+                {user?.jabatan_label || "-"}
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ShieldAlert, Bed, ArrowLeft } from "lucide-react";
+import { ShieldAlert, Bed } from "lucide-react";
 
 interface RoleAccessDeniedProps {
   moduleName: string;
@@ -40,7 +40,7 @@ export function RoleAccessDenied({ moduleName }: RoleAccessDeniedProps) {
           href="/pengaturan"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium transition cursor-pointer"
         >
-          <span>Ganti Peran di Pengaturan</span>
+          <span>Lihat Profil &amp; Akses</span>
         </Link>
       </div>
     </div>

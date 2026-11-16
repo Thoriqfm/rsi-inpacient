@@ -76,7 +76,13 @@ export default function DaftarTungguPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   const waitingList = useMemo(

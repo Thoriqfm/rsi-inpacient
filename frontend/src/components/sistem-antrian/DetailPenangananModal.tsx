@@ -48,7 +48,6 @@ export function DetailPenangananModal({
 
   useEffect(() => {
     if (!item?.rujukan?.id_surat) {
-      setHistoryLogs([]);
       return;
     }
     let cancelled = false;
@@ -65,6 +64,8 @@ export function DetailPenangananModal({
   }, [item]);
 
   if (!item) return null;
+
+  const displayedHistoryLogs = item.rujukan?.id_surat ? historyLogs : [];
 
   const isQueuePath = item.jalur_penanganan === "Daftar Tunggu";
   const isReferralPath = item.jalur_penanganan === "Rujukan RS Lain";
@@ -375,12 +376,12 @@ export function DetailPenangananModal({
               )}
 
               {/* Audit History */}
-              {historyLogs.length > 0 && (
+              {displayedHistoryLogs.length > 0 && (
                 <div className="space-y-1.5 pt-2">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Jejak Audit Perubahan Status
                   </span>
-                  {historyLogs.map((log) => (
+                  {displayedHistoryLogs.map((log) => (
                     <div
                       key={log.id_log}
                       className="flex items-center justify-between text-[11px] bg-white px-3 py-1.5 rounded-lg border border-slate-200/70"

@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { ALLOCATION_STATUS, BED_STATUS } from "../../shared/constants/bed.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 // Maksimal satu alokasi aktif per bed dijaga uq_rekam_alokasi_bed_aktif.
 const activeOccupantSelect = {
@@ -39,8 +40,8 @@ export function buildBedWhere({ status, q }) {
         ...(q
             ? {
                   OR: [
-                      { no_bed: { contains: q } },
-                      { nama_bangsal: { contains: q } },
+                      { no_bed: containsInsensitive(q) },
+                      { nama_bangsal: containsInsensitive(q) },
                   ],
               }
             : {}),

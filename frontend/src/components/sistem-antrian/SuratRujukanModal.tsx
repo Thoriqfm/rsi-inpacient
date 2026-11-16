@@ -41,10 +41,12 @@ export function SuratRujukanModal({
   useEffect(() => {
     if (!referral) return;
     let cancelled = false;
-    setErrorMsg(null);
     fetchReferralHistoryApi(referral.id_surat)
       .then((logs) => {
-        if (!cancelled) setHistoryLogs(logs);
+        if (!cancelled) {
+          setErrorMsg(null);
+          setHistoryLogs(logs);
+        }
       })
       .catch((err: unknown) => {
         if (!cancelled) {

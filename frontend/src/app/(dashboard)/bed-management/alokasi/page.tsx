@@ -13,7 +13,6 @@ import {
   createQueueApi,
   searchHistoryPatientsApi,
 } from "@/lib/api-client";
-import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
 import {
   ArrowLeft,
   Bed,
@@ -42,13 +41,12 @@ export default function AlokasiBedPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedKelas, setSelectedKelas] = useState<string>("Kelas 1"); // Default Kelas 1 as in Figma 193:9909
 
-  // Selected Bed for allocation (Default BED-ANG-101 as in Figma 193:9909)
-  const [selectedBedId, setSelectedBedId] = useState<number | null>(1);
+  // Selected Bed for allocation
+  const [selectedBedId, setSelectedBedId] = useState<number | null>(null);
 
-  // Selected Patient (Default Hendra Wijaya RM-2026-00142 as in Figma 193:9909)
-  const [selectedPatientId, setSelectedPatientId] = useState<number>(101);
-  const [candidates, setCandidates] =
-    useState<PasienCandidate[]>(INITIAL_PASIEN_CANDIDATES);
+  // Selected Patient
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
+  const [candidates, setCandidates] = useState<PasienCandidate[]>([]);
   const [waitingQueues, setWaitingQueues] = useState<QueueItem[]>([]);
 
   // Countdown timer for Row-Level Lock (5 minutes = 300 seconds)
@@ -134,20 +132,14 @@ export default function AlokasiBedPage() {
           }
         }
 
-        for (const p of INITIAL_PASIEN_CANDIDATES) {
-          if (
-            !merged.some(
-              (m) => m.id_pasien === p.id_pasien || m.no_rm === p.no_rm
-            )
-          ) {
-            merged.push(p);
-          }
-        }
-
         if (merged.length > 0) {
           setCandidates(merged);
           setSelectedPatientId(merged[0].id_pasien);
         }
+      } catch (err) {
+        setErrorMsg(
+          err instanceof Error ? err.message : "Gagal memuat data alokasi."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -192,25 +184,22 @@ export default function AlokasiBedPage() {
     });
   }, [availableBeds, searchQuery, selectedKelas]);
 
-  // Auto-select first available bed if current selection is not valid
-  useEffect(() => {
-    if (availableBeds.length > 0) {
-      const currentExists = availableBeds.some((b) => b.id_bed === selectedBedId);
-      if (!currentExists) {
-        setSelectedBedId(availableBeds[0].id_bed);
-        setLockSeconds(300);
-      }
+  const activeSelectedBedId = useMemo(() => {
+    if (availableBeds.some((b) => b.id_bed === selectedBedId)) {
+      return selectedBedId;
     }
+    return availableBeds[0]?.id_bed ?? null;
   }, [availableBeds, selectedBedId]);
 
   const selectedBed = useMemo(() => {
-    return beds.find((b) => b.id_bed === selectedBedId) || null;
-  }, [beds, selectedBedId]);
+    return beds.find((b) => b.id_bed === activeSelectedBedId) || null;
+  }, [beds, activeSelectedBedId]);
 
   const selectedPatient = useMemo(() => {
     return (
       candidates.find((p) => p.id_pasien === selectedPatientId) ||
-      candidates[0]
+      candidates[0] ||
+      null
     );
   }, [candidates, selectedPatientId]);
 
@@ -225,6 +214,10 @@ export default function AlokasiBedPage() {
   };
 
   const handleAssignAllocation = async () => {
+    if (!selectedPatient) {
+      setErrorMsg("Silakan pilih pasien terlebih dahulu.");
+      return;
+    }
     if (!selectedBed) {
       setErrorMsg("Silakan pilih tempat tidur yang tersedia.");
       return;
@@ -487,15 +480,21 @@ export default function AlokasiBedPage() {
                 Pilih Pasien Rawat Inap
               </label>
               <select
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(Number(e.target.value))}
+                value={selectedPatientId ?? ""}
+                onChange={(e) =>
+                  setSelectedPatientId(e.target.value ? Number(e.target.value) : null)
+                }
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
               >
-                {candidates.map((p) => (
-                  <option key={p.id_pasien} value={p.id_pasien}>
-                    {p.nama_pasien} ({p.no_rm}) - DPJP: {p.dokter_dpjp}
-                  </option>
-                ))}
+                {candidates.length === 0 ? (
+                  <option value="">Tidak ada data pasien</option>
+                ) : (
+                  candidates.map((p) => (
+                    <option key={p.id_pasien} value={p.id_pasien}>
+                      {p.nama_pasien} ({p.no_rm})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

@@ -55,7 +55,13 @@ function EditRekapContent() {
   }, [idRekap]);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   const handleSubmit = async (e: React.FormEvent) => {

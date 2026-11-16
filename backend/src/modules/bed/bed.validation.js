@@ -36,9 +36,11 @@ export const updateBedSchema = z
         message: "Minimal satu field harus diisi.",
     });
 
-export const bedListQuerySchema = z.object({
-    page: pageSchema,
-    limit: limitSchema,
-    status: z.enum(BED_STATUS_LIST).optional(),
-    q: z.string().trim().max(100).optional(),
-});
+export const bedListQuerySchema = z
+    .object({
+        page: pageSchema,
+        limit: limitSchema,
+        status: z.enum(BED_STATUS_LIST).optional(),
+        q: z.string().trim().max(100).optional(),
+    })
+    .strict();

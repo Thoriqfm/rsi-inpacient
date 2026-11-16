@@ -29,7 +29,6 @@ import {
   ReferralHospitalItem,
   ReferralItem,
 } from "@/types";
-import { INITIAL_PASIEN_CANDIDATES } from "@/lib/mock-fallback";
 import {
   createReferralApi,
   fetchQueuesApi,
@@ -51,15 +50,13 @@ export default function RujukanPasienPage() {
 
   const [emergencyCandidates, setEmergencyCandidates] = useState<
     PasienCandidate[]
-  >(() =>
-    INITIAL_PASIEN_CANDIDATES.filter((p) => p.kondisi_pasien === "Darurat")
-  );
+  >([]);
 
-  const [selectedPasien, setSelectedPasien] = useState<PasienCandidate>(
-    emergencyCandidates[0] || INITIAL_PASIEN_CANDIDATES[4]
+  const [selectedPasien, setSelectedPasien] = useState<PasienCandidate | null>(
+    null
   );
   const [patientSearch, setPatientSearch] = useState("");
-  const [selectedHospitalId, setSelectedHospitalId] = useState<number>(1);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number>(0);
   const [hospitalSearch, setHospitalSearch] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
 
@@ -102,44 +99,31 @@ export default function RujukanPasienPage() {
       if (pRes.length > 0) {
         const dbEmergency: PasienCandidate[] = pRes
           .filter((p) => p.kondisi_pasien === "Darurat")
-          .map((p) => {
-            const matched = INITIAL_PASIEN_CANDIDATES.find(
-              (seed) => seed.no_rm === p.no_rm
-            );
-            return {
-              id_pasien: p.id_pasien,
-              no_rm: p.no_rm,
-              nama_pasien: p.nama_pasien,
-              jenis_kelamin_usia:
-                matched?.jenis_kelamin_usia || p.jenis_kelamin_usia || "L/P",
-              dokter_dpjp: matched?.dokter_dpjp || p.dokter_dpjp || "dr. DPJP",
-              hak_kelas_jaminan:
-                matched?.hak_kelas_jaminan ||
-                p.hak_kelas_jaminan ||
-                "BPJS Kesehatan",
-              kelas_rekomendasi:
-                matched?.kelas_rekomendasi || p.kelas_perawatan || "Kelas 1",
-              diagnosa_masuk:
-                matched?.diagnosa_masuk ||
-                p.diagnosa_masuk ||
-                "Penanganan Darurat IGD",
-              kondisi_pasien: "Darurat",
-              status_penanganan:
-                (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
-                "Menunggu",
-              asal_instalasi:
-                matched?.asal_instalasi || "IGD Resusitasi (Triase Merah)",
-              tanda_vital:
-                matched?.tanda_vital ||
-                "TD: 165/105 mmHg • Nadi: 114x/m • RR: 28x/m • SpO2: 91%",
-            };
-          });
-        if (dbEmergency.length > 0) {
-          setEmergencyCandidates(dbEmergency);
-          setSelectedPasien((prev) =>
-            dbEmergency.find((d) => d.no_rm === prev?.no_rm) || dbEmergency[0]
-          );
-        }
+          .map((p) => ({
+            id_pasien: p.id_pasien,
+            no_rm: p.no_rm,
+            nama_pasien: p.nama_pasien,
+            jenis_kelamin_usia: p.jenis_kelamin_usia || "-",
+            dokter_dpjp: p.dokter_dpjp || "DPJP IGD",
+            hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
+            kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
+            diagnosa_masuk: p.diagnosa_masuk || "Penanganan Darurat IGD",
+            kondisi_pasien: "Darurat",
+            status_penanganan:
+              (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
+              "Menunggu",
+            asal_instalasi: "IGD Resusitasi (Triase Merah)",
+            tanda_vital: "Terpantau di IGD",
+          }));
+        setEmergencyCandidates(dbEmergency);
+        setSelectedPasien((prev) =>
+          dbEmergency.find((d) => d.no_rm === prev?.no_rm) ||
+          dbEmergency[0] ||
+          null
+        );
+      } else {
+        setEmergencyCandidates([]);
+        setSelectedPasien(null);
       }
 
       // Select first available hospital by default if none selected
@@ -155,7 +139,13 @@ export default function RujukanPasienPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   // Filter emergency patients
@@ -225,6 +215,10 @@ export default function RujukanPasienPage() {
     e.preventDefault();
     setErrorMsg(null);
 
+    if (!selectedPasien) {
+      setErrorMsg("Silakan pilih pasien darurat yang akan dirujuk terlebih dahulu.");
+      return;
+    }
     if (!selectedHospital) {
       setErrorMsg("Silakan pilih Rumah Sakit Rujukan tujuan terlebih dahulu.");
       return;
@@ -402,8 +396,17 @@ export default function RujukanPasienPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredPatients.map((p, idx) => {
-                  const isSelected = selectedPasien.id_pasien === p.id_pasien;
+                {filteredPatients.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-slate-400">
+                      {loading
+                        ? "Memuat daftar pasien darurat..."
+                        : "Belum ada pasien kondisi darurat."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPatients.map((p, idx) => {
+                  const isSelected = selectedPasien?.id_pasien === p.id_pasien;
                   const rowNum = String(idx + 1).padStart(2, "0");
 
                   return (
@@ -454,30 +457,33 @@ export default function RujukanPasienPage() {
                       </td>
                     </tr>
                   );
-                })}
+                })
+                )}
               </tbody>
             </table>
           </div>
 
           {/* Active Patient Clinical Card Footer */}
-          <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs space-y-1.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-bold text-slate-900">
-                {selectedPasien.nama_pasien} ({selectedPasien.no_rm}) —{" "}
-                <span className="text-rose-700 font-semibold">
-                  {selectedPasien.asal_instalasi}
+          {selectedPasien && (
+            <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="font-bold text-slate-900">
+                  {selectedPasien.nama_pasien} ({selectedPasien.no_rm}) —{" "}
+                  <span className="text-rose-700 font-semibold">
+                    {selectedPasien.asal_instalasi}
+                  </span>
+                </div>
+                <span className="text-slate-600 flex items-center gap-1 text-[11px]">
+                  <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
+                  {selectedPasien.dokter_dpjp}
                 </span>
               </div>
-              <span className="text-slate-600 flex items-center gap-1 text-[11px]">
-                <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
-                {selectedPasien.dokter_dpjp}
-              </span>
+              <div className="flex items-center gap-2 text-[11px] text-slate-700">
+                <HeartPulse className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span className="font-medium">{selectedPasien.tanda_vital}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-700">
-              <HeartPulse className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span className="font-medium">{selectedPasien.tanda_vital}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: DAFTAR RUMAH SAKIT RUJUKAN */}

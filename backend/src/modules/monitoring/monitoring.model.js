@@ -1,4 +1,5 @@
 import prisma from "../../config/prisma.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 // Read-only: hanya SELECT. Monitoring tidak memiliki model/tabel status sendiri.
 const latestQueueSelect = {
@@ -85,7 +86,7 @@ export function buildMonitoringWhere({ q, status_antrean, status_rujukan, waktuF
     return {
         AND: [
             involvedFilter,
-            ...(q ? [{ OR: [{ no_rm: { contains: q } }, { nama_pasien: { contains: q } }] }] : []),
+            ...(q ? [{ OR: [{ no_rm: containsInsensitive(q) }, { nama_pasien: containsInsensitive(q) }] }] : []),
             ...(Object.keys(queueSome).length > 0 ? [{ daftar_tunggu_list: { some: queueSome } }] : []),
             ...(status_rujukan ? [{ surat_rujukan_list: { some: { status: status_rujukan } } }] : []),
         ],

@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { QUEUE_STATUS } from "../../shared/constants/queue.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 export const queueSelect = {
     id_antrean: true,
@@ -37,8 +38,8 @@ export function buildQueueWhere({ status, id_pasien, q }) {
                   pasien: {
                       is: {
                           OR: [
-                              { no_rm: { contains: q } },
-                              { nama_pasien: { contains: q } },
+                              { no_rm: containsInsensitive(q) },
+                              { nama_pasien: containsInsensitive(q) },
                           ],
                       },
                   },

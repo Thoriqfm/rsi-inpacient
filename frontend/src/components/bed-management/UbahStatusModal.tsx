@@ -37,14 +37,6 @@ export function UbahStatusModal({
 
   const isOccupied = bed?.status === "Terisi";
 
-  // Sync state whenever bed changes
-  React.useEffect(() => {
-    if (bed) {
-      setSelectedStatus(bed.status === "Terisi" ? "Pembersihan" : bed.status);
-      setErrorMsg(null);
-    }
-  }, [bed]);
-
   if (!isOpen || !bed) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { BedItem, BedStatus, KelasPerawatan } from "@/types";
 import { fetchBedsApi } from "@/lib/api-client";
@@ -65,8 +65,9 @@ export default function BedManagementPage() {
   // Success Notification & Error State
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const isPollingRef = useRef(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
@@ -80,22 +81,32 @@ export default function BedManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadData();
-    // NFR-SRS-13 / BM-SRS-01: Sinkronisasi status bed secara real-time (maksimal setiap 2 detik).
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    // Sinkronisasi status bed berkala tanpa menumpuk request saat server lambat.
     const interval = setInterval(async () => {
       if (typeof document !== "undefined" && document.hidden) return;
+      if (isPollingRef.current) return;
+      isPollingRef.current = true;
       try {
         const res = await fetchBedsApi();
-        setBeds(res.items);
+        if (active) setBeds(res.items);
       } catch {
         // abaikan error polling latar belakang agar tidak mengganggu interaksi petugas
+      } finally {
+        isPollingRef.current = false;
       }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [user?.role]);
+    }, 5000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [loadData, user?.role]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -149,15 +160,11 @@ export default function BedManagementPage() {
 
   // Paginated items
   const totalPages = Math.max(1, Math.ceil(filteredBeds.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedBeds = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const start = (safeCurrentPage - 1) * pageSize;
     return filteredBeds.slice(start, start + pageSize);
-  }, [filteredBeds, currentPage, pageSize]);
-
-  // Adjust page if filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedWard, selectedKelas, statusTab]);
+  }, [filteredBeds, safeCurrentPage, pageSize]);
 
   // Delete Action Dispatcher (Rules UC-02 EF-01)
   const handleDeleteClick = (bed: BedItem) => {
@@ -764,7 +771,7 @@ export default function BedManagementPage() {
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              disabled={currentPage <= 1}
+              disabled={safeCurrentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition cursor-pointer"
             >
@@ -773,7 +780,7 @@ export default function BedManagementPage() {
 
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pageNum = i + 1;
-              const isActive = currentPage === pageNum;
+              const isActive = safeCurrentPage === pageNum;
               return (
                 <button
                   key={pageNum}
@@ -792,7 +799,7 @@ export default function BedManagementPage() {
 
             <button
               type="button"
-              disabled={currentPage >= totalPages}
+              disabled={safeCurrentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition cursor-pointer"
             >
@@ -805,6 +812,7 @@ export default function BedManagementPage() {
 
       {/* MODAL 1: TAMBAH BED BARU (Figma 217:13467) */}
       <TambahBedModal
+        key={isTambahOpen ? "open" : "closed"}
         isOpen={isTambahOpen}
         onClose={() => setIsTambahOpen(false)}
         allExistingBeds={beds}
@@ -816,6 +824,7 @@ export default function BedManagementPage() {
 
       {/* MODAL 2: UBAH STATUS KETERSEDIAAN BED (Figma 285:189) */}
       <UbahStatusModal
+        key={selectedBedForStatus?.id_bed ?? "none"}
         isOpen={!!selectedBedForStatus}
         onClose={() => setSelectedBedForStatus(null)}
         bed={selectedBedForStatus}

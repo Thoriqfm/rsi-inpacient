@@ -24,6 +24,7 @@ import {
 } from "@/lib/api-client";
 
 function PemeriksaanTagihanContent() {
+  const { user } = useAuth();
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -89,7 +90,13 @@ function PemeriksaanTagihanContent() {
   }, [idPasien, queryIdTagihan, queryIdRekap]);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   // Recalculate handler
@@ -143,6 +150,10 @@ function PemeriksaanTagihanContent() {
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Pemeriksaan Tagihan" />;
+  }
 
   if (loading) {
     return (

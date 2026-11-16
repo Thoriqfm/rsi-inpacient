@@ -22,6 +22,7 @@ import {
 } from "@/lib/api-client";
 
 function PenerbitanInvoiceContent() {
+  const { user } = useAuth();
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -61,7 +62,13 @@ function PenerbitanInvoiceContent() {
   }, [idPasien, queryIdTagihan]);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   // Issue invoice transition: Draft -> Belum Dibayar
@@ -101,6 +108,10 @@ function PenerbitanInvoiceContent() {
       currency: "IDR",
       maximumFractionDigits: 0,
     }).format(val);
+
+  if (user?.role === "PETUGAS_BED_MANAGEMENT") {
+    return <RoleAccessDenied moduleName="Penerbitan Invoice" />;
+  }
 
   if (loading || !billing) {
     return (

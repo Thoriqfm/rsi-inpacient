@@ -1,4 +1,5 @@
 import prisma from "../../config/prisma.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 const billingListSelect = {
     id_tagihan: true,
@@ -41,13 +42,13 @@ export function buildBillingWhere({ status, id_pasien, q }) {
         ...(q
             ? {
                   OR: [
-                      { no_tagihan: { contains: q } },
+                      { no_tagihan: containsInsensitive(q) },
                       {
                           pasien: {
                               is: {
                                   OR: [
-                                      { no_rm: { contains: q } },
-                                      { nama_pasien: { contains: q } },
+                                      { no_rm: containsInsensitive(q) },
+                                      { nama_pasien: containsInsensitive(q) },
                                   ],
                               },
                           },

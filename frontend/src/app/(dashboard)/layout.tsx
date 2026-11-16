@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState, useCallback, Suspense } from "react";
+import React, { useState, useCallback, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleClose = useCallback(() => {
@@ -18,6 +22,23 @@ export default function DashboardLayout({
   const handleToggle = useCallback(() => {
     setIsMobileNavOpen((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/login");
+    }
+  }, [isLoading, user, router]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3 text-slate-600">
+          <div className="w-9 h-9 border-3 border-emerald-600/25 border-t-emerald-600 rounded-full animate-spin" />
+          <p className="text-xs font-medium">Memverifikasi sesi petugas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50">
