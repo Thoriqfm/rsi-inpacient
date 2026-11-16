@@ -237,8 +237,9 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
     });
 
     test("tarif hilang menggagalkan alokasi secara atomik", async () => {
+        const freePatient = await makePatient();
         const bed = await prisma.bed.create({ data: { no_bed: `RN${suffix}`, nama_bangsal: "Uji", kelas_perawatan: "Kelas 2" } }); beds.push(bed.id_bed);
-        const result = await api("POST", "/allocations", { id_pasien: patient.id_pasien, id_bed: bed.id_bed }, manager);
+        const result = await api("POST", "/allocations", { id_pasien: freePatient.id_pasien, id_bed: bed.id_bed }, manager);
         assert.equal(result.status, 422, JSON.stringify(result.body));
         assert.equal(result.body.error.code, "ROOM_TARIFF_NOT_FOUND");
         assert.equal((await prisma.bed.findUnique({ where: { id_bed: bed.id_bed } })).status, "Tersedia");

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { BedItem, KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
 import {
   fetchAvailableBedsApi,
+  fetchActiveAllocatedPatientIdsApi,
   fetchQueuesApi,
   createAllocationApi,
   createQueueApi,
@@ -66,21 +67,28 @@ export default function AlokasiBedPage() {
     async function load() {
       setIsLoading(true);
       try {
-        const [bedsRes, queueRes, patientsRes] = await Promise.allSettled([
-          fetchAvailableBedsApi(),
-          fetchQueuesApi(),
-          searchHistoryPatientsApi(""),
-        ]);
+        const [bedsRes, queueRes, patientsRes, activeAllocRes] =
+          await Promise.allSettled([
+            fetchAvailableBedsApi(),
+            fetchQueuesApi(),
+            searchHistoryPatientsApi(""),
+            fetchActiveAllocatedPatientIdsApi(),
+          ]);
 
         if (bedsRes.status === "fulfilled") {
           setBeds(bedsRes.value.items);
         }
 
+        const activeAllocatedIds = new Set<number>(
+          activeAllocRes.status === "fulfilled" ? activeAllocRes.value : []
+        );
+
         const merged: PasienCandidate[] = [];
 
         if (queueRes.status === "fulfilled" && queueRes.value.items.length > 0) {
           const waiting = queueRes.value.items.filter(
-            (q) => q.status === "Menunggu"
+            (q) =>
+              q.status === "Menunggu" && !activeAllocatedIds.has(q.id_pasien)
           );
           setWaitingQueues(waiting);
 
@@ -107,7 +115,13 @@ export default function AlokasiBedPage() {
           patientsRes.value.length > 0
         ) {
           for (const p of patientsRes.value) {
+            const isAlreadyInpatientOrReferred =
+              activeAllocatedIds.has(p.id_pasien) ||
+              p.status_penanganan === "Rawat Inap" ||
+              p.status_penanganan === "Dirujuk";
+
             if (
+              !isAlreadyInpatientOrReferred &&
               !merged.some(
                 (m) => m.id_pasien === p.id_pasien || m.no_rm === p.no_rm
               )
@@ -243,10 +257,20 @@ export default function AlokasiBedPage() {
         time: result.waktu_alokasi,
       });
 
-      // Update local state beds
+      // Update local state beds & keluarkan pasien yang baru dialokasikan dari kandidat
       setBeds((prev) =>
         prev.map((b) => (b.id_bed === result.bed.id_bed ? result.bed : b))
       );
+      setWaitingQueues((prev) =>
+        prev.filter((q) => q.id_pasien !== selectedPatient.id_pasien)
+      );
+      setCandidates((prev) => {
+        const remaining = prev.filter(
+          (p) => p.id_pasien !== selectedPatient.id_pasien
+        );
+        setSelectedPatientId(remaining[0]?.id_pasien ?? null);
+        return remaining;
+      });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMsg(err.message);
@@ -484,10 +508,13 @@ export default function AlokasiBedPage() {
                 onChange={(e) =>
                   setSelectedPatientId(e.target.value ? Number(e.target.value) : null)
                 }
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
+                disabled={candidates.length === 0}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 {candidates.length === 0 ? (
-                  <option value="">Tidak ada data pasien</option>
+                  <option value="">
+                    Tidak ada pasien menunggu alokasi (semua sudah Rawat Inap / Dirujuk)
+                  </option>
                 ) : (
                   candidates.map((p) => (
                     <option key={p.id_pasien} value={p.id_pasien}>
@@ -556,7 +583,7 @@ export default function AlokasiBedPage() {
               <button
                 type="button"
                 onClick={handleAssignAllocation}
-                disabled={isSubmitting || !selectedBed || lockSeconds <= 0}
+                disabled={isSubmitting || !selectedPatient || !selectedBed || lockSeconds <= 0}
                 className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-xs transition duration-150 shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (

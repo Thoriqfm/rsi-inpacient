@@ -8,6 +8,7 @@ import {
     countQueues,
     createQueue,
     createRiwayatStatusForQueue,
+    findActiveAllocationByPatient,
     findActiveQueueByPatient,
     findNextQueueNumber,
     findPasienForQueue,
@@ -64,7 +65,25 @@ export async function registerQueue({ id_pasien }, id_akun) {
         try {
             return await prisma.$transaction(async (tx) => {
                 await lockPasienForQueue(tx, id_pasien);
+                const freshPasien = await findPasienForQueue(id_pasien, tx);
 
+                if (freshPasien?.status_penanganan === "Dirujuk") {
+                    throw new HttpError(
+                        409,
+                        "QUEUE_PATIENT_REFERRED",
+                        "Pasien sudah berstatus Dirujuk dan tidak dapat dimasukkan ke daftar tunggu.",
+                    );
+                }
+                if (
+                    freshPasien?.status_penanganan === "Rawat Inap" ||
+                    (await findActiveAllocationByPatient(id_pasien, tx))
+                ) {
+                    throw new HttpError(
+                        409,
+                        "QUEUE_PATIENT_INPATIENT",
+                        "Pasien sudah berstatus Rawat Inap atau menempati kamar aktif.",
+                    );
+                }
                 if (await findActiveQueueByPatient(id_pasien, tx)) {
                     throw new HttpError(409, "QUEUE_ALREADY_ACTIVE", "Pasien sudah memiliki antrean aktif.");
                 }

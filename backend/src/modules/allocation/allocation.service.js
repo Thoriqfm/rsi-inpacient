@@ -8,6 +8,7 @@ import { claimBedForAllocation, findBedById, releaseBedAfterAllocation } from ".
 import {
     buildAllocationWhere,
     closeAllocation,
+    countActiveAllocationsByPatient,
     countAllocations,
     createAllocation,
     createRiwayatStatusForAllocation,
@@ -15,6 +16,7 @@ import {
     findAllocations,
     findPasienForAllocation,
     findQueueById,
+    lockPasienForAllocation,
     markQueueAllocated,
     updatePasienStatusForAllocation,
 } from "./allocation.model.js";
@@ -122,6 +124,29 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
             const claimed = await claimBedForAllocation(id_bed, tx);
             if (claimed.count === 0) {
                 throw new HttpError(409, "BED_UNAVAILABLE", "Bed sudah dialokasikan oleh petugas lain.");
+            }
+
+            await lockPasienForAllocation(tx, id_pasien);
+            const freshPasien = await findPasienForAllocation(id_pasien, tx);
+            if (!freshPasien) {
+                throw new HttpError(404, "PASIEN_NOT_FOUND", "Pasien tidak ditemukan.");
+            }
+            if (freshPasien.status_penanganan === "Dirujuk") {
+                throw new HttpError(
+                    409,
+                    "PATIENT_ALREADY_REFERRED",
+                    "Pasien sudah berstatus Dirujuk ke rumah sakit lain dan tidak dapat dialokasikan.",
+                );
+            }
+            if (
+                freshPasien.status_penanganan === "Rawat Inap" ||
+                (await countActiveAllocationsByPatient(id_pasien, tx)) > 0
+            ) {
+                throw new HttpError(
+                    409,
+                    "PATIENT_ALREADY_ALLOCATED",
+                    "Pasien sudah berstatus Rawat Inap atau sedang menempati tempat tidur aktif.",
+                );
             }
 
             const currentBed = await findBedById(id_bed, tx);

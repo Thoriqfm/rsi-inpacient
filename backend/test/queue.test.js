@@ -280,5 +280,32 @@ describe("Queue management (UC-04)", { skip: !RUN }, () => {
         const emergencyQueue = await enqueue(adminToken, daruratPasien);
         assert.equal(emergencyQueue.status, 422);
         assert.equal(emergencyQueue.body.error.code, "QUEUE_PATIENT_EMERGENCY");
+
+        const inpatientPasien = await prisma.pasien.create({
+            data: {
+                no_rm: `RMI${suffix.slice(-7)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+                nama_pasien: "Pasien Rawat Inap",
+                status_penanganan: "Rawat Inap",
+            },
+        });
+        pasienIds.push(inpatientPasien.id_pasien);
+
+        const inpatientQueue = await enqueue(adminToken, inpatientPasien);
+        assert.equal(inpatientQueue.status, 409);
+        assert.equal(inpatientQueue.body.error.code, "QUEUE_PATIENT_INPATIENT");
+
+        const referredPasien = await prisma.pasien.create({
+            data: {
+                no_rm: `RMR${suffix.slice(-7)}${Math.floor(Math.random() * 1000)}`.slice(0, 20),
+                nama_pasien: "Pasien Dirujuk",
+                status_penanganan: "Dirujuk",
+                kondisi_pasien: "Stabil",
+            },
+        });
+        pasienIds.push(referredPasien.id_pasien);
+
+        const referredQueue = await enqueue(adminToken, referredPasien);
+        assert.equal(referredQueue.status, 409);
+        assert.equal(referredQueue.body.error.code, "QUEUE_PATIENT_REFERRED");
     });
 });

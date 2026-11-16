@@ -57,6 +57,16 @@ export function findPasienForAllocation(id_pasien, client = prisma) {
     });
 }
 
+export function lockPasienForAllocation(client, id_pasien) {
+    return client.$queryRaw`SELECT id_pasien FROM pasien WHERE id_pasien = ${id_pasien} FOR UPDATE`;
+}
+
+export function countActiveAllocationsByPatient(id_pasien, client = prisma) {
+    return client.rekamAlokasi.count({
+        where: { id_pasien, status_alokasi: ALLOCATION_STATUS.AKTIF },
+    });
+}
+
 export function updatePasienStatusForAllocation(client, id_pasien, status_penanganan) {
     return client.pasien.update({
         where: { id_pasien },
