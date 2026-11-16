@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { AUDIT_TABLE } from "../../shared/constants/referral.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 export const referralSelect = {
     id_surat: true,
@@ -36,9 +37,9 @@ export function buildReferralWhere({ status, id_pasien, id_rs, q }) {
         ...(q
             ? {
                   OR: [
-                      { no_rujukan: { contains: q } },
-                      { pasien: { is: { OR: [{ no_rm: { contains: q } }, { nama_pasien: { contains: q } }] } } },
-                      { rumah_sakit_rujukan: { is: { nama_rs: { contains: q } } } },
+                      { no_rujukan: containsInsensitive(q) },
+                      { pasien: { is: { OR: [{ no_rm: containsInsensitive(q) }, { nama_pasien: containsInsensitive(q) }] } } },
+                      { rumah_sakit_rujukan: { is: { nama_rs: containsInsensitive(q) } } },
                   ],
               }
             : {}),

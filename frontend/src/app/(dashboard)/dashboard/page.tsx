@@ -54,7 +54,13 @@ export default function MainSimrsDashboardPage() {
   }, []);
 
   useEffect(() => {
-    loadOverview();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadOverview();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadOverview]);
 
   const formatRupiah = (val: number) =>

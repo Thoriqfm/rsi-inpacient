@@ -1,4 +1,5 @@
 import prisma from "../../config/prisma.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 export const historyListSelect = {
     id_rekap: true,
@@ -41,13 +42,13 @@ export function buildHistoryWhere({ status, id_pasien, q }) {
         ...(q
             ? {
                   OR: [
-                      { kode_rekap: { contains: q } },
+                      { kode_rekap: containsInsensitive(q) },
                       {
                           pasien: {
                               is: {
                                   OR: [
-                                      { no_rm: { contains: q } },
-                                      { nama_pasien: { contains: q } },
+                                      { no_rm: containsInsensitive(q) },
+                                      { nama_pasien: containsInsensitive(q) },
                                   ],
                               },
                           },
@@ -162,7 +163,7 @@ export function findLatestHistoryUpdateActor(id_rekap, client = prisma) {
 export function searchPatientsForHistory(q) {
     return prisma.pasien.findMany({
         where: {
-            OR: [{ no_rm: { contains: q } }, { nama_pasien: { contains: q } }],
+            OR: [{ no_rm: containsInsensitive(q) }, { nama_pasien: containsInsensitive(q) }],
         },
         select: {
             id_pasien: true,

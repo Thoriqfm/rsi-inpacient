@@ -11,6 +11,16 @@ export function notFound(req, res) {
 }
 
 export function errorHandler(err, req, res, next) {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+        return res.status(400).json({
+            error: {
+                code: "INVALID_JSON",
+                message: "Format body JSON tidak valid.",
+                details: [],
+            },
+        });
+    }
+
     const isHttpError = err instanceof HttpError;
     const status = isHttpError ? err.status : 500;
 

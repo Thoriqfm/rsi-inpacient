@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { BedItem, KelasPerawatan } from "@/types";
-import { BANGSAL_OPTIONS } from "@/lib/mock-fallback";
+import { BANGSAL_OPTIONS } from "@/lib/constants";
 import { X, CheckCircle2, AlertTriangle, Bed } from "lucide-react";
 
 interface TambahBedModalProps {
@@ -12,34 +12,43 @@ interface TambahBedModalProps {
   allExistingBeds: BedItem[];
 }
 
+function suggestBedNumber(bangsalLabel: string, beds: BedItem[]): {
+  noBed: string;
+  kelas: KelasPerawatan;
+} {
+  const selectedWard =
+    BANGSAL_OPTIONS.find((b) => b.label === bangsalLabel) || BANGSAL_OPTIONS[0];
+  const existingInWard = beds.filter((b) =>
+    b.no_bed.toUpperCase().includes(`-${selectedWard.prefix}-`)
+  );
+  const nextNum = 101 + existingInWard.length;
+  return {
+    noBed: `BED-${selectedWard.prefix}-${nextNum}`,
+    kelas: selectedWard.defaultKelas,
+  };
+}
+
 export function TambahBedModal({
   isOpen,
   onClose,
   onSuccess,
   allExistingBeds,
 }: TambahBedModalProps) {
-  const [noBed, setNoBed] = useState("");
   const [bangsal, setBangsal] = useState(BANGSAL_OPTIONS[0].label);
-  const [kelas, setKelas] = useState<KelasPerawatan>("Kelas 1");
+  const [noBed, setNoBed] = useState(() =>
+    suggestBedNumber(BANGSAL_OPTIONS[0].label, allExistingBeds).noBed
+  );
+  const [kelas, setKelas] = useState<KelasPerawatan>(BANGSAL_OPTIONS[0].defaultKelas);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Auto-generate suggestion when bangsal changes
-  useEffect(() => {
-    if (isOpen) {
-      const selectedWard =
-        BANGSAL_OPTIONS.find((b) => b.label === bangsal) || BANGSAL_OPTIONS[0];
-      setKelas(selectedWard.defaultKelas);
-
-      // Find highest bed number in this ward
-      const existingInWard = allExistingBeds.filter((b) =>
-        b.no_bed.toUpperCase().includes(`-${selectedWard.prefix}-`)
-      );
-      const nextNum = 101 + existingInWard.length;
-      setNoBed(`BED-${selectedWard.prefix}-${nextNum}`);
-      setErrorMsg(null);
-    }
-  }, [isOpen, bangsal, allExistingBeds]);
+  const handleBangsalChange = (nextBangsal: string) => {
+    setBangsal(nextBangsal);
+    const suggestion = suggestBedNumber(nextBangsal, allExistingBeds);
+    setNoBed(suggestion.noBed);
+    setKelas(suggestion.kelas);
+    setErrorMsg(null);
+  };
 
   if (!isOpen) return null;
 
@@ -181,7 +190,7 @@ export function TambahBedModal({
             </label>
             <select
               value={bangsal}
-              onChange={(e) => setBangsal(e.target.value)}
+              onChange={(e) => handleBangsalChange(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 cursor-pointer"
             >
               {BANGSAL_OPTIONS.map((opt) => (

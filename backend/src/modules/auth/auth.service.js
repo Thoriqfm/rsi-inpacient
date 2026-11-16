@@ -9,8 +9,17 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
 const BCRYPT_ROUNDS = 10;
 
-// Penyimpanan token/sesi yang telah di-logout untuk mencegah pemakaian ulang sesi lama (PC-03).
-const revokedTokens = new Set();
+// Penyimpanan token/sesi yang telah di-logout beserta waktu kedaluwarsanya (PC-03).
+const revokedTokens = new Map();
+const DEFAULT_REVOKE_TTL_MS = 8 * 60 * 60 * 1000;
+
+function pruneExpiredRevokedTokens(now = Date.now()) {
+    for (const [key, expiresAt] of revokedTokens.entries()) {
+        if (expiresAt <= now) {
+            revokedTokens.delete(key);
+        }
+    }
+}
 
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
     throw new Error("JWT_SECRET wajib diisi minimal 32 karakter pada environment.");
@@ -30,21 +39,37 @@ export function toPublicAkun(akun) {
 
 export function revokeAccessToken(token) {
     if (!token) return;
-    revokedTokens.add(token);
+    const now = Date.now();
+    if (revokedTokens.size > 500) {
+        pruneExpiredRevokedTokens(now);
+    }
     const decoded = jwt.decode(token);
+    const expiresAt =
+        decoded && typeof decoded === "object" && typeof decoded.exp === "number"
+            ? decoded.exp * 1000
+            : now + DEFAULT_REVOKE_TTL_MS;
+
+    if (expiresAt <= now) return;
+
+    revokedTokens.set(token, expiresAt);
     if (decoded && typeof decoded === "object" && decoded.jti) {
-        revokedTokens.add(decoded.jti);
+        revokedTokens.set(decoded.jti, expiresAt);
     }
 }
 
 export function verifyAccessToken(token) {
     try {
-        if (revokedTokens.has(token)) {
+        const now = Date.now();
+        const tokenRevokedUntil = revokedTokens.get(token);
+        if (tokenRevokedUntil && tokenRevokedUntil > now) {
             throw new Error("Token sudah dicabut (logged out).");
         }
         const payload = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
-        if (payload.jti && revokedTokens.has(payload.jti)) {
-            throw new Error("Sesi sudah diakhiri.");
+        if (payload.jti) {
+            const jtiRevokedUntil = revokedTokens.get(payload.jti);
+            if (jtiRevokedUntil && jtiRevokedUntil > now) {
+                throw new Error("Sesi sudah diakhiri.");
+            }
         }
         const id_akun = Number(payload.sub);
 

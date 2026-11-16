@@ -28,26 +28,35 @@ export async function runBootstrapSeed() {
             },
         ];
 
-        const seedPassword = process.env.SEED_DEFAULT_PASSWORD || "password123";
+        const isProd = process.env.NODE_ENV === "production";
+        const envSeedPassword = process.env.SEED_DEFAULT_PASSWORD;
+        const canSeedAccounts = !isProd || (Boolean(envSeedPassword) && envSeedPassword.length >= 8);
+        const seedPassword = envSeedPassword || "password123";
         let passwordHash = null;
 
-        for (const acc of defaultAccounts) {
-            const existing = await prisma.akun.findFirst({
-                where: { username: acc.username },
-                select: { id_akun: true },
-            });
-            if (!existing) {
-                if (!passwordHash) {
-                    passwordHash = await bcrypt.hash(seedPassword, 10);
-                }
-                await prisma.akun.create({
-                    data: {
-                        username: acc.username,
-                        password: passwordHash,
-                        nama_petugas: acc.nama_petugas,
-                        role: acc.role,
-                    },
+        if (!canSeedAccounts) {
+            console.warn(
+                "[Bootstrap Seed] Melewati pembuatan akun default di produksi karena SEED_DEFAULT_PASSWORD belum disetel (>= 8 karakter).",
+            );
+        } else {
+            for (const acc of defaultAccounts) {
+                const existing = await prisma.akun.findFirst({
+                    where: { username: acc.username },
+                    select: { id_akun: true },
                 });
+                if (!existing) {
+                    if (!passwordHash) {
+                        passwordHash = await bcrypt.hash(seedPassword, 10);
+                    }
+                    await prisma.akun.create({
+                        data: {
+                            username: acc.username,
+                            password: passwordHash,
+                            nama_petugas: acc.nama_petugas,
+                            role: acc.role,
+                        },
+                    });
+                }
             }
         }
 

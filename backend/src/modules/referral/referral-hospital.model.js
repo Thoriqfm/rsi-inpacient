@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { AUDIT_TABLE } from "../../shared/constants/referral.js";
+import { containsInsensitive } from "../../shared/utils/prisma-search.js";
 
 export const hospitalSelect = {
     id_rs: true,
@@ -18,8 +19,8 @@ export function buildHospitalWhere({ status_ketersediaan, q }) {
         ...(q
             ? {
                   OR: [
-                      { nama_rs: { contains: q } },
-                      { alamat: { contains: q } },
+                      { nama_rs: containsInsensitive(q) },
+                      { alamat: containsInsensitive(q) },
                   ],
               }
             : {}),

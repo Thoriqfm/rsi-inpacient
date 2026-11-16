@@ -74,7 +74,13 @@ function DetailRekapContent() {
       router.replace("/rekap-layanan");
       return;
     }
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [params?.idRekap, idRekap, loadData, router]);
 
   // Stepper advance status

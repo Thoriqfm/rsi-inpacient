@@ -77,7 +77,13 @@ export default function RekapLayananPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadData();
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   // Close dropdown on outside click

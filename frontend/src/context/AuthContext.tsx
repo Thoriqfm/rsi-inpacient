@@ -1,24 +1,20 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { UserAccount, UserRole } from "@/types";
-import { DEMO_USERS } from "@/lib/mock-fallback";
+import { UserAccount } from "@/types";
 import {
+  fetchCurrentUserApi,
+  getStoredToken,
   loginApi,
-  isStrictBackendMode,
-  setStrictBackendMode,
+  logoutApi,
 } from "@/lib/api-client";
 
 interface AuthContextType {
   user: UserAccount | null;
   token: string | null;
   isLoading: boolean;
-  dataSource: "backend" | "mock";
-  isStrictBackend: boolean;
-  setStrictBackend: (enabled: boolean) => void;
   login: (username: string, pass: string) => Promise<UserAccount>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,69 +26,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserAccount | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState<"backend" | "mock">("backend");
-  const [isStrict, setIsStrict] = useState<boolean>(true);
-
-  // Sync strict state reactively
-  useEffect(() => {
-    setIsStrict(isStrictBackendMode());
-    const handleStrictChange = () => {
-      setIsStrict(isStrictBackendMode());
-    };
-    window.addEventListener("rsi_strict_mode_changed", handleStrictChange);
-    return () => {
-      window.removeEventListener("rsi_strict_mode_changed", handleStrictChange);
-    };
-  }, []);
-
-  const handleSetStrict = (enabled: boolean) => {
-    setStrictBackendMode(enabled);
-    setIsStrict(enabled);
-  };
 
   useEffect(() => {
+    let cancelled = false;
+
     async function initAuth() {
       try {
-        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-        const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-        const strict = isStrictBackendMode();
-
-        // If valid backend token exists
-        if (storedUser && storedToken && !storedToken.startsWith("mock-")) {
-          setUser(JSON.parse(storedUser));
-          setToken(storedToken);
-          setDataSource("backend");
+        const storedToken = getStoredToken();
+        if (!storedToken) {
+          localStorage.removeItem(USER_STORAGE_KEY);
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          if (!cancelled) {
+            setUser(null);
+            setToken(null);
+          }
           return;
         }
 
-        // In Strict Backend Mode: do not auto-login with hardcoded credentials.
-        // Require explicit login via /login page.
-        if (strict) {
+        // Verify stored JWT against backend so expired/revoked sessions are rejected.
+        const verifiedUser = await fetchCurrentUserApi(storedToken);
+        if (!cancelled) {
+          setUser(verifiedUser);
+          setToken(storedToken);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(verifiedUser));
+        }
+      } catch {
+        localStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        if (!cancelled) {
           setUser(null);
           setToken(null);
-          setDataSource("backend");
-          localStorage.removeItem(TOKEN_STORAGE_KEY);
-          return;
         }
-
-        // Only in Mock Mode (offline prototype): fallback to local demo user
-        const parsedUser: UserAccount = storedUser
-          ? JSON.parse(storedUser)
-          : DEMO_USERS["budi.santoso"].account;
-        const defaultToken = storedToken || "mock-jwt-token-1-init";
-        setUser(parsedUser);
-        setToken(defaultToken);
-        setDataSource("mock");
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsedUser));
-        localStorage.setItem(TOKEN_STORAGE_KEY, defaultToken);
-      } catch {
-        // ignore JSON parse error
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     initAuth();
+
+    const handleExpired = () => {
+      setUser(null);
+      setToken(null);
+    };
+    window.addEventListener("rsi_auth_expired", handleExpired);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("rsi_auth_expired", handleExpired);
+    };
   }, []);
 
   const login = async (
@@ -104,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await loginApi(username, pass);
       setUser(result.user);
       setToken(result.token);
-      setDataSource(result.source);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(result.user));
       localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
       return result.user;
@@ -114,48 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    const activeToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (activeToken && !activeToken.startsWith("mock-")) {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-      fetch(`${apiBase}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${activeToken}` },
-      }).catch(() => {});
-    }
+    const activeToken = getStoredToken();
+    logoutApi(activeToken);
     setUser(null);
     setToken(null);
-    setDataSource("backend");
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
-  };
-
-  const switchRole = async (newRole: UserRole) => {
-    let target = Object.values(DEMO_USERS).find(
-      (u) => u.account.role === newRole
-    )?.account;
-    if (!target) {
-      target = DEMO_USERS["budi.santoso"].account;
-    }
-
-    try {
-      const result = await loginApi(target.username, "password123");
-      setUser(result.user);
-      setToken(result.token);
-      setDataSource(result.source);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(result.user));
-      localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
-    } catch (err: unknown) {
-      if (isStrictBackendMode()) {
-        throw err;
-      }
-      setUser(target);
-      const mockToken = `mock-jwt-token-${target.id_akun}-${Date.now()}`;
-      setToken(mockToken);
-      setDataSource("mock");
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(target));
-      localStorage.setItem(TOKEN_STORAGE_KEY, mockToken);
-    }
   };
 
   return (
@@ -164,12 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         isLoading,
-        dataSource,
-        isStrictBackend: isStrict,
-        setStrictBackend: handleSetStrict,
         login,
         logout,
-        switchRole,
       }}
     >
       {children}
