@@ -2,6 +2,8 @@ import prisma from "../../config/prisma.js";
 import { ALLOCATION_STATUS, BED_STATUS } from "../../shared/constants/bed.js";
 import { HttpError } from "../../shared/errors/http-error.js";
 import { createAuditLog } from "../../shared/utils/audit.js";
+import { jakartaDate } from "../../shared/utils/room-billing.js";
+import { lockRoomClass } from "../billing/billing.model.js";
 import { claimBedForAllocation, findBedById, releaseBedAfterAllocation } from "../bed/bed.model.js";
 import {
     buildAllocationWhere,
@@ -17,6 +19,10 @@ import {
     updatePasienStatusForAllocation,
 } from "./allocation.model.js";
 
+function allocationResponse(row) {
+    return { ...row, harga_per_malam_snapshot: row.harga_per_malam_snapshot?.toFixed(2) ?? null };
+}
+
 export async function listAllocations(query) {
     const where = buildAllocationWhere(query);
     const { page, limit } = query;
@@ -26,7 +32,7 @@ export async function listAllocations(query) {
     ]);
 
     return {
-        items,
+        items: items.map(allocationResponse),
         meta: { page, limit, total, total_pages: Math.ceil(total / limit) },
     };
 }
@@ -38,7 +44,7 @@ export async function getAllocation(id_alokasi) {
         throw new HttpError(404, "ALLOCATION_NOT_FOUND", "Alokasi tidak ditemukan.");
     }
 
-    return alokasi;
+    return allocationResponse(alokasi);
 }
 
 export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, id_akun) {
@@ -81,6 +87,20 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
                 throw new HttpError(409, "BED_UNAVAILABLE", "Bed sudah dialokasikan oleh petugas lain.");
             }
 
+            const currentBed = await findBedById(id_bed, tx);
+            await lockRoomClass(tx, currentBed.kelas_perawatan);
+            const waktuAlokasi = new Date(Math.floor(Date.now() / 1000) * 1000);
+            const tanggal = jakartaDate(waktuAlokasi);
+            const rates = await tx.tarifKamar.findMany({ where: {
+                kelas_perawatan: currentBed.kelas_perawatan,
+                tanggal_berlaku: { lte: tanggal },
+                OR: [{ tanggal_berakhir: null }, { tanggal_berakhir: { gt: tanggal } }],
+            } });
+            if (rates.length !== 1) {
+                throw new HttpError(422, "ROOM_TARIFF_NOT_FOUND", "Tarif kamar untuk kelas dan tanggal masuk belum tersedia atau ambigu. Hubungi Super Admin.");
+            }
+            const rate = rates[0];
+
             if (id_antrean) {
                 const marked = await markQueueAllocated(id_antrean, tx);
                 if (marked.count === 0) {
@@ -93,7 +113,10 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
                 id_bed,
                 id_akun,
                 id_antrean: id_antrean ?? null,
-                waktu_alokasi: new Date(),
+                waktu_alokasi: waktuAlokasi,
+                id_tarif_kamar: rate.id_tarif_kamar,
+                kelas_perawatan_snapshot: currentBed.kelas_perawatan,
+                harga_per_malam_snapshot: rate.harga_per_malam,
                 status_alokasi: ALLOCATION_STATUS.AKTIF,
             });
 
@@ -119,8 +142,8 @@ export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, 
                 },
             });
 
-            return created;
-        });
+            return allocationResponse(created);
+        }, { isolationLevel: "ReadCommitted" });
     } catch (err) {
         // Guard DB uq_rekam_alokasi_bed_aktif / uq_rekam_alokasi_antrean.
         if (err.code === "P2002") {
@@ -157,6 +180,6 @@ export async function closeAllocationById(id_alokasi, status_alokasi, id_akun) {
             data_sesudah: { status_alokasi },
         });
 
-        return findAllocationById(id_alokasi, tx);
+        return allocationResponse(await findAllocationById(id_alokasi, tx));
     });
 }

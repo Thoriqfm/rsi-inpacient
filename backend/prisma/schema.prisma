@@ -87,20 +87,27 @@ model Bed {
 }
 
 model RekamAlokasi {
-  id_alokasi     Int       @id @default(autoincrement())
-  id_pasien      Int
-  id_bed         Int
+  id_tarif_kamar           Int?
+  kelas_perawatan_snapshot String?         @db.VarChar(50)
+  harga_per_malam_snapshot Decimal?        @db.Decimal(15, 2)
+  id_tagihan_kamar         Int?
+  tarif_kamar              TarifKamar?     @relation("AlokasiTarifKamar", fields: [id_tarif_kamar], references: [id_tarif_kamar], onDelete: NoAction, onUpdate: NoAction)
+  tagihan_kamar            Tagihan?        @relation("KlaimKamar", fields: [id_tagihan_kamar], references: [id_tagihan], onDelete: NoAction, onUpdate: NoAction)
+  detail_kamar_list        DetailTagihan[] @relation("DetailAlokasiKamar")
+  id_alokasi               Int             @id @default(autoincrement())
+  id_pasien                Int
+  id_bed                   Int
   /// Petugas yang melakukan alokasi
-  id_akun        Int
-  waktu_alokasi  DateTime  @db.DateTime(0)
+  id_akun                  Int
+  waktu_alokasi            DateTime        @db.DateTime(0)
   /// Kosong jika alokasi masih aktif
-  waktu_selesai  DateTime? @db.DateTime(0)
+  waktu_selesai            DateTime?       @db.DateTime(0)
   /// Aktif / Selesai / Batal
-  status_alokasi String    @default("Aktif") @db.VarChar(30)
+  status_alokasi           String          @default("Aktif") @db.VarChar(30)
   /// Asal antrean jika alokasi dibuat dari daftar tunggu
-  id_antrean     Int?      @unique(map: "uq_rekam_alokasi_antrean")
-  created_at     DateTime? @db.DateTime(0)
-  updated_at     DateTime? @db.DateTime(0)
+  id_antrean               Int?            @unique(map: "uq_rekam_alokasi_antrean")
+  created_at               DateTime?       @db.DateTime(0)
+  updated_at               DateTime?       @db.DateTime(0)
 
   pasien  Pasien        @relation("RekamAlokasiPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_pasien")
   bed     Bed           @relation("RekamAlokasiBed", fields: [id_bed], references: [id_bed], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekam_alokasi_bed")
@@ -276,20 +283,21 @@ model Tarif {
 }
 
 model Tagihan {
-  id_tagihan          Int       @id @default(autoincrement())
+  klaim_kamar_list    RekamAlokasi[] @relation("KlaimKamar")
+  id_tagihan          Int            @id @default(autoincrement())
   id_pasien           Int
   id_rekap            Int
   /// Petugas pembuat tagihan
   id_akun             Int
-  no_tagihan          String    @db.VarChar(30)
-  total_biaya         Decimal   @default(0) @db.Decimal(15, 2)
+  no_tagihan          String         @db.VarChar(30)
+  total_biaya         Decimal        @default(0) @db.Decimal(15, 2)
   /// Draft / Siap Diserahkan / Belum Dibayar / Lunas / Batal
-  status              String    @default("Draft") @db.VarChar(30)
-  catatan_penyesuaian String?   @db.Text
-  alasan_pembatalan   String?   @db.Text
-  tanggal_dibuat      DateTime  @db.DateTime(0)
-  tanggal_diperbarui  DateTime? @db.DateTime(0)
-  tanggal_dibatalkan  DateTime? @db.DateTime(0)
+  status              String         @default("Draft") @db.VarChar(30)
+  catatan_penyesuaian String?        @db.Text
+  alasan_pembatalan   String?        @db.Text
+  tanggal_dibuat      DateTime       @db.DateTime(0)
+  tanggal_diperbarui  DateTime?      @db.DateTime(0)
+  tanggal_dibatalkan  DateTime?      @db.DateTime(0)
 
   pasien              Pasien          @relation("TagihanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_pasien")
   rekap_tindakan      RekapTindakan   @relation("TagihanRekapTindakan", fields: [id_rekap], references: [id_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_tagihan_rekap")
@@ -304,19 +312,28 @@ model Tagihan {
 }
 
 model DetailTagihan {
-  id_detail_tagihan Int     @id @default(autoincrement())
-  id_tagihan        Int
-  id_detail_rekap   Int
-  id_tarif          Int
-  nama_tindakan     String  @db.VarChar(100)
-  jumlah            Int     @default(1)
-  harga_satuan      Decimal @db.Decimal(15, 2)
-  subtotal          Decimal @db.Decimal(15, 2)
+  jenis_item               String        @default("TINDAKAN") @db.VarChar(10)
+  id_alokasi               Int?
+  id_tarif_kamar           Int?
+  kelas_perawatan_snapshot String?       @db.VarChar(50)
+  waktu_mulai              DateTime?     @db.DateTime(0)
+  waktu_selesai            DateTime?     @db.DateTime(0)
+  alokasi_kamar            RekamAlokasi? @relation("DetailAlokasiKamar", fields: [id_alokasi], references: [id_alokasi], onDelete: NoAction, onUpdate: NoAction)
+  tarif_kamar              TarifKamar?   @relation("DetailTarifKamar", fields: [id_tarif_kamar], references: [id_tarif_kamar], onDelete: NoAction, onUpdate: NoAction)
+  id_detail_tagihan        Int           @id @default(autoincrement())
+  id_tagihan               Int
+  id_detail_rekap          Int?
+  id_tarif                 Int?
+  nama_tindakan            String        @db.VarChar(100)
+  jumlah                   Int           @default(1)
+  harga_satuan             Decimal       @db.Decimal(15, 2)
+  subtotal                 Decimal       @db.Decimal(15, 2)
 
-  tagihan               Tagihan             @relation("DetailTagihanTagihan", fields: [id_tagihan], references: [id_tagihan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tagihan")
-  detail_rekap_tindakan DetailRekapTindakan @relation("DetailTagihanDetailRekapTindakan", fields: [id_detail_rekap], references: [id_detail_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_detail_rekap")
-  tarif                 Tarif               @relation("DetailTagihanTarif", fields: [id_tarif], references: [id_tarif], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tarif")
+  tagihan               Tagihan              @relation("DetailTagihanTagihan", fields: [id_tagihan], references: [id_tagihan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tagihan")
+  detail_rekap_tindakan DetailRekapTindakan? @relation("DetailTagihanDetailRekapTindakan", fields: [id_detail_rekap], references: [id_detail_rekap], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_detail_rekap")
+  tarif                 Tarif?               @relation("DetailTagihanTarif", fields: [id_tarif], references: [id_tarif], onDelete: NoAction, onUpdate: NoAction, map: "fk_detail_tagihan_tarif")
 
+  @@unique([id_tagihan, id_alokasi], map: "uq_tagihan_alokasi_kamar")
   @@index([id_tagihan], map: "idx_detail_tagihan_tagihan")
   @@index([id_detail_rekap], map: "idx_detail_tagihan_detail_rekap")
   @@index([id_tarif], map: "idx_detail_tagihan_tarif")
@@ -342,4 +359,19 @@ model LogAudit {
   @@index([nama_tabel, id_referensi], map: "idx_log_audit_tabel_referensi")
   @@index([id_akun], map: "idx_log_audit_akun")
   @@map("log_audit")
+}
+
+model TarifKamar {
+  id_tarif_kamar   Int             @id @default(autoincrement())
+  kelas_perawatan  String          @db.VarChar(50)
+  harga_per_malam  Decimal         @db.Decimal(15, 2)
+  tanggal_berlaku  DateTime        @db.Date
+  tanggal_berakhir DateTime?       @db.Date
+  created_at       DateTime        @default(now()) @db.DateTime(0)
+  updated_at       DateTime?       @db.DateTime(0)
+  alokasi_list     RekamAlokasi[]  @relation("AlokasiTarifKamar")
+  detail_list      DetailTagihan[] @relation("DetailTarifKamar")
+
+  @@unique([kelas_perawatan, tanggal_berlaku], map: "uq_tarif_kamar_kelas_tanggal")
+  @@map("tarif_kamar")
 }

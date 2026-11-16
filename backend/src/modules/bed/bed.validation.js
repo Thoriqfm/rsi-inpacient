@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { BED_STATUS, BED_STATUS_LIST } from "../../shared/constants/bed.js";
+import { BED_STATUS, BED_STATUS_LIST, ROOM_CLASSES } from "../../shared/constants/bed.js";
 
 const pageSchema = z.coerce.number().int().min(1).default(1);
 const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 
 const noBed = z.string().trim().min(1, "Nomor bed wajib diisi.").max(20, "Nomor bed maksimal 20 karakter.");
 const namaBangsal = z.string().trim().min(1, "Nama bangsal wajib diisi.").max(100, "Nama bangsal maksimal 100 karakter.");
-const kelasPerawatan = z.string().trim().min(1, "Kelas perawatan wajib diisi.").max(50, "Kelas perawatan maksimal 50 karakter.");
+const kelasPerawatan = z.enum(ROOM_CLASSES);
 const tipeBed = z.string().trim().max(50, "Tipe bed maksimal 50 karakter.").nullish();
 const namaKamar = z.string().trim().max(50, "Nama kamar maksimal 50 karakter.").nullish();
 const fasilitas = z.string().trim().max(255, "Fasilitas maksimal 255 karakter.").nullish();

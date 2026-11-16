@@ -1,6 +1,8 @@
 import { parseId } from "../../shared/utils/parse-id.js";
 import {
     addTariff,
+    addRoomTariff,
+    listRoomTariffs,
     cancelBilling,
     changeBillingStatus,
     createInvoice,
@@ -24,7 +26,7 @@ export async function indexTariffs(req, res) {
 }
 
 export async function preview(req, res) {
-    const result = await previewBillingCost(req.validated.id_rekap);
+    const result = await previewBillingCost(req.validated.id_rekap, req.validated.id_alokasi_list);
 
     res.status(200).json({ data: result, meta: null });
 }
@@ -39,6 +41,14 @@ export async function storeTariff(req, res) {
     const tarif = await addTariff(req.validated);
 
     res.status(201).json({ data: tarif, meta: null });
+}
+
+export async function indexRoomTariffs(req, res) {
+    res.status(200).json({ data: { items: await listRoomTariffs() }, meta: null });
+}
+
+export async function storeRoomTariff(req, res) {
+    res.status(201).json({ data: await addRoomTariff(req.validated, req.user.id_akun), meta: null });
 }
 
 export async function show(req, res) {

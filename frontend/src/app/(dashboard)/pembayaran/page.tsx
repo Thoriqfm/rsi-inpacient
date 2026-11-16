@@ -220,6 +220,7 @@ export default function PembayaranDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <Link href="/pembayaran/tarif-kamar" className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-medium">Tarif Kamar</Link>
           <button
             type="button"
             onClick={() => setIsTarifModalOpen(true)}

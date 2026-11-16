@@ -126,7 +126,7 @@ function DetailTagihanContent() {
     new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(val);
 
   if (user?.role === "PETUGAS_BED_MANAGEMENT") {
@@ -324,7 +324,7 @@ function DetailTagihanContent() {
                     </td>
 
                     <td className="py-3.5 px-4 text-slate-600">
-                      {item.tanggal_tindakan || "-"}
+                      {item.tanggal_tindakan_formatted || item.tanggal_tindakan || "-"}
                     </td>
 
                     <td className="py-3.5 px-4 font-semibold text-slate-900">

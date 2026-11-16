@@ -26,6 +26,12 @@ export const billingDetailSelect = {
             id_detail_tagihan: true,
             id_detail_rekap: true,
             id_tarif: true,
+            jenis_item: true,
+            id_alokasi: true,
+            id_tarif_kamar: true,
+            kelas_perawatan_snapshot: true,
+            waktu_mulai: true,
+            waktu_selesai: true,
             nama_tindakan: true,
             jumlah: true,
             harga_satuan: true,
@@ -114,6 +120,22 @@ export function findRekapForBilling(id_rekap, client = prisma) {
 // Kunci baris rekap agar create/recalculate untuk rekap yang sama antre, bukan balapan.
 export function lockRekapRow(client, id_rekap) {
     return client.$queryRaw`SELECT id_rekap FROM rekap_tindakan WHERE id_rekap = ${id_rekap} FOR UPDATE`;
+}
+
+export async function lockRoomClass(client, kelas) {
+    if (process.env.DATABASE_URL?.startsWith("postgres")) {
+        await client.$queryRaw`SELECT pg_advisory_xact_lock(741203, hashtext(${kelas}))::text`;
+    } else {
+        // ponytail: master tariff writes are rare; MySQL serializes them on one account row.
+        // Replace with a dedicated per-class lock table if this becomes a bottleneck.
+        await client.$queryRaw`SELECT id_akun FROM akun ORDER BY id_akun LIMIT 1 FOR UPDATE`;
+    }
+}
+
+export async function lockRoomAllocations(client, ids) {
+    for (const id of [...ids].sort((a, b) => a - b)) {
+        await client.$queryRaw`SELECT id_alokasi FROM rekam_alokasi WHERE id_alokasi = ${id} FOR UPDATE`;
+    }
 }
 
 const tariffSelect = {

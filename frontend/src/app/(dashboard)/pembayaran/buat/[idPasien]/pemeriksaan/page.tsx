@@ -111,7 +111,7 @@ function PemeriksaanTagihanContent() {
       );
       setBilling(updated);
       showToast(
-        `Tagihan ${updated.no_tagihan} berhasil dihitung ulang (Recalculate) berdasarkan tarif terbaru.`
+        `Tagihan ${updated.no_tagihan} berhasil dihitung ulang (Recalculate) berdasarkan rekap tindakan dan snapshot tarif kamar.`
       );
     } catch (err: unknown) {
       setErrorMsg(
@@ -142,7 +142,7 @@ function PemeriksaanTagihanContent() {
     new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(val);
 
   const getInitials = (name: string) => {
@@ -309,7 +309,7 @@ function PemeriksaanTagihanContent() {
                       </td>
 
                       <td className="py-3 px-4 text-slate-600">
-                        {item.tanggal_tindakan || "-"}
+                        {item.tanggal_tindakan_formatted || item.tanggal_tindakan || "-"}
                       </td>
 
                       <td className="py-3 px-4 font-semibold text-slate-900">
@@ -363,7 +363,7 @@ function PemeriksaanTagihanContent() {
 
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <Info className="w-3.5 h-3.5 text-slate-400" />
-              <span>Gunakan tombol &quot;Hitung Ulang&quot; di kanan bila terdapat perubahan master tarif.</span>
+              <span>Hitung ulang memperbarui biaya tindakan. Tarif kamar tetap memakai snapshot saat masuk.</span>
             </div>
           </div>
         </div>

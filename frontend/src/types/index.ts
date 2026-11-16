@@ -351,8 +351,15 @@ export interface TarifItem {
 
 export interface BillingDetailItem {
   id_detail_tagihan?: number;
-  id_detail_rekap: number;
-  id_tarif: number;
+  id_detail_rekap: number | null;
+  id_tarif: number | null;
+  jenis_item?: "TINDAKAN" | "KAMAR";
+  id_alokasi?: number | null;
+  id_tarif_kamar?: number | null;
+  kelas_perawatan_snapshot?: string | null;
+  waktu_mulai?: string | null;
+  waktu_selesai?: string | null;
+  estimasi?: boolean;
   kode_tindakan: string;
   nama_tindakan: string;
   kategori?: string;
@@ -424,5 +431,25 @@ export interface BillingItem {
 
 export interface CreateBillingPayload {
   id_rekap: number;
+  id_alokasi_list?: number[];
   catatan?: string;
+}
+
+export interface RoomTariff {
+  id_tarif_kamar: number;
+  kelas_perawatan: KelasPerawatan;
+  harga_per_malam: string;
+  tanggal_berlaku: string;
+  tanggal_berakhir: string | null;
+}
+
+export interface RoomAllocation {
+  id_alokasi: number;
+  waktu_alokasi: string;
+  waktu_selesai: string | null;
+  status_alokasi: "Aktif" | "Selesai" | "Batal";
+  kelas_perawatan_snapshot: string | null;
+  harga_per_malam_snapshot: string | null;
+  id_tagihan_kamar: number | null;
+  bed: { no_bed: string };
 }

@@ -8,6 +8,7 @@ import {
     TAGIHAN_TRANSITIONS,
 } from "../../shared/constants/billing.js";
 import { HISTORY_STATUS } from "../../shared/constants/history.js";
+import { countRoomNights, jakartaDate } from "../../shared/utils/room-billing.js";
 import { createAuditLog, parseAuditData } from "../../shared/utils/audit.js";
 import {
     buildBillingWhere,
@@ -23,6 +24,8 @@ import {
     findRekapForBilling,
     findTariffsForCodes,
     lockRekapRow,
+    lockRoomClass,
+    lockRoomAllocations,
     replaceBillingDetails,
     updateBillingStatus,
 } from "./billing.model.js";
@@ -79,8 +82,8 @@ function resolveTariff(tariffsByCode, detail) {
     return candidates[0] ?? null;
 }
 
-async function calculateRekap(rekap, client = prisma) {
-    if (rekap.detail_rekap_tindakan_list.length === 0) {
+async function calculateRekap(rekap, client = prisma, allocationIds = [], { preview = false, invoiceId = null } = {}) {
+    if (rekap.detail_rekap_tindakan_list.length === 0 && allocationIds.length === 0) {
         throw new HttpError(422, "BILLING_NO_DETAILS", "Rekap belum memiliki tindakan.");
     }
 
@@ -111,6 +114,7 @@ async function calculateRekap(rekap, client = prisma) {
         total = total.add(subtotal);
 
         return {
+            jenis_item: "TINDAKAN",
             id_detail_rekap: detail.id_detail_rekap,
             kode_tindakan: detail.kode_tindakan,
             nama_tindakan: detail.nama_tindakan,
@@ -131,7 +135,83 @@ async function calculateRekap(rekap, client = prisma) {
         );
     }
 
-    return { items, total, total_biaya: total.toFixed(2) };
+    const waktuEstimasi = new Date(Math.floor(Date.now() / 1000) * 1000);
+    const allocations = allocationIds.length ? await client.rekamAlokasi.findMany({
+        where: { id_alokasi: { in: allocationIds } }, orderBy: { id_alokasi: "asc" },
+    }) : [];
+    if (allocations.length !== allocationIds.length) {
+        throw new HttpError(422, "ROOM_ALLOCATION_INVALID", "Alokasi kamar tidak ditemukan.");
+    }
+    for (const allocation of allocations) {
+        if (allocation.id_pasien !== rekap.id_pasien || !["Aktif", "Selesai"].includes(allocation.status_alokasi)) {
+            throw new HttpError(422, "ROOM_ALLOCATION_INVALID", "Alokasi harus milik pasien yang sama dan tidak dibatalkan.");
+        }
+        if (allocation.id_tagihan_kamar !== null && allocation.id_tagihan_kamar !== invoiceId) {
+            throw new HttpError(409, "ROOM_ALREADY_BILLED", "Alokasi kamar sudah tercantum pada tagihan lain.");
+        }
+        if (!allocation.id_tarif_kamar || !allocation.kelas_perawatan_snapshot || !allocation.harga_per_malam_snapshot) {
+            throw new HttpError(422, "ROOM_SNAPSHOT_MISSING", "Alokasi lama belum memiliki snapshot tarif. Perlu rekonsiliasi Backend Lead.");
+        }
+        const estimasi = allocation.status_alokasi === "Aktif";
+        if (estimasi && !preview) {
+            throw new HttpError(409, "ROOM_ALLOCATION_ACTIVE", "Selesaikan alokasi sebelum membuat tagihan biaya kamar.");
+        }
+        const end = estimasi ? waktuEstimasi : allocation.waktu_selesai;
+        const jumlah = countRoomNights(allocation.waktu_alokasi, end);
+        const subtotal = allocation.harga_per_malam_snapshot.mul(jumlah);
+        total = total.add(subtotal);
+        items.push({
+            jenis_item: "KAMAR", id_detail_rekap: null, id_tarif: null,
+            id_alokasi: allocation.id_alokasi, id_tarif_kamar: allocation.id_tarif_kamar,
+            kelas_perawatan_snapshot: allocation.kelas_perawatan_snapshot,
+            nama_tindakan: `Akomodasi ${allocation.kelas_perawatan_snapshot}`,
+            waktu_mulai: allocation.waktu_alokasi, waktu_selesai: end,
+            estimasi, jumlah, harga_satuan: allocation.harga_per_malam_snapshot.toFixed(2),
+            subtotal: subtotal.toFixed(2),
+        });
+    }
+    return { items, total, total_biaya: total.toFixed(2), waktu_estimasi: waktuEstimasi };
+}
+
+function invoiceDetails(items) {
+    return items.map(({ kode_tindakan, tanggal_tindakan, estimasi, ...item }) => ({
+        ...item, harga_satuan: new Prisma.Decimal(item.harga_satuan), subtotal: new Prisma.Decimal(item.subtotal),
+    }));
+}
+
+export async function listRoomTariffs() {
+    const rows = await prisma.tarifKamar.findMany({ orderBy: [{ kelas_perawatan: "asc" }, { tanggal_berlaku: "desc" }] });
+    return rows.map((row) => ({ ...row, harga_per_malam: row.harga_per_malam.toFixed(2) }));
+}
+
+export async function addRoomTariff({ id_tarif_sebelumnya, ...data }, id_akun) {
+    try {
+        return await prisma.$transaction(async (tx) => {
+            await lockRoomClass(tx, data.kelas_perawatan);
+            if (id_tarif_sebelumnya) {
+                const previous = await tx.tarifKamar.findUnique({ where: { id_tarif_kamar: id_tarif_sebelumnya } });
+                if (!previous || previous.kelas_perawatan !== data.kelas_perawatan || previous.tanggal_berakhir ||
+                    previous.tanggal_berlaku >= data.tanggal_berlaku || data.tanggal_berlaku < jakartaDate(new Date())) {
+                    throw new HttpError(409, "ROOM_TARIFF_CONFLICT", "Tarif sebelumnya harus satu kelas, masih terbuka, dan berakhir mulai hari ini atau setelahnya.");
+                }
+                await tx.tarifKamar.update({ where: { id_tarif_kamar: id_tarif_sebelumnya },
+                    data: { tanggal_berakhir: data.tanggal_berlaku, updated_at: new Date() } });
+            }
+            const overlap = await tx.tarifKamar.findFirst({ where: {
+                kelas_perawatan: data.kelas_perawatan,
+                ...(data.tanggal_berakhir ? { tanggal_berlaku: { lt: data.tanggal_berakhir } } : {}),
+                OR: [{ tanggal_berakhir: null }, { tanggal_berakhir: { gt: data.tanggal_berlaku } }],
+            } });
+            if (overlap) throw new HttpError(409, "ROOM_TARIFF_CONFLICT", "Periode tarif kamar untuk kelas ini bertumpang tindih.");
+            const row = await tx.tarifKamar.create({ data });
+            await createAuditLog(tx, { id_akun, nama_tabel: "tarif_kamar", id_referensi: row.id_tarif_kamar,
+                aksi: "CREATE", data_sesudah: { ...data, id_tarif_sebelumnya: id_tarif_sebelumnya ?? null } });
+            return { ...row, harga_per_malam: row.harga_per_malam.toFixed(2) };
+        });
+    } catch (err) {
+        if (err.code === "P2002") throw new HttpError(409, "ROOM_TARIFF_CONFLICT", "Tarif kelas pada tanggal tersebut sudah ada.");
+        throw err;
+    }
 }
 
 function ensureRekapReady(rekap) {
@@ -208,11 +288,11 @@ export async function getBilling(id_tagihan) {
     return toBillingDetail(row, auditTrail);
 }
 
-export async function previewBillingCost(id_rekap) {
+export async function previewBillingCost(id_rekap, allocationIds = []) {
     const rekap = await findRekapForBilling(id_rekap);
     ensureRekapReady(rekap);
 
-    const calculation = await calculateRekap(rekap);
+    const calculation = await calculateRekap(rekap, prisma, allocationIds, { preview: true });
 
     return {
         id_rekap: rekap.id_rekap,
@@ -222,10 +302,11 @@ export async function previewBillingCost(id_rekap) {
         acuan_tarif: "tanggal_tindakan",
         items: calculation.items,
         total_biaya: calculation.total_biaya,
+        waktu_estimasi: calculation.waktu_estimasi,
     };
 }
 
-export async function createInvoice({ id_rekap, catatan }, id_akun) {
+export async function createInvoice({ id_rekap, catatan, id_alokasi_list = [] }, id_akun) {
     // no_tagihan unik; request bersamaan bisa memperoleh nomor yang sama.
     // Nomor dihitung ulang di transaksi baru setiap kali unique constraint menolak.
     for (let attempt = 1; attempt <= MAX_INVOICE_NUMBER_ATTEMPTS; attempt += 1) {
@@ -246,7 +327,8 @@ export async function createInvoice({ id_rekap, catatan }, id_akun) {
                     );
                 }
 
-                const calculation = await calculateRekap(rekap, tx);
+                await lockRoomAllocations(tx, id_alokasi_list);
+                const calculation = await calculateRekap(rekap, tx, id_alokasi_list);
 
                 const created = await createBilling(
                     tx,
@@ -260,15 +342,18 @@ export async function createInvoice({ id_rekap, catatan }, id_akun) {
                         catatan_penyesuaian: catatan ?? null,
                         tanggal_dibuat: new Date(),
                     },
-                    calculation.items.map((item) => ({
-                        id_detail_rekap: item.id_detail_rekap,
-                        id_tarif: item.id_tarif,
-                        nama_tindakan: item.nama_tindakan,
-                        jumlah: item.jumlah,
-                        harga_satuan: new Prisma.Decimal(item.harga_satuan),
-                        subtotal: new Prisma.Decimal(item.subtotal),
-                    })),
+                    invoiceDetails(calculation.items),
                 );
+
+                if (id_alokasi_list.length) {
+                    const claimed = await tx.rekamAlokasi.updateMany({
+                        where: { id_alokasi: { in: id_alokasi_list }, id_tagihan_kamar: null },
+                        data: { id_tagihan_kamar: created.id_tagihan },
+                    });
+                    if (claimed.count !== id_alokasi_list.length) {
+                        throw new HttpError(409, "ROOM_ALREADY_BILLED", "Alokasi kamar sudah ditagihkan petugas lain.");
+                    }
+                }
 
                 await createAuditLog(tx, {
                     id_akun,
@@ -346,6 +431,7 @@ export async function recalculateBilling(id_tagihan, payload = {}, id_akun) {
     }
 
     return prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id_tagihan FROM tagihan WHERE id_tagihan = ${id_tagihan} FOR UPDATE`;
         const current = await findBillingById(id_tagihan, tx);
 
         if (!current) {
@@ -365,7 +451,9 @@ export async function recalculateBilling(id_tagihan, payload = {}, id_akun) {
         const rekap = await findRekapForBilling(current.id_rekap, tx);
         ensureRekapReady(rekap);
 
-        const calculation = await calculateRekap(rekap, tx);
+        const ids = current.detail_tagihan_list.filter((item) => item.jenis_item === "KAMAR").map((item) => item.id_alokasi);
+        await lockRoomAllocations(tx, ids);
+        const calculation = await calculateRekap(rekap, tx, ids, { invoiceId: id_tagihan });
         const hasCatatanUpdate = payload && payload.catatan_penyesuaian !== undefined;
         const nextCatatan = hasCatatanUpdate
             ? payload.catatan_penyesuaian
@@ -384,14 +472,7 @@ export async function recalculateBilling(id_tagihan, payload = {}, id_akun) {
         await replaceBillingDetails(
             tx,
             id_tagihan,
-            calculation.items.map((item) => ({
-                id_detail_rekap: item.id_detail_rekap,
-                id_tarif: item.id_tarif,
-                nama_tindakan: item.nama_tindakan,
-                jumlah: item.jumlah,
-                harga_satuan: new Prisma.Decimal(item.harga_satuan),
-                subtotal: new Prisma.Decimal(item.subtotal),
-            })),
+            invoiceDetails(calculation.items),
         );
 
         await createAuditLog(tx, {
@@ -442,6 +523,9 @@ export async function cancelBilling(id_tagihan, alasan, id_akun) {
         if (updated.count === 0) {
             throw new HttpError(409, "BILLING_CONFLICT", "Tagihan sudah diubah petugas lain.");
         }
+
+        await lockRoomAllocations(tx, current.detail_tagihan_list.filter((item) => item.jenis_item === "KAMAR").map((item) => item.id_alokasi));
+        await tx.rekamAlokasi.updateMany({ where: { id_tagihan_kamar: id_tagihan }, data: { id_tagihan_kamar: null } });
 
         await createAuditLog(tx, {
             id_akun,
