@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { countRoomNights, jakartaDate } from "../src/shared/utils/room-billing.js";
 import { createRoomTariffSchema, previewBillingSchema } from "../src/modules/billing/billing.validation.js";
+import { reconcileRoomSnapshotSchema } from "../src/modules/allocation/allocation.validation.js";
 
 test("kamar: elapsed 24 jam, pembulatan ke atas dan minimal satu malam", () => {
     const start = new Date("2026-11-01T23:00:00+07:00");
@@ -26,4 +27,12 @@ test("kamar: validasi kelas, uang, periode dan sumber input dari client", () => 
     assert.equal(previewBillingSchema.safeParse({ id_rekap: 1, id_alokasi_list: [1, 1] }).success, false);
     assert.equal(previewBillingSchema.safeParse({ id_rekap: 1, id_alokasi_list: [1], jumlah_malam: 1 }).success, false);
     assert.equal(previewBillingSchema.safeParse({ id_rekap: 1, id_alokasi_list: [1], harga_per_malam: "1" }).success, false);
+});
+
+test("rekonsiliasi: tarif, alasan dan konfirmasi wajib; waktu dan nominal tidak diterima", () => {
+    const body = { id_tarif_kamar: 1, alasan: "Alokasi sebelum fitur tarif kamar", konfirmasi: true };
+    assert.equal(reconcileRoomSnapshotSchema.safeParse(body).success, true);
+    for (const change of [{ id_tarif_kamar: 0 }, { alasan: " " }, { konfirmasi: false }, { harga_per_malam: "1" }, { waktu_alokasi: new Date().toISOString() }]) {
+        assert.equal(reconcileRoomSnapshotSchema.safeParse({ ...body, ...change }).success, false);
+    }
 });

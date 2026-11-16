@@ -3,6 +3,7 @@ import {
     createAllocationForBed,
     getAllocation,
     listAllocations,
+    reconcileRoomSnapshot,
 } from "./allocation.service.js";
 import { parseId } from "../../shared/utils/parse-id.js";
 
@@ -16,6 +17,11 @@ export async function show(req, res) {
     const alokasi = await getAllocation(parseId(req.params.id));
 
     res.status(200).json({ data: alokasi, meta: null });
+}
+
+export async function reconcileSnapshot(req, res) {
+    const result = await reconcileRoomSnapshot(parseId(req.params.id), req.validated, req.user.id_akun);
+    res.status(200).json({ data: result, meta: null });
 }
 
 export async function store(req, res) {

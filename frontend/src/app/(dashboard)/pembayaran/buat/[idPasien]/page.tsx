@@ -12,11 +12,13 @@ import {
   Info,
   AlertTriangle,
 } from "lucide-react";
-import { BillingPreviewResult, HistoryRecapItem, RoomAllocation } from "@/types";
+import { BillingPreviewResult, HistoryRecapItem, RoomAllocation, RoomTariff } from "@/types";
 import {
   createBillingApi,
   fetchHistoriesApi,
   fetchRoomAllocationsApi,
+  fetchRoomTariffsApi,
+  reconcileRoomSnapshotApi,
   previewBillingApi,
 } from "@/lib/api-client";
 
@@ -39,6 +41,11 @@ function RincianBiayaPelayananContent() {
   const [allocations, setAllocations] = useState<RoomAllocation[]>([]);
   const [selectedAllocations, setSelectedAllocations] = useState<number[]>([]);
   const [calculating, setCalculating] = useState(false);
+  const [reconcileTarget, setReconcileTarget] = useState<number | null>(null);
+  const [roomRates, setRoomRates] = useState<RoomTariff[]>([]);
+  const [reconcileBusy, setReconcileBusy] = useState(false);
+  const [reconcileError, setReconcileError] = useState<string | null>(null);
+  const [reconcileNotice, setReconcileNotice] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -96,24 +103,67 @@ function RincianBiayaPelayananContent() {
     } finally { setCalculating(false); }
   };
 
+  const openReconciliation = async (id: number) => {
+    setReconcileTarget(id); setReconcileBusy(true); setReconcileError(null); setRoomRates([]);
+    try { setRoomRates(await fetchRoomTariffsApi()); }
+    catch (err) { setReconcileError(err instanceof Error ? err.message : "Gagal memuat tarif kamar."); }
+    finally { setReconcileBusy(false); }
+  };
+
+  const submitReconciliation = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (reconcileTarget === null) return;
+    const fields = new FormData(event.currentTarget);
+    setReconcileBusy(true); setReconcileError(null); setReconcileNotice(null);
+    try {
+      const updated = await reconcileRoomSnapshotApi(reconcileTarget, {
+        id_tarif_kamar: Number(fields.get("tarif")), alasan: String(fields.get("alasan")), konfirmasi: fields.get("konfirmasi") === "on",
+      });
+      setAllocations((items) => items.map((item) => item.id_alokasi === updated.id_alokasi ? updated : item));
+      setReconcileTarget(null);
+      setReconcileNotice("Tarif alokasi lama sudah dilengkapi. Waktu masuk tetap sama. Pilih alokasi untuk menghitung biaya kamar.");
+    } catch (err) { setReconcileError(err instanceof Error ? err.message : "Gagal melengkapi tarif alokasi."); }
+    finally { setReconcileBusy(false); }
+  };
+
   const hasActiveRoom = allocations.some((a) => selectedAllocations.includes(a.id_alokasi) && a.status_alokasi === "Aktif");
   const roomSelector = (
     <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs" aria-busy={calculating}>
       <h2 className="font-semibold text-sm">Biaya kamar per malam</h2>
       <p className="text-slate-600">Pilih alokasi untuk perawatan yang sedang ditagihkan. Setiap 24 jam dihitung satu malam; sisa waktu dibulatkan ke atas, minimal satu malam.</p>
+      {reconcileNotice && <p role="status" className="text-emerald-800">{reconcileNotice}</p>}
       {allocations.length === 0 && <p>Belum ada alokasi kamar pasien.</p>}
       {allocations.map((a) => {
         const unavailable = a.status_alokasi === "Batal" || a.id_tagihan_kamar !== null || !a.harga_per_malam_snapshot;
-        return <label key={a.id_alokasi} className="flex items-start gap-3 border border-slate-200 rounded-lg p-3">
+        return <div key={a.id_alokasi} className="border border-slate-200 rounded-lg p-3 space-y-3">
+          <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-1" checked={selectedAllocations.includes(a.id_alokasi)}
-            disabled={unavailable || calculating || creating || !!rekapInfo?.tagihan.some((t) => t.status !== "Batal")}
+            disabled={unavailable || calculating || creating || reconcileBusy || !!rekapInfo?.tagihan.some((t) => t.status !== "Batal")}
             onChange={(e) => void selectAllocations(e.target.checked ? [...selectedAllocations, a.id_alokasi] : selectedAllocations.filter((id) => id !== a.id_alokasi))} />
           <span className="space-y-1">
             <span className="block font-medium">{a.bed.no_bed} · {a.kelas_perawatan_snapshot || "Tanpa snapshot kelas"} · {a.status_alokasi}</span>
             <span className="block text-slate-600">{new Date(a.waktu_alokasi).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} – {a.waktu_selesai ? new Date(a.waktu_selesai).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "Masih dirawat (estimasi)"}</span>
-            <span className="block">{a.harga_per_malam_snapshot ? `${formatRupiah(Number(a.harga_per_malam_snapshot))} / malam` : "Alokasi lama perlu rekonsiliasi tarif oleh Backend Lead."}{a.id_tagihan_kamar !== null ? " · Sudah ditagihkan" : ""}</span>
+            <span className="block">{a.harga_per_malam_snapshot ? `${formatRupiah(Number(a.harga_per_malam_snapshot))} / malam` : "Tarif alokasi lama belum dilengkapi. Super Admin dapat merekonsiliasi tanpa membuat ulang alokasi."}{a.id_tagihan_kamar !== null ? " · Sudah ditagihkan" : ""}</span>
           </span>
-        </label>;
+          </label>
+          {user?.role === "SUPER_ADMIN" && !a.harga_per_malam_snapshot && a.status_alokasi !== "Batal" && a.id_tagihan_kamar === null && (
+            reconcileTarget !== a.id_alokasi ? <button type="button" disabled={reconcileBusy || calculating || creating} onClick={() => void openReconciliation(a.id_alokasi)} className="text-emerald-700 underline disabled:opacity-50">Lengkapi tarif alokasi lama</button> :
+              <form onSubmit={submitReconciliation} className="space-y-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-amber-900">Pastikan kelas dan harga sesuai perawatan pasien saat masuk. Tarif yang dipilih berlaku untuk seluruh durasi sejak waktu masuk asli, termasuk bila master tarif dibuat belakangan.</p>
+                {reconcileError && <p role="alert" className="text-red-700">{reconcileError} <button type="button" disabled={reconcileBusy} onClick={() => void openReconciliation(a.id_alokasi)} className="underline">Muat ulang tarif</button></p>}
+                <fieldset disabled={reconcileBusy} className="space-y-3 disabled:opacity-60">
+                  <label className="block">Kelas dan tarif per malam<select name="tarif" required defaultValue="" className="block w-full mt-1 border rounded-lg p-2 bg-white">
+                    <option value="">Pilih tarif yang benar</option>
+                    {roomRates.map((rate) => <option key={rate.id_tarif_kamar} value={rate.id_tarif_kamar}>{rate.kelas_perawatan} · {formatRupiah(Number(rate.harga_per_malam))} / malam · {rate.tanggal_berlaku.slice(0, 10)} – {rate.tanggal_berakhir?.slice(0, 10) || "tanpa batas"}</option>)}
+                  </select></label>
+                  {!reconcileBusy && roomRates.length === 0 && <p>Belum ada tarif. <Link href="/pembayaran/tarif-kamar" className="underline">Isi master tarif kamar</Link> terlebih dahulu.</p>}
+                  <label className="block">Alasan rekonsiliasi<textarea required name="alasan" minLength={10} maxLength={1000} className="block w-full mt-1 border rounded-lg p-2 bg-white" placeholder="Contoh: Pasien masuk sebelum fitur tarif kamar diterapkan." /></label>
+                  <label className="flex items-start gap-2"><input required type="checkbox" name="konfirmasi" /><span>Saya telah memeriksa kelas dan harga untuk alokasi ini. Waktu masuk dipertahankan dan pilihan tarif akan dicatat dalam audit.</span></label>
+                  <div className="flex gap-3"><button type="submit" disabled={roomRates.length === 0} className="bg-emerald-700 text-white rounded-lg px-3 py-2 disabled:opacity-50">{reconcileBusy ? "Menyimpan..." : "Simpan tarif alokasi"}</button><button type="button" onClick={() => setReconcileTarget(null)}>Batal</button></div>
+                </fieldset>
+              </form>
+          )}
+        </div>;
       })}
       {calculating && <p role="status">Menghitung ulang rincian biaya...</p>}
       {hasActiveRoom && <p role="status" className="text-amber-800">Biaya kamar aktif masih estimasi. Selesaikan alokasi sebelum membuat draf tagihan.</p>}
@@ -406,7 +456,7 @@ function RincianBiayaPelayananContent() {
 
         <button
           type="button"
-          disabled={creating || calculating || hasActiveRoom}
+          disabled={creating || calculating || reconcileBusy || hasActiveRoom}
           onClick={handleProceedToInspection}
           className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
         >

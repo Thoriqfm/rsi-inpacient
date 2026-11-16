@@ -206,4 +206,74 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         assert.equal(detail.body.data.status, "Batal");
         assert.equal(detail.body.data.detail_tagihan_list[0].subtotal, "800000.50");
     });
+
+    test("rekonsiliasi hanya Super Admin dan perlu konfirmasi serta alasan", async () => {
+        const allocation = await makeAllocation({ snapshot: false });
+        const path = `/allocations/${allocation.id_alokasi}/room-snapshot`;
+        const body = { id_tarif_kamar: rate.id_tarif_kamar, alasan: "Pasien masuk sebelum fitur tarif", konfirmasi: true };
+        assert.equal((await api("POST", path, body, null)).status, 401);
+        assert.equal((await api("POST", path, body, admin)).status, 403);
+        assert.equal((await api("POST", path, body, manager)).status, 403);
+        assert.equal((await api("POST", path, { ...body, konfirmasi: false }, superAdmin)).status, 400);
+        assert.equal((await api("POST", path, { ...body, alasan: "" }, superAdmin)).status, 400);
+        assert.equal((await api("POST", path, { ...body, waktu_alokasi: new Date().toISOString() }, superAdmin)).status, 400);
+        assert.equal((await prisma.rekamAlokasi.findUnique({ where: { id_alokasi: allocation.id_alokasi } })).id_tarif_kamar, null);
+    });
+
+    test("rekonsiliasi menjaga waktu masuk asli; alokasi aktif delapan jam dihitung satu malam", async () => {
+        const allocation = await makeAllocation({ snapshot: false, status: "Aktif" });
+        const start = new Date(Math.floor(Date.now() / 1000) * 1000 - 8 * 3600000);
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: allocation.id_alokasi }, data: { waktu_alokasi: start } });
+        const body = { id_tarif_kamar: rate.id_tarif_kamar, alasan: "Pasien sudah masuk sebelum fitur kamar", konfirmasi: true };
+        const result = await api("POST", `/allocations/${allocation.id_alokasi}/room-snapshot`, body, superAdmin);
+        assert.equal(result.status, 200, JSON.stringify(result.body));
+        assert.equal(result.body.data.waktu_alokasi, start.toISOString());
+        assert.equal(result.body.data.waktu_selesai, null);
+        assert.equal(result.body.data.status_alokasi, "Aktif");
+        assert.equal(result.body.data.kelas_perawatan_snapshot, "VIP");
+        assert.equal(result.body.data.harga_per_malam_snapshot, "400000.25");
+        const recap = await makeRecap();
+        const preview = await api("POST", "/billing/preview", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.items[0].jumlah, 1);
+        assert.equal(preview.body.data.items[0].estimasi, true);
+        assert.equal(preview.body.data.total_biaya, "400000.25");
+    });
+
+    test("pilihan tarif legacy di luar periode masuk dicatat; dua rekonsiliasi hanya satu berhasil", async () => {
+        const allocation = await makeAllocation({ snapshot: false });
+        const start = new Date("2025-12-31T00:00:00Z");
+        const end = new Date("2026-01-01T01:00:00Z");
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: allocation.id_alokasi }, data: { waktu_alokasi: start, waktu_selesai: end } });
+        const body = { id_tarif_kamar: rate.id_tarif_kamar, alasan: "Konfirmasi harga historis alokasi sebelum fitur", konfirmasi: true };
+        const path = `/allocations/${allocation.id_alokasi}/room-snapshot`;
+        const results = await Promise.all([api("POST", path, body, superAdmin), api("POST", path, body, superAdmin)]);
+        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+        const audit = await prisma.logAudit.findMany({ where: { nama_tabel: "rekam_alokasi", id_referensi: allocation.id_alokasi, aksi: "UPDATE" } });
+        assert.equal(audit.length, 1);
+        assert.equal(JSON.parse(audit[0].data_sesudah).tarif_di_luar_periode_masuk, true);
+        assert.equal(JSON.parse(audit[0].data_sesudah).alasan, body.alasan);
+        const recap = await makeRecap();
+        const invoice = await api("POST", "/billing", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+        assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
+        assert.equal(invoice.body.data.total_biaya, "800000.50");
+        assert.equal(invoice.body.data.detail_tagihan_list[0].waktu_mulai, start.toISOString());
+        assert.equal(invoice.body.data.detail_tagihan_list[0].waktu_selesai, end.toISOString());
+        assert.equal((await api("POST", path, body, superAdmin)).body.error.code, "ROOM_ALREADY_BILLED");
+    });
+
+    test("rekonsiliasi menolak snapshot lama, batal, tarif hilang dan tarif masa mendatang", async () => {
+        const body = { id_tarif_kamar: rate.id_tarif_kamar, alasan: "Pengujian penolakan rekonsiliasi", konfirmasi: true };
+        const existing = await makeAllocation();
+        assert.equal((await api("POST", `/allocations/${existing.id_alokasi}/room-snapshot`, body, superAdmin)).body.error.code, "ROOM_SNAPSHOT_EXISTS");
+        const cancelled = await makeAllocation({ snapshot: false, status: "Batal" });
+        assert.equal((await api("POST", `/allocations/${cancelled.id_alokasi}/room-snapshot`, body, superAdmin)).body.error.code, "ROOM_ALLOCATION_INVALID");
+        const legacy = await makeAllocation({ snapshot: false });
+        const path = `/allocations/${legacy.id_alokasi}/room-snapshot`;
+        assert.equal((await api("POST", path, { ...body, id_tarif_kamar: 2147483647 }, superAdmin)).status, 404);
+        assert.equal((await api("POST", "/allocations/2147483647/room-snapshot", body, superAdmin)).status, 404);
+        const future = await prisma.tarifKamar.findFirst({ where: { kelas_perawatan: "VIP", tanggal_berlaku: new Date("2090-01-01") } });
+        assert.equal((await api("POST", path, { ...body, id_tarif_kamar: future.id_tarif_kamar }, superAdmin)).body.error.code, "ROOM_TARIFF_INVALID");
+        assert.equal((await prisma.rekamAlokasi.findUnique({ where: { id_alokasi: legacy.id_alokasi } })).id_tarif_kamar, null);
+    });
 });

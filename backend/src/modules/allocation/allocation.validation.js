@@ -4,6 +4,12 @@ import { ALLOCATION_STATUS } from "../../shared/constants/bed.js";
 const pageSchema = z.coerce.number().int().min(1).default(1);
 const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 
+export const reconcileRoomSnapshotSchema = z.object({
+    id_tarif_kamar: z.number().int().positive(),
+    alasan: z.string().trim().min(10, "Jelaskan alasan rekonsiliasi minimal 10 karakter.").max(1000),
+    konfirmasi: z.literal(true),
+}).strict();
+
 export const createAllocationSchema = z.object({
     id_pasien: z.coerce.number().int().positive("Pasien tidak valid."),
     id_bed: z.coerce.number().int().positive("Bed tidak valid."),
