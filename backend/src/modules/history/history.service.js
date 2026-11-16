@@ -68,12 +68,13 @@ export async function reconcileHistoryAllocation(id_rekap, { id_alokasi, alasan 
 }
 
 function toHistoryItem(row) {
-    const { akun, _count, ...rest } = row;
+    const { akun, _count, tagihan_list, ...rest } = row;
 
     return {
         ...rest,
         dibuat_oleh: akun?.nama_petugas ?? null,
         jumlah_tindakan: _count?.detail_rekap_tindakan_list ?? 0,
+        tagihan: tagihan_list ?? [],
     };
 }
 
@@ -137,7 +138,7 @@ export async function listPatientRme(id_pasien) {
 
     return {
         pasien,
-        items: await findRmeByPatient(id_pasien),
+        items: await findRmeByPatient(id_pasien, undefined, { onlyUnrecapped: true }),
     };
 }
 
@@ -152,7 +153,8 @@ export async function registerHistoryRecap({ id_pasien, id_riwayat, catatan, ket
         throw new HttpError(400, "VALIDATION_ERROR", "id_riwayat tidak boleh duplikat.");
     }
 
-    const rme = await findRmeByPatient(id_pasien, requestedIds);
+    // Hanya ambil tindakan RME yang belum masuk ke rekap aktif agar tidak tercampur lintas kunjungan.
+    const rme = await findRmeByPatient(id_pasien, requestedIds, { onlyUnrecapped: true });
 
     // Snapshot hanya boleh berasal dari RME milik pasien yang sama.
     if (requestedIds && rme.length !== requestedIds.length) {

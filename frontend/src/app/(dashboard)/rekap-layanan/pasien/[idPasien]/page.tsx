@@ -152,7 +152,9 @@ function InformasiDataPasienContent() {
     );
   }
 
-  const activeRekap = existingRekap.find((r) => r.status !== "Draft") || existingRekap[0];
+  const activeRekap = existingRekap.find(
+    (r) => !(r.tagihan?.some((t) => t.status !== "Batal"))
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-800">
@@ -285,10 +287,22 @@ function InformasiDataPasienContent() {
               {rmeItems.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-8 px-4 text-center text-slate-500">
-                    Pasien ini belum memiliki catatan tindakan RME selama rawat inap.{" "}
-                    {user?.role === "SUPER_ADMIN"
-                      ? 'Klik "Tambah Tindakan RME" untuk mencatat tindakan.'
-                      : "Hubungi Super Admin untuk mencatat tindakan RME terlebih dahulu."}
+                    {activeRekap ? (
+                      <>
+                        Seluruh tindakan RME saat ini sudah masuk ke rekap aktif{" "}
+                        <span className="font-mono font-medium text-slate-700">
+                          {activeRekap.kode_rekap}
+                        </span>
+                        . Buka dokumen rekap untuk meninjau rincian tindakan.
+                      </>
+                    ) : (
+                      <>
+                        Pasien ini belum memiliki catatan tindakan RME baru yang siap direkap.{" "}
+                        {user?.role === "SUPER_ADMIN"
+                          ? 'Klik "Tambah Tindakan RME" untuk mencatat tindakan.'
+                          : "Hubungi Super Admin untuk mencatat tindakan RME terlebih dahulu."}
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : (

@@ -62,7 +62,13 @@ function RincianBiayaPelayananContent() {
       const hRes = await fetchHistoriesApi({ id_pasien: idPasien });
       const targetRekap = queryIdRekap
         ? hRes.items.find((h) => h.id_rekap === Number(queryIdRekap))
-        : hRes.items.find((h) => h.status === "Siap Billing") || hRes.items[0];
+        : hRes.items.find(
+            (h) =>
+              h.status === "Siap Billing" &&
+              !(h.tagihan?.some((t) => t.status !== "Batal"))
+          ) ||
+          hRes.items.find((h) => h.status === "Siap Billing") ||
+          hRes.items[0];
 
       if (!targetRekap) {
         setErrorMsg("Pasien ini belum memiliki dokumen Rekap Tindakan yang terverifikasi.");
@@ -205,12 +211,16 @@ function RincianBiayaPelayananContent() {
     </section>
   );
 
+  const activeInv = rekapInfo?.tagihan?.find((t) => t.status !== "Batal");
+  const hasFinalInvoice = Boolean(activeInv && activeInv.status !== "Draft");
+
   const handleProceedToInspection = async () => {
     if (!preview) return;
-    const activeInv = rekapInfo?.tagihan?.find((t) => t.status !== "Batal");
     if (activeInv) {
       router.push(
-        `/pembayaran/buat/${idPasien}/pemeriksaan?id_tagihan=${activeInv.id_tagihan}&id_rekap=${preview.id_rekap}`
+        activeInv.status === "Draft"
+          ? `/pembayaran/buat/${idPasien}/pemeriksaan?id_tagihan=${activeInv.id_tagihan}&id_rekap=${preview.id_rekap}`
+          : `/pembayaran/${activeInv.id_tagihan}`
       );
       return;
     }
@@ -490,6 +500,22 @@ function RincianBiayaPelayananContent() {
           </button>
         </div>
       )}
+      {hasFinalInvoice && activeInv && (
+        <div role="status" className="p-3.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            Rekap ini sudah memiliki tagihan aktif{" "}
+            <span className="font-mono font-semibold">{activeInv.no_tagihan}</span> ({activeInv.status}).
+            Anda dapat langsung membuka detail tagihan tersebut.
+          </span>
+          <Link
+            href={`/pembayaran/${activeInv.id_tagihan}`}
+            className="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shrink-0 transition"
+          >
+            Buka Tagihan {activeInv.no_tagihan}
+          </Link>
+        </div>
+      )}
+
       {/* Bottom Navigation */}
       <div className="flex items-center justify-between pt-2">
         <Link
@@ -500,15 +526,33 @@ function RincianBiayaPelayananContent() {
           <span>Kembali</span>
         </Link>
 
-        <button
-          type="button"
-          disabled={creating || reconcileBusy || hasActiveRoom}
-          onClick={handleProceedToInspection}
-          className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
-        >
-          <span>{creating ? "Memproses Draf..." : hasActiveRoom ? "Menunggu Alokasi Selesai" : "Periksa Tagihan"}</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        {hasFinalInvoice && activeInv ? (
+          <Link
+            href={`/pembayaran/${activeInv.id_tagihan}`}
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+          >
+            <span>Lihat Invoice {activeInv.no_tagihan}</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={creating || reconcileBusy || hasActiveRoom}
+            onClick={handleProceedToInspection}
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-60"
+          >
+            <span>
+              {creating
+                ? "Memproses Draf..."
+                : hasActiveRoom
+                  ? "Menunggu Alokasi Selesai"
+                  : activeInv?.status === "Draft"
+                    ? `Lanjutkan Draf ${activeInv.no_tagihan}`
+                    : "Periksa Tagihan"}
+            </span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );

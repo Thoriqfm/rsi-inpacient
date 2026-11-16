@@ -15,6 +15,14 @@ export const historyListSelect = {
     pasien: { select: { no_rm: true, nama_pasien: true } },
     akun: { select: { nama_petugas: true } },
     _count: { select: { detail_rekap_tindakan_list: true } },
+    tagihan_list: {
+        select: {
+            id_tagihan: true,
+            no_tagihan: true,
+            status: true,
+        },
+        orderBy: { id_tagihan: "desc" },
+    },
 };
 
 export const historyDetailSelect = {
@@ -88,11 +96,20 @@ export function findPasienForHistory(id_pasien) {
     });
 }
 
-export function findRmeByPatient(id_pasien, id_riwayat_list) {
+export function findRmeByPatient(id_pasien, id_riwayat_list, { onlyUnrecapped = false } = {}) {
     return prisma.rmeDummy.findMany({
         where: {
             id_pasien,
             ...(id_riwayat_list ? { id_riwayat: { in: id_riwayat_list } } : {}),
+            ...(onlyUnrecapped
+                ? {
+                      detail_rekap_tindakan_list: {
+                          none: {
+                              rekap_tindakan: { deleted_at: null },
+                          },
+                      },
+                  }
+                : {}),
         },
         orderBy: [{ tanggal_tindakan: "asc" }, { id_riwayat: "asc" }],
     });
@@ -177,7 +194,13 @@ export function searchPatientsForHistory(q) {
             status_penanganan: true,
             _count: {
                 select: {
-                    rme_dummy_list: true,
+                    rme_dummy_list: {
+                        where: {
+                            detail_rekap_tindakan_list: {
+                                none: { rekap_tindakan: { deleted_at: null } },
+                            },
+                        },
+                    },
                     rekap_tindakan_list: { where: { deleted_at: null } },
                 },
             },
