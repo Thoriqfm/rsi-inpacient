@@ -1716,6 +1716,31 @@ export async function createRoomTariffApi(payload: {
   return (await res.json()).data;
 }
 
+export async function fetchActiveAllocatedPatientIdsApi(): Promise<number[]> {
+  const ids = new Set<number>();
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await apiFetch(
+      `/allocations?status_alokasi=Aktif&page=${page}&limit=100`
+    );
+    if (!res.ok) {
+      throw new Error(
+        await readErrorMessage(res, "Gagal memuat data alokasi aktif")
+      );
+    }
+    const json = await res.json();
+    const items = (json.data?.items || []) as Record<string, unknown>[];
+    for (const item of items) {
+      const id = Number(item.id_pasien);
+      if (Number.isFinite(id) && id > 0) ids.add(id);
+    }
+    totalPages = Number(json.meta?.total_pages || 1);
+    page++;
+  } while (page <= totalPages);
+  return Array.from(ids);
+}
+
 export async function fetchRoomAllocationsApi(id_pasien: number): Promise<RoomAllocation[]> {
   const items: RoomAllocation[] = [];
   let page = 1;

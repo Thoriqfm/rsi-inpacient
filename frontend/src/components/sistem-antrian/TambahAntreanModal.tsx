@@ -14,7 +14,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { KelasPerawatan, PasienCandidate, QueueItem } from "@/types";
-import { createQueueApi, searchHistoryPatientsApi } from "@/lib/api-client";
+import {
+  createQueueApi,
+  fetchActiveAllocatedPatientIdsApi,
+  searchHistoryPatientsApi,
+} from "@/lib/api-client";
 
 interface TambahAntreanModalProps {
   isOpen: boolean;
@@ -45,31 +49,42 @@ export function TambahAntreanModal({
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
-    searchHistoryPatientsApi("")
-      .then((rows) => {
+    Promise.all([
+      searchHistoryPatientsApi(""),
+      fetchActiveAllocatedPatientIdsApi().catch(() => [] as number[]),
+    ])
+      .then(([rows, activeAllocatedIds]) => {
         if (!active) return;
-        const mapped: PasienCandidate[] = rows.map((p) => ({
-          id_pasien: p.id_pasien,
-          no_rm: p.no_rm,
-          nama_pasien: p.nama_pasien,
-          jenis_kelamin_usia: p.jenis_kelamin_usia || "-",
-          dokter_dpjp: p.dokter_dpjp || "DPJP Rawat Inap",
-          hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
-          kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
-          diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
-          kondisi_pasien:
-            p.kondisi_pasien ||
-            (p.status_penanganan?.includes("Darurat") ? "Darurat" : "Stabil"),
-          status_penanganan:
-            (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
-            "Menunggu",
-          asal_instalasi: "IGD / Poli",
-        }));
+        const activeAllocatedSet = new Set(activeAllocatedIds);
+        const mapped: PasienCandidate[] = rows
+          .filter(
+            (p) =>
+              !activeAllocatedSet.has(p.id_pasien) &&
+              p.status_penanganan !== "Rawat Inap" &&
+              p.status_penanganan !== "Dirujuk"
+          )
+          .map((p) => ({
+            id_pasien: p.id_pasien,
+            no_rm: p.no_rm,
+            nama_pasien: p.nama_pasien,
+            jenis_kelamin_usia: p.jenis_kelamin_usia || "-",
+            dokter_dpjp: p.dokter_dpjp || "DPJP Rawat Inap",
+            hak_kelas_jaminan: p.hak_kelas_jaminan || "BPJS Kesehatan",
+            kelas_rekomendasi: p.kelas_perawatan || "Kelas 1",
+            diagnosa_masuk: p.diagnosa_masuk || "Rawat Inap",
+            kondisi_pasien:
+              p.kondisi_pasien ||
+              (p.status_penanganan?.includes("Darurat") ? "Darurat" : "Stabil"),
+            status_penanganan:
+              (p.status_penanganan as PasienCandidate["status_penanganan"]) ||
+              "Menunggu",
+            asal_instalasi: "IGD / Poli",
+          }));
         setCandidateList(mapped);
         const preferred =
-          mapped.find((m) => m.kondisi_pasien === "Stabil") || mapped[0];
+          mapped.find((m) => m.kondisi_pasien === "Stabil") || mapped[0] || null;
+        setSelectedPasien(preferred);
         if (preferred) {
-          setSelectedPasien(preferred);
           setKelasTarget(preferred.kelas_rekomendasi);
         }
       })
@@ -223,7 +238,12 @@ export function TambahAntreanModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
-              {filteredCandidates.map((p) => {
+              {filteredCandidates.length === 0 ? (
+                <div className="sm:col-span-2 p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-500">
+                  Tidak ada pasien yang tersedia untuk didaftarkan ke daftar tunggu (pasien sudah Rawat Inap atau Dirujuk).
+                </div>
+              ) : (
+                filteredCandidates.map((p) => {
                 const isSelected = selectedPasien?.id_pasien === p.id_pasien;
                 const inQueue = activeWaitingIds.has(p.id_pasien);
                 const emergency = p.kondisi_pasien === "Darurat";
@@ -270,7 +290,8 @@ export function TambahAntreanModal({
                     </div>
                   </button>
                 );
-              })}
+              })
+              )}
             </div>
           </div>
 
@@ -393,7 +414,7 @@ export function TambahAntreanModal({
             </button>
             <button
               type="submit"
-              disabled={submitting || isDarurat || isAlreadyWaiting}
+              disabled={submitting || !selectedPasien || isDarurat || isAlreadyWaiting}
               className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4 text-emerald-300" />

@@ -387,4 +387,41 @@ describe("Bed management & allocation", { skip: !RUN }, () => {
         const noToken = await api("GET", "/allocations");
         assert.equal(noToken.status, 401);
     });
+
+    test("pasien yang sudah Rawat Inap atau Dirujuk tidak bisa dialokasikan ke bed lain", async () => {
+        const bed1 = await createBed();
+        const bed2 = await createBed();
+        const pasien = await createPasien();
+
+        const first = await api("POST", "/allocations", {
+            token: adminToken,
+            body: { id_pasien: pasien.id_pasien, id_bed: bed1.id_bed },
+        });
+        assert.equal(first.status, 201);
+
+        const secondBedAlloc = await api("POST", "/allocations", {
+            token: adminToken,
+            body: { id_pasien: pasien.id_pasien, id_bed: bed2.id_bed },
+        });
+        assert.equal(secondBedAlloc.status, 409);
+        assert.equal(secondBedAlloc.body.error.code, "PATIENT_ALREADY_ALLOCATED");
+        assert.equal((await prisma.bed.findUnique({ where: { id_bed: bed2.id_bed } })).status, "Tersedia");
+
+        const referred = await prisma.pasien.create({
+            data: {
+                no_rm: `RMR${suffix.slice(-8)}${String(pasienIds.length + 1).padStart(4, "0")}`.slice(0, 20),
+                nama_pasien: "Pasien Dirujuk",
+                status_penanganan: "Dirujuk",
+                kondisi_pasien: "Darurat",
+            },
+        });
+        pasienIds.push(referred.id_pasien);
+
+        const referredAlloc = await api("POST", "/allocations", {
+            token: adminToken,
+            body: { id_pasien: referred.id_pasien, id_bed: bed2.id_bed },
+        });
+        assert.equal(referredAlloc.status, 409);
+        assert.equal(referredAlloc.body.error.code, "PATIENT_ALREADY_REFERRED");
+    });
 });

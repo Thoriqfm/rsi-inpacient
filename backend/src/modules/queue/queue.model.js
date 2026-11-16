@@ -70,8 +70,8 @@ export function findQueueById(id_antrean, client = prisma) {
     });
 }
 
-export function findPasienForQueue(id_pasien) {
-    return prisma.pasien.findUnique({
+export function findPasienForQueue(id_pasien, client = prisma) {
+    return client.pasien.findUnique({
         where: { id_pasien },
         select: {
             id_pasien: true,
@@ -80,6 +80,13 @@ export function findPasienForQueue(id_pasien) {
             kondisi_pasien: true,
             status_penanganan: true,
         },
+    });
+}
+
+export function findActiveAllocationByPatient(id_pasien, client = prisma) {
+    return client.rekamAlokasi.findFirst({
+        where: { id_pasien, status_alokasi: "Aktif" },
+        select: { id_alokasi: true },
     });
 }
 
