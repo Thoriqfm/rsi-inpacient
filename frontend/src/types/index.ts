@@ -375,6 +375,8 @@ export interface BillingDetailItem {
 }
 
 export interface BillingPreviewResult {
+  alokasi: RoomAllocation | null;
+  room_error: { code: string; message: string } | null;
   id_rekap: number;
   kode_rekap: string;
   status: HistoryStatus;
@@ -431,7 +433,6 @@ export interface BillingItem {
 
 export interface CreateBillingPayload {
   id_rekap: number;
-  id_alokasi_list?: number[];
   catatan?: string;
 }
 

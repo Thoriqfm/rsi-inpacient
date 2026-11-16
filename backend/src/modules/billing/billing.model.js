@@ -99,6 +99,8 @@ export function findRekapForBilling(id_rekap, client = prisma) {
         where: { id_rekap, deleted_at: null },
         select: {
             id_rekap: true,
+            id_alokasi: true,
+            tanggal_dibuat: true,
             kode_rekap: true,
             id_pasien: true,
             status: true,

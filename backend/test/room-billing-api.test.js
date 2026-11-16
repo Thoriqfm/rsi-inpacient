@@ -12,6 +12,7 @@ const suffix = `${Date.now()}`;
 let server, base, admin, manager, superAdmin, patient, otherPatient, rate;
 const accounts = [], beds = [], recaps = [], rates = [], invoices = [], allocations = [];
 const actionRates = [], rmeRows = [];
+const extraPatients = [];
 let counter = 0;
 
 function token(account) {
@@ -34,6 +35,24 @@ async function makeRecap(id_pasien = patient.id_pasien) {
         id_pasien, id_akun: admin.id_akun, kode_rekap: `ROOM-${suffix}-${++counter}`, status: "Siap Billing",
     } });
     recaps.push(row.id_rekap); return row;
+}
+async function makePatient() {
+    const row = await prisma.pasien.create({ data: { no_rm: `RA${suffix}${++counter}`.slice(-20), nama_pasien: "Pasien Auto Uji" } });
+    extraPatients.push(row.id_pasien); return row;
+}
+async function addAction(recap, id_pasien, tanggal = new Date()) {
+    const kode = `A${suffix}${++counter}`.slice(-20);
+    const tariff = await prisma.tarif.create({ data: { kode_tindakan: kode, nama_tindakan: "Tindakan Otomatis Uji", harga: "100.25", tanggal_berlaku: new Date("2020-01-01") } });
+    actionRates.push(tariff.id_tarif);
+    const rme = await prisma.rmeDummy.create({ data: { id_pasien, kode_tindakan: kode, nama_tindakan: "Tindakan Otomatis Uji", tanggal_tindakan: tanggal, jumlah: 1 } });
+    rmeRows.push(rme.id_riwayat);
+    if (recap) await prisma.detailRekapTindakan.create({ data: { id_rekap: recap.id_rekap, id_riwayat: rme.id_riwayat, kode_tindakan: kode, nama_tindakan: rme.nama_tindakan, tanggal_tindakan: tanggal, jumlah: 1 } });
+    return rme;
+}
+// Build persisted source links as fixtures; API requests contain only the recap ID.
+async function roomBody(recap, allocation) {
+    await prisma.rekapTindakan.update({ where: { id_rekap: recap.id_rekap }, data: { id_alokasi: allocation.id_alokasi } });
+    return { id_rekap: recap.id_rekap };
 }
 async function makeAllocation({ status = "Selesai", snapshot = true, id_pasien = patient.id_pasien } = {}) {
     const bed = await prisma.bed.create({ data: {
@@ -74,9 +93,9 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         await prisma.rmeDummy.deleteMany({ where: { id_riwayat: { in: rmeRows } } });
         await prisma.tarif.deleteMany({ where: { id_tarif: { in: actionRates } } });
         await prisma.rekamAlokasi.deleteMany({ where: { id_akun: manager.id_akun } });
-        await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: [patient.id_pasien, otherPatient.id_pasien] } } });
+        await prisma.riwayatStatusPasien.deleteMany({ where: { id_pasien: { in: [patient.id_pasien, otherPatient.id_pasien, ...extraPatients] } } });
         await prisma.bed.deleteMany({ where: { id_bed: { in: beds } } });
-        await prisma.pasien.deleteMany({ where: { id_pasien: { in: [patient.id_pasien, otherPatient.id_pasien] } } });
+        await prisma.pasien.deleteMany({ where: { id_pasien: { in: [patient.id_pasien, otherPatient.id_pasien, ...extraPatients] } } });
         await prisma.tarifKamar.deleteMany({ where: { id_tarif_kamar: { in: rates } } });
         await prisma.logAudit.deleteMany({ where: { id_akun: { in: accounts.map((a) => a.id_akun) } } });
         await prisma.akun.deleteMany({ where: { id_akun: { in: accounts.map((a) => a.id_akun) } } });
@@ -116,7 +135,7 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
 
     test("25 jam ditagih dua malam; snapshot dipertahankan saat hitung ulang", async () => {
         const recap = await makeRecap(); const allocation = await makeAllocation();
-        const body = { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] };
+        const body = await roomBody(recap, allocation);
         const preview = await api("POST", "/billing/preview", body);
         assert.equal(preview.status, 200, JSON.stringify(preview.body));
         assert.equal(preview.body.data.items[0].jumlah, 2);
@@ -140,7 +159,7 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
             nama_tindakan: "Tindakan Uji", tanggal_tindakan: new Date("2026-11-01"), jumlah: 2 } }); rmeRows.push(rme.id_riwayat);
         await prisma.detailRekapTindakan.create({ data: { id_rekap: recap.id_rekap, id_riwayat: rme.id_riwayat,
             kode_tindakan: kode, nama_tindakan: "Tindakan Uji", tanggal_tindakan: rme.tanggal_tindakan, jumlah: 2 } });
-        const body = { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] };
+        const body = await roomBody(recap, allocation);
         const preview = await api("POST", "/billing/preview", body);
         const created = await api("POST", "/billing", body);
         assert.equal(created.status, 201, JSON.stringify(created.body));
@@ -164,28 +183,28 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
 
     test("dua rekap tidak dapat menagih alokasi sama; cancel membebaskan klaim tanpa menghapus snapshot", async () => {
         const allocation = await makeAllocation(); const first = await makeRecap(); const second = await makeRecap();
-        const results = await Promise.all([first, second].map((r) => api("POST", "/billing", { id_rekap: r.id_rekap, id_alokasi_list: [allocation.id_alokasi] })));
+        const results = await Promise.all([first, second].map(async (r) => api("POST", "/billing", await roomBody(r, allocation))));
         assert.deepEqual(results.map((r) => r.status).sort(), [201, 409]);
         const winner = results.find((r) => r.status === 201).body.data;
         assert.equal((await api("POST", `/billing/${winner.id_tagihan}/cancel`, { alasan: "Koreksi uji" })).status, 200);
         const stored = await prisma.rekamAlokasi.findUnique({ where: { id_alokasi: allocation.id_alokasi } });
         assert.equal(stored.id_tagihan_kamar, null);
         const loser = results[0].status === 201 ? second : first;
-        assert.equal((await api("POST", "/billing", { id_rekap: loser.id_rekap, id_alokasi_list: [allocation.id_alokasi] })).status, 201);
+        assert.equal((await api("POST", "/billing", await roomBody(loser, allocation))).status, 201);
         const old = await api("GET", `/billing/${winner.id_tagihan}`);
         assert.equal(old.body.data.detail_tagihan_list[0].subtotal, "800000.50");
     });
 
     test("alokasi aktif hanya estimasi; batal, pasien lain dan snapshot hilang ditolak", async () => {
         const recap = await makeRecap(); const active = await makeAllocation({ status: "Aktif" });
-        const body = { id_rekap: recap.id_rekap, id_alokasi_list: [active.id_alokasi] };
+        const body = await roomBody(recap, active);
         const preview = await api("POST", "/billing/preview", body);
         assert.equal(preview.status, 200, JSON.stringify(preview.body));
         assert.equal(preview.body.data.items[0].estimasi, true);
         assert.equal((await api("POST", "/billing", body)).body.error.code, "ROOM_ALLOCATION_ACTIVE");
         for (const [options, code] of [[{ status: "Batal" }, "ROOM_ALLOCATION_INVALID"], [{ id_pasien: otherPatient.id_pasien }, "ROOM_ALLOCATION_INVALID"], [{ snapshot: false }, "ROOM_SNAPSHOT_MISSING"]]) {
             const allocation = await makeAllocation(options);
-            const rejected = await api("POST", "/billing", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+            const rejected = await api("POST", "/billing", await roomBody(recap, allocation));
             assert.equal(rejected.body.error.code, code);
         }
         assert.equal((await api("POST", "/billing", { ...body, id_alokasi_list: [active.id_alokasi, active.id_alokasi] })).status, 400);
@@ -193,7 +212,7 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
 
     test("cancel dan hitung ulang bersamaan tidak meninggalkan klaim atau menghapus snapshot", async () => {
         const recap = await makeRecap(); const allocation = await makeAllocation();
-        const created = await api("POST", "/billing", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+        const created = await api("POST", "/billing", await roomBody(recap, allocation));
         assert.equal(created.status, 201, JSON.stringify(created.body));
         const id = created.body.data.id_tagihan;
         const [recalc, cancelled] = await Promise.all([
@@ -233,7 +252,7 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         assert.equal(result.body.data.kelas_perawatan_snapshot, "VIP");
         assert.equal(result.body.data.harga_per_malam_snapshot, "400000.25");
         const recap = await makeRecap();
-        const preview = await api("POST", "/billing/preview", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+        const preview = await api("POST", "/billing/preview", await roomBody(recap, allocation));
         assert.equal(preview.status, 200, JSON.stringify(preview.body));
         assert.equal(preview.body.data.items[0].jumlah, 1);
         assert.equal(preview.body.data.items[0].estimasi, true);
@@ -254,7 +273,7 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         assert.equal(JSON.parse(audit[0].data_sesudah).tarif_di_luar_periode_masuk, true);
         assert.equal(JSON.parse(audit[0].data_sesudah).alasan, body.alasan);
         const recap = await makeRecap();
-        const invoice = await api("POST", "/billing", { id_rekap: recap.id_rekap, id_alokasi_list: [allocation.id_alokasi] });
+        const invoice = await api("POST", "/billing", await roomBody(recap, allocation));
         assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
         assert.equal(invoice.body.data.total_biaya, "800000.50");
         assert.equal(invoice.body.data.detail_tagihan_list[0].waktu_mulai, start.toISOString());
@@ -275,5 +294,94 @@ describe("Room billing API, snapshot dan concurrency", { skip: !RUN }, () => {
         const future = await prisma.tarifKamar.findFirst({ where: { kelas_perawatan: "VIP", tanggal_berlaku: new Date("2090-01-01") } });
         assert.equal((await api("POST", path, { ...body, id_tarif_kamar: future.id_tarif_kamar }, superAdmin)).body.error.code, "ROOM_TARIFF_INVALID");
         assert.equal((await prisma.rekamAlokasi.findUnique({ where: { id_alokasi: legacy.id_alokasi } })).id_tarif_kamar, null);
+    });
+
+    test("rekap legacy otomatis memakai satu alokasi; preview read-only dan invoice menyimpan FK", async () => {
+        const p = await makePatient(); const a = await makeAllocation({ id_pasien: p.id_pasien, status: "Aktif" });
+        const start = new Date(Math.floor(Date.now() / 1000) * 1000 - 8 * 3600000);
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: a.id_alokasi }, data: { waktu_alokasi: start } });
+        const r = await makeRecap(p.id_pasien);
+        const preview = await api("POST", "/billing/preview", { id_rekap: r.id_rekap });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.alokasi.id_alokasi, a.id_alokasi);
+        assert.equal(preview.body.data.items[0].jumlah, 1);
+        assert.equal(preview.body.data.total_biaya, "400000.25");
+        assert.equal((await prisma.rekapTindakan.findUnique({ where: { id_rekap: r.id_rekap } })).id_alokasi, null);
+        assert.equal((await api("POST", "/billing", { id_rekap: r.id_rekap })).body.error.code, "ROOM_ALLOCATION_ACTIVE");
+        assert.equal((await api("POST", "/billing/preview", { id_rekap: r.id_rekap, id_alokasi_list: [] })).status, 400);
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: a.id_alokasi }, data: { status_alokasi: "Selesai", waktu_selesai: new Date(Math.floor(Date.now() / 1000) * 1000) } });
+        const invoice = await api("POST", "/billing", { id_rekap: r.id_rekap });
+        assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
+        assert.equal(invoice.body.data.total_biaya, "400000.25");
+        assert.equal((await prisma.rekapTindakan.findUnique({ where: { id_rekap: r.id_rekap } })).id_alokasi, a.id_alokasi);
+    });
+
+    test("rekap baru menyimpan FK otomatis saat dibuat dari History", async () => {
+        const p = await makePatient(); const a = await makeAllocation({ id_pasien: p.id_pasien, status: "Aktif" });
+        const rme = await addAction(null, p.id_pasien);
+        const recap = await api("POST", "/histories", { id_pasien: p.id_pasien, id_riwayat: [rme.id_riwayat] });
+        assert.equal(recap.status, 201, JSON.stringify(recap.body));
+        recaps.push(recap.body.data.id_rekap);
+        assert.equal(recap.body.data.id_alokasi, a.id_alokasi);
+    });
+
+    test("beberapa alokasi ambigu tidak dipilih latest dan tidak membuat invoice", async () => {
+        const p = await makePatient();
+        await makeAllocation({ id_pasien: p.id_pasien }); await makeAllocation({ id_pasien: p.id_pasien });
+        const r = await makeRecap(p.id_pasien);
+        await prisma.rekapTindakan.update({ where: { id_rekap: r.id_rekap }, data: { tanggal_dibuat: new Date("2026-11-01T12:00:00Z") } });
+        const preview = await api("POST", "/billing/preview", { id_rekap: r.id_rekap });
+        assert.equal(preview.body.error.code, "ROOM_ALLOCATION_AMBIGUOUS");
+        assert.equal((await api("POST", "/billing", { id_rekap: r.id_rekap })).status, 409);
+        assert.equal(await prisma.tagihan.count({ where: { id_rekap: r.id_rekap } }), 0);
+    });
+
+    test("snapshot hilang ditampilkan sebagai masalah kamar; tidak membuat tagihan tindakan saja", async () => {
+        const p = await makePatient(); const a = await makeAllocation({ id_pasien: p.id_pasien, snapshot: false });
+        const r = await makeRecap(p.id_pasien);
+        await prisma.rekapTindakan.update({ where: { id_rekap: r.id_rekap }, data: { tanggal_dibuat: new Date("2026-11-01T12:00:00Z") } });
+        const preview = await api("POST", "/billing/preview", { id_rekap: r.id_rekap });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.alokasi.id_alokasi, a.id_alokasi);
+        assert.equal(preview.body.data.room_error.code, "ROOM_SNAPSHOT_MISSING");
+        assert.equal((await api("POST", "/billing", { id_rekap: r.id_rekap })).body.error.code, "ROOM_SNAPSHOT_MISSING");
+    });
+
+    test("kunjungan berulang memakai periode tindakan, bukan alokasi terakhir; rekap lintas kunjungan ditolak", async () => {
+        const p = await makePatient();
+        const old = await makeAllocation({ id_pasien: p.id_pasien });
+        const latest = await makeAllocation({ id_pasien: p.id_pasien });
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: old.id_alokasi }, data: { waktu_alokasi: new Date("2026-10-01"), waktu_selesai: new Date("2026-10-03") } });
+        await prisma.rekamAlokasi.update({ where: { id_alokasi: latest.id_alokasi }, data: { waktu_alokasi: new Date("2026-11-01"), waktu_selesai: new Date("2026-11-03") } });
+        const r = await makeRecap(p.id_pasien);
+        await addAction(r, p.id_pasien, new Date("2026-10-02"));
+        const preview = await api("POST", "/billing/preview", { id_rekap: r.id_rekap });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.alokasi.id_alokasi, old.id_alokasi);
+        assert.equal(preview.body.data.total_biaya, "800100.75");
+        assert.equal((await api("POST", "/billing", { id_rekap: r.id_rekap, id_alokasi_list: [latest.id_alokasi] })).body.error.code, "ROOM_ALLOCATION_AUTOMATIC");
+        const invoice = await api("POST", "/billing", { id_rekap: r.id_rekap });
+        assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
+        assert.equal((await prisma.rekapTindakan.findUnique({ where: { id_rekap: r.id_rekap } })).id_alokasi, old.id_alokasi);
+        const mixed = await makeRecap(p.id_pasien);
+        await addAction(mixed, p.id_pasien, new Date("2026-10-02"));
+        await addAction(mixed, p.id_pasien, new Date("2026-11-02"));
+        assert.equal((await api("POST", "/billing", { id_rekap: mixed.id_rekap })).body.error.code, "ROOM_ALLOCATION_UNMATCHED");
+        assert.equal(await prisma.tagihan.count({ where: { id_rekap: mixed.id_rekap } }), 0);
+    });
+
+    test("preview dan hitung ulang invoice tindakan lama tidak menambah kamar secara retroaktif", async () => {
+        const p = await makePatient(); const r = await makeRecap(p.id_pasien);
+        await addAction(r, p.id_pasien);
+        const invoice = await api("POST", "/billing", { id_rekap: r.id_rekap });
+        assert.equal(invoice.status, 201, JSON.stringify(invoice.body));
+        await makeAllocation({ id_pasien: p.id_pasien });
+        const preview = await api("POST", "/billing/preview", { id_rekap: r.id_rekap });
+        assert.equal(preview.status, 200, JSON.stringify(preview.body));
+        assert.equal(preview.body.data.alokasi, null);
+        assert.equal(preview.body.data.total_biaya, "100.25");
+        const recalc = await api("POST", `/billing/${invoice.body.data.id_tagihan}/recalculate`, {});
+        assert.equal(recalc.body.data.total_biaya, "100.25");
+        assert.equal(recalc.body.data.detail_tagihan_list.length, 1);
     });
 });

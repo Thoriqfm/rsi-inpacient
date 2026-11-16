@@ -87,6 +87,7 @@ model Bed {
 }
 
 model RekamAlokasi {
+  rekap_list               RekapTindakan[] @relation("RekapAlokasi")
   id_tarif_kamar           Int?
   kelas_perawatan_snapshot String?         @db.VarChar(50)
   harga_per_malam_snapshot Decimal?        @db.Decimal(15, 2)
@@ -219,20 +220,22 @@ model RmeDummy {
 }
 
 model RekapTindakan {
-  id_rekap           Int       @id @default(autoincrement())
+  id_alokasi         Int?
+  alokasi            RekamAlokasi? @relation("RekapAlokasi", fields: [id_alokasi], references: [id_alokasi], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_alokasi")
+  id_rekap           Int           @id @default(autoincrement())
   /// Contoh: RKP-20261015-001
-  kode_rekap         String    @db.VarChar(30)
+  kode_rekap         String        @db.VarChar(30)
   id_pasien          Int
   /// Petugas pembuat rekap. Pembaruan dicatat di log_audit
   id_akun            Int
   /// Draft / Proses Verifikasi / Siap Billing
-  status             String    @default("Draft") @db.VarChar(30)
-  catatan            String?   @db.Text
-  keterangan         String?   @db.Text
-  tanggal_dibuat     DateTime  @default(now()) @db.DateTime(0)
-  tanggal_diperbarui DateTime? @db.DateTime(0)
+  status             String        @default("Draft") @db.VarChar(30)
+  catatan            String?       @db.Text
+  keterangan         String?       @db.Text
+  tanggal_dibuat     DateTime      @default(now()) @db.DateTime(0)
+  tanggal_diperbarui DateTime?     @db.DateTime(0)
   /// Soft delete untuk menjaga histori
-  deleted_at         DateTime? @db.DateTime(0)
+  deleted_at         DateTime?     @db.DateTime(0)
 
   pasien                     Pasien                @relation("RekapTindakanPasien", fields: [id_pasien], references: [id_pasien], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_pasien")
   akun                       Akun                  @relation("RekapTindakanAkun", fields: [id_akun], references: [id_akun], onDelete: NoAction, onUpdate: NoAction, map: "fk_rekap_tindakan_akun")
@@ -240,6 +243,7 @@ model RekapTindakan {
   tagihan_list               Tagihan[]             @relation("TagihanRekapTindakan")
 
   @@unique([kode_rekap], map: "uq_rekap_tindakan_kode_rekap")
+  @@index([id_alokasi], map: "idx_rekap_alokasi")
   @@index([id_pasien], map: "idx_rekap_tindakan_pasien")
   @@index([status, deleted_at], map: "idx_rekap_tindakan_status_deleted")
   @@index([id_akun], map: "idx_rekap_tindakan_akun")

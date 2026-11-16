@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { countRoomNights, jakartaDate } from "../src/shared/utils/room-billing.js";
 import { createRoomTariffSchema, previewBillingSchema } from "../src/modules/billing/billing.validation.js";
 import { reconcileRoomSnapshotSchema } from "../src/modules/allocation/allocation.validation.js";
+import { matchRecapAllocation } from "../src/shared/utils/recap-allocation.js";
 
 test("kamar: elapsed 24 jam, pembulatan ke atas dan minimal satu malam", () => {
     const start = new Date("2026-11-01T23:00:00+07:00");
@@ -35,4 +36,19 @@ test("rekonsiliasi: tarif, alasan dan konfirmasi wajib; waktu dan nominal tidak 
     for (const change of [{ id_tarif_kamar: 0 }, { alasan: " " }, { konfirmasi: false }, { harga_per_malam: "1" }, { waktu_alokasi: new Date().toISOString() }]) {
         assert.equal(reconcileRoomSnapshotSchema.safeParse({ ...body, ...change }).success, false);
     }
+});
+
+test("alokasi otomatis: FK authoritative, tanggal kunjungan dan ambiguitas", () => {
+    const allocation = (id, start, end) => ({ id_alokasi: id, id_pasien: 1, status_alokasi: "Selesai", waktu_alokasi: new Date(start), waktu_selesai: end ? new Date(end) : null });
+    const old = allocation(1, "2026-10-01", "2026-10-03");
+    const current = allocation(2, "2026-11-01", "2026-11-03");
+    const recap = { id_pasien: 1, tanggal_dibuat: new Date("2026-11-04"), detail_rekap_tindakan_list: [{ tanggal_tindakan: new Date("2026-10-02") }] };
+    assert.equal(matchRecapAllocation(recap, [old, current]).id_alokasi, 1);
+    assert.equal(matchRecapAllocation({ ...recap, id_alokasi: 2 }, [old, current]).id_alokasi, 2);
+    assert.equal(matchRecapAllocation({ ...recap, tanggal_dibuat: new Date("2026-10-04") }, [old, current]).id_alokasi, 1);
+    assert.equal(matchRecapAllocation(recap, []), null);
+    assert.throws(() => matchRecapAllocation(recap, [old, { ...old, id_alokasi: 3 }]), { code: "ROOM_ALLOCATION_AMBIGUOUS" });
+    assert.throws(() => matchRecapAllocation({ ...recap, detail_rekap_tindakan_list: [] }, [old, current]), { code: "ROOM_ALLOCATION_UNMATCHED" });
+    assert.throws(() => matchRecapAllocation({ ...recap, detail_rekap_tindakan_list: [{ tanggal_tindakan: new Date("2026-11-02") }] }, [old]), { code: "ROOM_ALLOCATION_UNMATCHED" });
+    assert.throws(() => matchRecapAllocation({ ...recap, id_alokasi: 2 }, [{ ...current, id_pasien: 3 }]), { code: "ROOM_ALLOCATION_INVALID" });
 });

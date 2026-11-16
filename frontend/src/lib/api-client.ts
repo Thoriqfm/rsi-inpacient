@@ -1508,12 +1508,11 @@ export async function fetchBillingByIdApi(
 }
 
 export async function previewBillingApi(
-  id_rekap: number,
-  id_alokasi_list: number[] = []
+  id_rekap: number
 ): Promise<BillingPreviewResult> {
   const res = await apiFetch("/billing/preview", {
     method: "POST",
-    body: JSON.stringify({ id_rekap, id_alokasi_list }),
+    body: JSON.stringify({ id_rekap }),
   });
 
   if (!res.ok) {
@@ -1532,6 +1531,8 @@ export async function previewBillingApi(
   const totalNum = Number(data.total_biaya || 0);
   return {
     id_rekap: Number(data.id_rekap || id_rekap),
+    alokasi: (data.alokasi as RoomAllocation | null) ?? null,
+    room_error: (data.room_error as BillingPreviewResult["room_error"]) ?? null,
     kode_rekap: String(data.kode_rekap || `RKP-${id_rekap}`),
     status: (data.status as HistoryStatus) || "Siap Billing",
     pasien: {
@@ -1561,7 +1562,6 @@ export async function createBillingApi(
     method: "POST",
     body: JSON.stringify({
       id_rekap: payload.id_rekap,
-      id_alokasi_list: payload.id_alokasi_list || [],
       ...(payload.catatan ? { catatan: payload.catatan } : {}),
     }),
   });
