@@ -444,6 +444,14 @@ export interface RoomTariff {
   tanggal_berakhir: string | null;
 }
 
+export interface AllocationReadiness {
+  has_rme: boolean;
+  has_recap: boolean;
+  has_ready_recap: boolean;
+  latest_recap_status: string | null;
+  can_complete_allocation: boolean;
+}
+
 export interface RoomAllocation {
   id_alokasi: number;
   waktu_alokasi: string;
@@ -453,4 +461,5 @@ export interface RoomAllocation {
   harga_per_malam_snapshot: string | null;
   id_tagihan_kamar: number | null;
   bed: { no_bed: string };
+  readiness?: AllocationReadiness;
 }
