@@ -164,10 +164,10 @@ export async function runBootstrapSeed() {
             { no_rm: "RM-2026-00145", nama_pasien: "Lina Marlina", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1991-03-04"), alamat: "Jl. Seroja No. 8", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-09") },
             { no_rm: "RM-2026-00214", nama_pasien: "Nadia Putri", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1997-02-15"), alamat: "Jl. Kedungdoro No. 64", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-10") },
 
-            // 3 pasien selesai alokasi kamar (alokasi Selesai + rekap Siap Billing)
-            { no_rm: "RM-2026-00153", nama_pasien: "Ahmad Fauzi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1968-02-10"), alamat: "Jl. Pahlawan No. 72", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
-            { no_rm: "RM-2026-00215", nama_pasien: "Dewi Kartika", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1986-07-18"), alamat: "Jl. Walikota Mustajab No. 29", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
-            { no_rm: "RM-2026-00216", nama_pasien: "Hendarto Gunawan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1972-10-05"), alamat: "Jl. Kertajaya Indah No. 41", status_penanganan: "Rawat Inap", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
+            // 3 pasien terdaftar (siap masuk antrean / alokasi uji coba)
+            { no_rm: "RM-2026-00153", nama_pasien: "Ahmad Fauzi", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1968-02-10"), alamat: "Jl. Pahlawan No. 72", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00215", nama_pasien: "Dewi Kartika", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1986-07-18"), alamat: "Jl. Walikota Mustajab No. 29", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-06") },
+            { no_rm: "RM-2026-00216", nama_pasien: "Hendarto Gunawan", jenis_kelamin: "Laki-laki", tanggal_lahir: new Date("1972-10-05"), alamat: "Jl. Kertajaya Indah No. 41", status_penanganan: "Terdaftar", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-07") },
 
             // 6 pasien Menunggu Stabil di Daftar Tunggu FIFO (#01 - #06)
             { no_rm: "RM-2026-00161", nama_pasien: "Dewi Lestari", jenis_kelamin: "Perempuan", tanggal_lahir: new Date("1999-11-03"), alamat: "Jl. Mawar No. 9", status_penanganan: "Menunggu", kondisi_pasien: "Stabil", tanggal_masuk: new Date("2026-11-11") },
@@ -413,8 +413,6 @@ export async function runBootstrapSeed() {
         // 8. Seed initial RekamAlokasi for seeded Rawat Inap patients & RME Dummy
         const allPatients = await prisma.pasien.findMany();
         const yesterday = new Date(now.getTime() - 25 * 60 * 60 * 1000);
-        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-        const rmeTime = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
         const existingAllocationCount = await prisma.rekamAlokasi.count();
         if (existingAllocationCount === 0) {
@@ -455,147 +453,10 @@ export async function runBootstrapSeed() {
                     });
                 }
             }
-
-            // Alokasi selesai untuk 3 pasien Siap Billing pada 3 bed berstatus Pembersihan
-            const finishedBedOccupants = [
-                { no_rm: "RM-2026-00153", no_bed: "BED-VIP-007" },
-                { no_rm: "RM-2026-00215", no_bed: "BED-ANG-108" },
-                { no_rm: "RM-2026-00216", no_bed: "BED-MEL-308" },
-            ];
-            for (const pair of finishedBedOccupants) {
-                const p = allPatients.find((row) => row.no_rm === pair.no_rm);
-                const b = allBeds.find((row) => row.no_bed === pair.no_bed);
-                const rt = b ? roomTariffByClass.get(b.kelas_perawatan) : null;
-                if (p && b && rt) {
-                    await prisma.rekamAlokasi.create({
-                        data: {
-                            id_pasien: p.id_pasien,
-                            id_bed: b.id_bed,
-                            id_akun: adminId,
-                            waktu_alokasi: yesterday,
-                            waktu_selesai: oneHourAgo,
-                            status_alokasi: "Selesai",
-                            id_tarif_kamar: rt.id_tarif_kamar,
-                            kelas_perawatan_snapshot: rt.kelas_perawatan,
-                            harga_per_malam_snapshot: rt.harga_per_malam,
-                        },
-                    });
-                }
-            }
         }
 
-        // Seed RME Dummy hanya untuk pasien yang sudah Rawat Inap / Dirujuk (bukan Menunggu / Terdaftar)
-        for (const p of allPatients) {
-            if (p.status_penanganan === "Menunggu" || p.status_penanganan === "Terdaftar") {
-                continue;
-            }
-            const existingRme = await prisma.rmeDummy.count({ where: { id_pasien: p.id_pasien } });
-            if (existingRme === 0) {
-                await prisma.rmeDummy.createMany({
-                    data: [
-                        {
-                            id_pasien: p.id_pasien,
-                            kode_tindakan: "TND-001",
-                            nama_tindakan: "Visite Dokter Spesialis Penyakit Dalam",
-                            tanggal_tindakan: rmeTime,
-                            jumlah: 1,
-                            keterangan: `Evaluasi klinis harian (${p.nama_pasien})`,
-                        },
-                        {
-                            id_pasien: p.id_pasien,
-                            kode_tindakan: "TND-002",
-                            nama_tindakan: "Pemeriksaan Darah Lengkap (Hematologi)",
-                            tanggal_tindakan: rmeTime,
-                            jumlah: 1,
-                            keterangan: "Cek darah rutin panel rawat inap",
-                        },
-                        {
-                            id_pasien: p.id_pasien,
-                            kode_tindakan: "TND-003",
-                            nama_tindakan: "Pemasangan Infus & Cairan Ringer Lactate",
-                            tanggal_tindakan: rmeTime,
-                            jumlah: 2,
-                            keterangan: "Pemeliharaan terapi cairan intravena",
-                        },
-                    ],
-                });
-            }
-        }
-
-        // 9. Seed initial Rekap Tindakan (3 Siap Billing + 1 Draft) if table is empty
-        const existingRecapCount = await prisma.rekapTindakan.count({
-            where: { deleted_at: null },
-        });
-        if (existingRecapCount === 0 && allPatients.length > 0) {
-            const stamp = Date.now().toString().slice(-6);
-            const initialRecapConfigs = [
-                {
-                    no_rm: "RM-2026-00153",
-                    kode_rekap: `RKP-READY-${stamp}-1`,
-                    status: "Siap Billing",
-                    catatan: "Rekap siap cetak & hitung tagihan (VIP) untuk pengujian modul Billing.",
-                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
-                },
-                {
-                    no_rm: "RM-2026-00215",
-                    kode_rekap: `RKP-READY-${stamp}-2`,
-                    status: "Siap Billing",
-                    catatan: "Rekap siap cetak & hitung tagihan (Kelas 1) untuk pengujian modul Billing.",
-                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
-                },
-                {
-                    no_rm: "RM-2026-00216",
-                    kode_rekap: `RKP-READY-${stamp}-3`,
-                    status: "Siap Billing",
-                    catatan: "Rekap siap cetak & hitung tagihan (Kelas 3) untuk pengujian modul Billing.",
-                    keterangan: "Tervalidasi oleh DPJP Penyakit Dalam.",
-                },
-                {
-                    no_rm: "RM-2026-00148",
-                    kode_rekap: `RKP-DRAFT-${stamp}-4`,
-                    status: "Draft",
-                    catatan: "Draft rekap tindakan rawat inap (siap diedit/difinalisasi pada modul Rekap Layanan).",
-                    keterangan: "Menunggu verifikasi tindakan tambahan harian.",
-                },
-            ];
-
-            for (const cfg of initialRecapConfigs) {
-                const targetPasien = allPatients.find((p) => p.no_rm === cfg.no_rm);
-                if (!targetPasien) continue;
-
-                const rmeItems = await prisma.rmeDummy.findMany({
-                    where: { id_pasien: targetPasien.id_pasien },
-                    take: 3,
-                });
-                const patientAllocation = await prisma.rekamAlokasi.findFirst({
-                    where: { id_pasien: targetPasien.id_pasien, status_alokasi: { not: "Batal" } },
-                    orderBy: { id_alokasi: "desc" },
-                });
-
-                if (rmeItems.length > 0) {
-                    await prisma.rekapTindakan.create({
-                        data: {
-                            kode_rekap: cfg.kode_rekap,
-                            id_pasien: targetPasien.id_pasien,
-                            id_alokasi: patientAllocation?.id_alokasi ?? null,
-                            id_akun: adminId,
-                            status: cfg.status,
-                            catatan: cfg.catatan,
-                            keterangan: cfg.keterangan,
-                            detail_rekap_tindakan_list: {
-                                create: rmeItems.map((r) => ({
-                                    id_riwayat: r.id_riwayat,
-                                    kode_tindakan: r.kode_tindakan,
-                                    nama_tindakan: r.nama_tindakan,
-                                    tanggal_tindakan: r.tanggal_tindakan,
-                                    jumlah: r.jumlah,
-                                })),
-                            },
-                        },
-                    });
-                }
-            }
-        }
+        // Opsi 1: Tidak melakukan auto-seed RmeDummy maupun RekapTindakan awal.
+        // Seluruh tindakan RME dicatat langsung dari akun admin.demo saat simulasi rawat inap aktif.
 
         // 10. Seed Riwayat Status Pasien if empty
         const riwayatCount = await prisma.riwayatStatusPasien.count();
