@@ -31,3 +31,11 @@ Per malam = 24 jam sejak alokasi, dibulatkan ke atas, minimal satu malam. Tarif 
 - Migration dan advisory lock PostgreSQL belum diuji pada server PostgreSQL dalam sesi ini. Tidak ada migration/seed/test penulis data yang dijalankan terhadap Supabase/shared/production.
 - Perintah lint umum turut memindai `.next` dalam folder frontend lama; lint source dijalankan terpisah dan lulus. Tidak mengubah konfigurasi lint di luar scope.
 - Dokumentasi lengkap dan plan ada di `docs/`; folder itu sudah diabaikan `.gitignore` repository. Runbook ini disimpan bersama migration agar ikut terbawa di Git.
+
+## Perbaikan alokasi sebelum fitur diterapkan
+
+Tidak perlu membuat ulang pasien/alokasi dan tidak memerlukan migration baru. Setelah deploy kode rekonsiliasi, login Super Admin lalu buka rincian biaya pasien. Klik **Lengkapi tarif alokasi lama**, pilih tarif master sesuai kelas/harga perawatan saat masuk, tulis alasan, centang konfirmasi, dan simpan. Waktu masuk asli tetap dipertahankan; kemudian centang alokasi untuk menghitung biaya. Alokasi Aktif masih estimasi dan harus Selesai sebelum ditagihkan.
+
+POST `/api/allocations/:id/room-snapshot` memerlukan ID tarif, alasan dan konfirmasi eksplisit. Tarif yang dibuat setelah pasien masuk hanya diterapkan berdasarkan pilihan admin ini, dengan penanda di audit; tidak ada backfill otomatis. Snapshot yang telah terisi, alokasi Batal atau yang pernah ditagihkan ditolak. Dua request bersamaan tidak bisa menimpa satu sama lain. Perubahan dan audit atomik. Tarif masa mendatang tidak dapat dipilih untuk rekonsiliasi.
+
+Verifikasi slice ini: 72 test backend lulus tanpa skip pada MySQL lokal terisolasi, termasuk izin Super Admin, waktu asli, estimasi 8 jam = satu malam, audit pilihan historis, dan concurrency. Lint source dan build frontend lulus. Tidak menjalankan perubahan data production atau integration test PostgreSQL. Prisma Client dikembalikan ke PostgreSQL setelah test.

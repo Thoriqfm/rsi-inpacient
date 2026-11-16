@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { index, show, store, update } from "../modules/allocation/allocation.controller.js";
+import { index, show, store, update, reconcileSnapshot } from "../modules/allocation/allocation.controller.js";
 import {
     allocationListQuerySchema,
     createAllocationSchema,
     updateAllocationSchema,
+    reconcileRoomSnapshotSchema,
 } from "../modules/allocation/allocation.validation.js";
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 import { requireRole } from "../middlewares/role.middleware.js";
@@ -19,6 +20,7 @@ router.use(authenticateToken);
 
 router.get("/", allocationRole, validateQuery(allocationListQuerySchema), index);
 router.post("/", allocationRole, validate(createAllocationSchema), store);
+router.post("/:id/room-snapshot", requireRole(ROLES.SUPER_ADMIN), validate(reconcileRoomSnapshotSchema), reconcileSnapshot);
 router.get("/:id", allocationRole, show);
 router.patch("/:id", allocationRole, validate(updateAllocationSchema), update);
 

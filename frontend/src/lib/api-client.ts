@@ -1689,6 +1689,14 @@ export async function fetchRoomTariffsApi(): Promise<RoomTariff[]> {
   return (await res.json()).data.items;
 }
 
+export async function reconcileRoomSnapshotApi(id_alokasi: number, payload: {
+  id_tarif_kamar: number; alasan: string; konfirmasi: boolean;
+}): Promise<RoomAllocation> {
+  const res = await apiFetch(`/allocations/${id_alokasi}/room-snapshot`, { method: "POST", body: JSON.stringify(payload) });
+  if (!res.ok) throw new Error(await readErrorMessage(res, "Gagal melengkapi tarif alokasi lama."));
+  return (await res.json()).data;
+}
+
 export async function createRoomTariffApi(payload: {
   kelas_perawatan: KelasPerawatan; harga_per_malam: string; tanggal_berlaku: string;
   tanggal_berakhir?: string; id_tarif_sebelumnya?: number;

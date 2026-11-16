@@ -3,7 +3,7 @@ import { ALLOCATION_STATUS, BED_STATUS } from "../../shared/constants/bed.js";
 import { HttpError } from "../../shared/errors/http-error.js";
 import { createAuditLog } from "../../shared/utils/audit.js";
 import { jakartaDate } from "../../shared/utils/room-billing.js";
-import { lockRoomClass } from "../billing/billing.model.js";
+import { lockRoomClass, lockRoomAllocations } from "../billing/billing.model.js";
 import { claimBedForAllocation, findBedById, releaseBedAfterAllocation } from "../bed/bed.model.js";
 import {
     buildAllocationWhere,
@@ -45,6 +45,43 @@ export async function getAllocation(id_alokasi) {
     }
 
     return allocationResponse(alokasi);
+}
+
+export async function reconcileRoomSnapshot(id_alokasi, { id_tarif_kamar, alasan }, id_akun) {
+    return prisma.$transaction(async (tx) => {
+        await lockRoomAllocations(tx, [id_alokasi]);
+        const allocation = await findAllocationById(id_alokasi, tx);
+        if (!allocation) throw new HttpError(404, "ALLOCATION_NOT_FOUND", "Alokasi tidak ditemukan.");
+        if (![ALLOCATION_STATUS.AKTIF, ALLOCATION_STATUS.SELESAI].includes(allocation.status_alokasi)) {
+            throw new HttpError(409, "ROOM_ALLOCATION_INVALID", "Alokasi yang dibatalkan tidak dapat direkonsiliasi.");
+        }
+        if (allocation.id_tagihan_kamar !== null || await tx.detailTagihan.findFirst({ where: { id_alokasi }, select: { id_detail_tagihan: true } })) {
+            throw new HttpError(409, "ROOM_ALREADY_BILLED", "Snapshot alokasi yang pernah ditagihkan tidak dapat diubah.");
+        }
+        if (allocation.id_tarif_kamar !== null || allocation.kelas_perawatan_snapshot !== null || allocation.harga_per_malam_snapshot !== null) {
+            throw new HttpError(409, "ROOM_SNAPSHOT_EXISTS", "Snapshot tarif sudah terisi. Muat ulang halaman; harga yang tersimpan tidak ditimpa.");
+        }
+        const rate = await tx.tarifKamar.findUnique({ where: { id_tarif_kamar } });
+        if (!rate) throw new HttpError(404, "ROOM_TARIFF_NOT_FOUND", "Tarif kamar tidak ditemukan.");
+        if (rate.tanggal_berlaku > jakartaDate(new Date())) {
+            throw new HttpError(422, "ROOM_TARIFF_INVALID", "Tarif yang belum mulai berlaku tidak dapat dipakai untuk rekonsiliasi.");
+        }
+        const snapshot = { id_tarif_kamar, kelas_perawatan_snapshot: rate.kelas_perawatan, harga_per_malam_snapshot: rate.harga_per_malam };
+        const updated = await tx.rekamAlokasi.updateMany({
+            where: { id_alokasi, id_tagihan_kamar: null, id_tarif_kamar: null, kelas_perawatan_snapshot: null, harga_per_malam_snapshot: null },
+            data: { ...snapshot, updated_at: new Date() },
+        });
+        if (updated.count !== 1) throw new HttpError(409, "ROOM_SNAPSHOT_EXISTS", "Snapshot telah diisi oleh petugas lain.");
+        const masuk = jakartaDate(allocation.waktu_alokasi);
+        await createAuditLog(tx, {
+            id_akun, nama_tabel: "rekam_alokasi", id_referensi: id_alokasi, aksi: "UPDATE",
+            data_sebelum: { id_tarif_kamar: null, kelas_perawatan_snapshot: null, harga_per_malam_snapshot: null },
+            data_sesudah: { ...snapshot, harga_per_malam_snapshot: rate.harga_per_malam.toFixed(2),
+                operasi: "RECONCILE_ROOM_SNAPSHOT", alasan,
+                tarif_di_luar_periode_masuk: rate.tanggal_berlaku > masuk || (rate.tanggal_berakhir !== null && rate.tanggal_berakhir <= masuk) },
+        });
+        return allocationResponse(await findAllocationById(id_alokasi, tx));
+    }, { isolationLevel: "ReadCommitted" });
 }
 
 export async function createAllocationForBed({ id_pasien, id_bed, id_antrean }, id_akun) {
