@@ -183,6 +183,6 @@ export function searchPatientsForHistory(q) {
             },
         },
         orderBy: [{ nama_pasien: "asc" }, { id_pasien: "asc" }],
-        take: 20,
+        take: 100,
     });
 }
