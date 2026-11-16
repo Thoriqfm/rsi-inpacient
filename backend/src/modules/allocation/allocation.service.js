@@ -22,7 +22,32 @@ import {
 } from "./allocation.model.js";
 
 function allocationResponse(row) {
-    return { ...row, harga_per_malam_snapshot: row.harga_per_malam_snapshot?.toFixed(2) ?? null };
+    const recaps = row.rekap_list ?? [];
+    const rmeList = row.pasien?.rme_dummy_list ?? [];
+    const hasRecap = recaps.length > 0;
+    const hasReadyRecap = recaps.some((r) => r.status === "Siap Billing");
+    const latestRecapStatus = recaps[0]?.status ?? null;
+    const hasRme =
+        hasRecap ||
+        rmeList.some((r) => new Date(r.tanggal_tindakan) >= new Date(row.waktu_alokasi));
+
+    const { rekap_list: _rekapList, pasien, ...rest } = row;
+    const cleanPasien = pasien
+        ? { no_rm: pasien.no_rm, nama_pasien: pasien.nama_pasien }
+        : undefined;
+
+    return {
+        ...rest,
+        ...(cleanPasien ? { pasien: cleanPasien } : {}),
+        harga_per_malam_snapshot: row.harga_per_malam_snapshot?.toFixed(2) ?? null,
+        readiness: {
+            has_rme: hasRme,
+            has_recap: hasRecap,
+            has_ready_recap: hasReadyRecap,
+            latest_recap_status: latestRecapStatus,
+            can_complete_allocation: hasRme && hasReadyRecap,
+        },
+    };
 }
 
 export async function listAllocations(query) {

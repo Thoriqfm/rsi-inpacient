@@ -16,7 +16,22 @@ const allocationSelect = {
     id_tagihan_kamar: true,
     created_at: true,
     updated_at: true,
-    pasien: { select: { no_rm: true, nama_pasien: true } },
+    pasien: {
+        select: {
+            no_rm: true,
+            nama_pasien: true,
+            rme_dummy_list: {
+                select: { tanggal_tindakan: true },
+                orderBy: { tanggal_tindakan: "desc" },
+                take: 1,
+            },
+        },
+    },
+    rekap_list: {
+        where: { deleted_at: null },
+        orderBy: { id_rekap: "desc" },
+        select: { id_rekap: true, status: true },
+    },
     bed: { select: { no_bed: true, nama_bangsal: true, kelas_perawatan: true } },
     akun: { select: { nama_petugas: true } },
 };

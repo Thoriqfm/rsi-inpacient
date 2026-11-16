@@ -1,4 +1,5 @@
 import {
+  AllocationReadiness,
   BedItem,
   BedStatus,
   BillingDetailItem,
@@ -1756,13 +1757,17 @@ export async function createRoomTariffApi(payload: {
   return (await res.json()).data;
 }
 
+export interface ActiveAllocationSummary {
+  id_alokasi: number;
+  id_pasien: number;
+  waktu_alokasi: string;
+  readiness: AllocationReadiness;
+}
+
 export async function fetchActiveAllocationsMapApi(): Promise<
-  Record<number, { id_alokasi: number; id_pasien: number; waktu_alokasi: string }>
+  Record<number, ActiveAllocationSummary>
 > {
-  const map: Record<
-    number,
-    { id_alokasi: number; id_pasien: number; waktu_alokasi: string }
-  > = {};
+  const map: Record<number, ActiveAllocationSummary> = {};
   let page = 1;
   let totalPages = 1;
   do {
@@ -1780,11 +1785,24 @@ export async function fetchActiveAllocationsMapApi(): Promise<
       const idBed = Number(item.id_bed);
       const idAlokasi = Number(item.id_alokasi);
       const idPasien = Number(item.id_pasien);
+      const rawReadiness = (item.readiness ?? {}) as Record<string, unknown>;
       if (idBed > 0 && idAlokasi > 0) {
         map[idBed] = {
           id_alokasi: idAlokasi,
           id_pasien: idPasien,
           waktu_alokasi: String(item.waktu_alokasi || ""),
+          readiness: {
+            has_rme: Boolean(rawReadiness.has_rme),
+            has_recap: Boolean(rawReadiness.has_recap),
+            has_ready_recap: Boolean(rawReadiness.has_ready_recap),
+            latest_recap_status:
+              typeof rawReadiness.latest_recap_status === "string"
+                ? rawReadiness.latest_recap_status
+                : null,
+            can_complete_allocation: Boolean(
+              rawReadiness.can_complete_allocation
+            ),
+          },
         };
       }
     }
