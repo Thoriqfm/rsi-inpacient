@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 
 
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
@@ -11,7 +11,6 @@ import {
   Receipt,
   Check,
   ChevronLeft,
-  Info,
   AlertTriangle,
 } from "lucide-react";
 import { BillingItem } from "@/types";
@@ -36,6 +35,15 @@ function PenerbitanInvoiceContent() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -87,7 +95,7 @@ function PenerbitanInvoiceContent() {
         showToast(
           `Invoice ${updated.no_tagihan} resmi diterbitkan ("Belum Dibayar").`
         );
-        setTimeout(() => {
+        redirectTimerRef.current = setTimeout(() => {
           router.push(`/pembayaran/${updated.id_tagihan}`);
         }, 1200);
       } else {
@@ -113,10 +121,31 @@ function PenerbitanInvoiceContent() {
     return <RoleAccessDenied moduleName="Penerbitan Invoice" />;
   }
 
-  if (loading || !billing) {
+  if (loading) {
     return (
       <div className="py-20 text-center text-[#8c8c8c] text-xs font-sans">
         Memuat pratinjau penerbitan invoice resmi...
+      </div>
+    );
+  }
+
+  if (!billing) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 space-y-4 font-sans text-xs">
+        <div className="p-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 space-y-1.5">
+          <div className="flex items-center gap-2 font-semibold text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Pratinjau Invoice Tidak Tersedia</span>
+          </div>
+          <p>{errorMsg || "Data draf tagihan tidak ditemukan untuk pasien ini."}</p>
+        </div>
+        <Link
+          href="/pembayaran/buat"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>Kembali ke Buat Tagihan</span>
+        </Link>
       </div>
     );
   }

@@ -6,14 +6,7 @@ import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
 import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Info,
-  Plus,
-  CheckCircle2,
-  Calendar,
-  User,
-} from "lucide-react";
+import { Info, Plus } from "lucide-react";
 import {
   HistoryRecapItem,
   PasienCandidate,
@@ -43,13 +36,17 @@ function InformasiDataPasienContent() {
   const [rmeKeterangan, setRmeKeterangan] = useState("");
   const [addingRme, setAddingRme] = useState(false);
   const [rmeError, setRmeError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [res, tarifRes] = await Promise.all([
         fetchPatientRmeApi(idPasien),
-        user?.role === "SUPER_ADMIN"
+        isSuperAdmin
           ? fetchTariffsApi().catch(() => [] as TarifItem[])
           : Promise.resolve([] as TarifItem[]),
       ]);
@@ -60,10 +57,16 @@ function InformasiDataPasienContent() {
       if (tarifRes.length > 0) {
         setSelectedTarifCode((prev) => prev || tarifRes[0].kode_tindakan);
       }
+    } catch (err: unknown) {
+      setLoadError(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data pasien dan riwayat RME."
+      );
     } finally {
       setLoading(false);
     }
-  }, [idPasien, user?.role]);
+  }, [idPasien, isSuperAdmin]);
 
   const handleAddRme = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +120,27 @@ function InformasiDataPasienContent() {
     return <RoleAccessDenied moduleName="Data Pasien & Riwayat RME" />;
   }
 
-  if (loading || !pasien) {
+  if (loading) {
     return (
       <div className="max-w-[1200px] mx-auto py-16 text-center text-slate-500 text-sm">
         Memuat data pasien dan riwayat layanan dari RME...
+      </div>
+    );
+  }
+
+  if (!pasien) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 space-y-4 text-xs">
+        <div className="p-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 space-y-1.5">
+          <div className="font-semibold text-sm">Data Pasien Tidak Ditemukan</div>
+          <p>{loadError || "Pasien atau riwayat RME tidak dapat dimuat."}</p>
+        </div>
+        <Link
+          href="/rekap-layanan"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium"
+        >
+          ← Kembali ke Rekap Layanan
+        </Link>
       </div>
     );
   }

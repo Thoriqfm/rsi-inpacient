@@ -9,15 +9,12 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock,
-  Activity,
   Edit3,
   Trash2,
   Receipt,
   Info,
   AlertTriangle,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { HistoryRecapItem, HistoryStatus } from "@/types";
 import {

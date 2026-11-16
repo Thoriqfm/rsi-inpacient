@@ -34,10 +34,12 @@ function DetailTagihanContent() {
   // Modal Ubah Status Pembayaran
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedNewStatus, setSelectedNewStatus] = useState<BillingStatus>("Lunas");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Modal Batalkan Tagihan
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -83,7 +85,8 @@ function DetailTagihanContent() {
 
   // Handler Simpan Perubahan Status
   const handleSaveStatus = async () => {
-    if (!billing) return;
+    if (!billing || updatingStatus) return;
+    setUpdatingStatus(true);
     try {
       const updated = await updateBillingStatusApi(
         billing.id_tagihan,
@@ -98,18 +101,21 @@ function DetailTagihanContent() {
       showError(
         err instanceof Error ? err.message : "Gagal mengubah status tagihan."
       );
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
   // Handler Batalkan Tagihan
   const handleConfirmCancel = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!billing) return;
+    if (!billing || cancelling) return;
     if (!cancelReason.trim()) {
       showError("Alasan pembatalan tagihan wajib diisi.");
       return;
     }
 
+    setCancelling(true);
     try {
       const updated = await cancelBillingApi(billing.id_tagihan, cancelReason);
       setBilling(updated);
@@ -119,6 +125,8 @@ function DetailTagihanContent() {
       showError(
         err instanceof Error ? err.message : "Gagal membatalkan tagihan."
       );
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -594,17 +602,19 @@ function DetailTagihanContent() {
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
+                disabled={updatingStatus}
                 onClick={() => setIsStatusModalOpen(false)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
+                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="button"
+                disabled={updatingStatus}
                 onClick={handleSaveStatus}
-                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-[8px] bg-[#00b89f] hover:bg-[#00a28c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Simpan Perubahan
+                {updatingStatus ? "Menyimpan..." : "Simpan Perubahan"}
               </button>
             </div>
           </div>
@@ -663,16 +673,18 @@ function DetailTagihanContent() {
             <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
+                disabled={cancelling}
                 onClick={() => setIsCancelModalOpen(false)}
-                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
+                className="px-4 py-2 rounded-[8px] border border-[#e5e7eb] text-xs font-medium text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer"
+                disabled={cancelling}
+                className="px-4 py-2 rounded-[8px] bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Ya, Batalkan Tagihan
+                {cancelling ? "Membatalkan..." : "Ya, Batalkan Tagihan"}
               </button>
             </div>
           </form>

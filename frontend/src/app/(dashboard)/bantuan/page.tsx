@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, ArrowRight, BookOpen, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ArrowRight, BookOpen } from "lucide-react";
 
 interface GuideItem {
   code: string;

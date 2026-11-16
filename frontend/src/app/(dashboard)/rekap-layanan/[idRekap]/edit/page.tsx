@@ -7,7 +7,6 @@ import React, { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Info,
   User,
   FileText,
@@ -89,10 +88,30 @@ function EditRekapContent() {
     return <RoleAccessDenied moduleName="Edit Rekap Tindakan" />;
   }
 
-  if (loading || !rekap) {
+  if (loading) {
     return (
       <div className="max-w-[1200px] mx-auto py-16 text-center text-slate-500 text-sm">
         Memuat formulir edit rekap...
+      </div>
+    );
+  }
+
+  if (!rekap) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 space-y-4 text-xs">
+        <div className="p-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 space-y-1.5">
+          <div className="flex items-center gap-2 font-semibold text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Data Rekap Tidak Ditemukan</span>
+          </div>
+          <p>{errorMsg || "Rekap riwayat layanan tidak dapat dimuat."}</p>
+        </div>
+        <Link
+          href="/rekap-layanan"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium"
+        >
+          ← Kembali ke Daftar Rekap
+        </Link>
       </div>
     );
   }

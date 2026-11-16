@@ -9,11 +9,9 @@ import {
   Clock,
   Ambulance,
   CheckCircle2,
-  XCircle,
   RefreshCw,
   Bed,
   Building2,
-  Send,
   SlidersHorizontal,
 } from "lucide-react";
 import { BedItem, MonitoringItem } from "@/types";
@@ -43,6 +41,7 @@ export default function PemantauanStatusPage() {
     null
   );
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -51,6 +50,7 @@ export default function PemantauanStatusPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const [mRes, bRes] = await Promise.all([
         fetchMonitoringApi(),
@@ -58,6 +58,12 @@ export default function PemantauanStatusPage() {
       ]);
       setItems(mRes.items);
       setAvailableBeds(bRes.items);
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat data pemantauan status pasien."
+      );
     } finally {
       setLoading(false);
     }
@@ -162,6 +168,18 @@ export default function PemantauanStatusPage() {
       </div>
 
       {/* Sub-navigation Tabs */}
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
+          >
+            Muat Ulang
+          </button>
+        </div>
+      )}
       <AntrianTabs
         waitingCount={waitingQueueCount}
         referralCount={referralTotalCount}
@@ -575,6 +593,7 @@ export default function PemantauanStatusPage() {
       </div>
       {/* Modal Detail & Update Status */}
       <DetailPenangananModal
+        key={selectedItem?.id_pasien ?? "closed"}
         item={selectedItem}
         availableBeds={availableBeds}
         onClose={() => setSelectedItem(null)}

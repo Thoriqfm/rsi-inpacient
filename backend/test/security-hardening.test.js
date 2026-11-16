@@ -3,6 +3,7 @@ import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import app from "../src/app.js";
+import { errorHandler } from "../src/middlewares/error.middleware.js";
 
 let server;
 let baseUrl;
@@ -70,5 +71,33 @@ describe("Security & Production Hardening", () => {
             lastStatus = res.status;
         }
         assert.equal(lastStatus, 429);
+    });
+
+    test("errorHandler maps unhandled Prisma P2002/P2025/P2003 codes without returning 500", () => {
+        const makeRes = () => {
+            const out = { statusCode: 0, body: null };
+            return {
+                out,
+                status(code) {
+                    out.statusCode = code;
+                    return this;
+                },
+                json(payload) {
+                    out.body = payload;
+                    return this;
+                },
+            };
+        };
+
+        for (const [code, expectedStatus, expectedErrCode] of [
+            ["P2002", 409, "CONFLICT"],
+            ["P2025", 404, "NOT_FOUND"],
+            ["P2003", 422, "INVALID_REFERENCE"],
+        ]) {
+            const res = makeRes();
+            errorHandler(Object.assign(new Error("prisma err"), { code }), { method: "POST", originalUrl: "/api/test" }, res);
+            assert.equal(res.out.statusCode, expectedStatus);
+            assert.equal(res.out.body.error.code, expectedErrCode);
+        }
     });
 });
