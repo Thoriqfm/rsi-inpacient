@@ -15,13 +15,19 @@ import {
   searchHistoryPatientsApi,
 } from "@/lib/api-client";
 import {
+  AlertBanner,
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+} from "@/components/ui";
+import {
   ArrowLeft,
   CheckCircle2,
   Lock,
   Search,
   ShieldCheck,
   User,
-  AlertCircle,
   Check,
 } from "lucide-react";
 
@@ -294,8 +300,7 @@ export default function AlokasiBedPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 text-slate-800">
-      {/* Back Link & Header */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Link
           href="/bed-management"
           className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 transition group"
@@ -304,17 +309,11 @@ export default function AlokasiBedPage() {
           <span>Kembali ke Ketersediaan Bed</span>
         </Link>
 
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-            ALOKASI RAWAT INAP
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Alokasi Kamar & Bed Pasien
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl leading-relaxed">
-            Pilih tempat tidur berstatus Tersedia dan tetapkan kamar kepada pasien yang membutuhkan rawat inap.
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="Alokasi Rawat Inap"
+          title="Alokasi Kamar & Bed Pasien"
+          description="Pilih tempat tidur berstatus Tersedia dan tetapkan kamar kepada pasien yang membutuhkan rawat inap."
+        />
       </div>
 
       {/* Main Grid Layout */}
@@ -449,7 +448,7 @@ export default function AlokasiBedPage() {
                               Sesi Kunci Sementara (Row-Level Lock)
                             </span>
                           </div>
-                          <span className="font-mono font-bold text-amber-900 bg-white px-2 py-0.5 rounded border border-amber-200">
+                          <span className="font-mono tabular-nums font-bold text-amber-900 bg-white px-2 py-0.5 rounded border border-amber-200">
                             {formatTimer(lockSeconds)}
                           </span>
                         </div>
@@ -461,18 +460,18 @@ export default function AlokasiBedPage() {
                           <span className="font-medium text-slate-800">
                             Kelas Perawatan:
                           </span>
-                          <span
-                            className={
-                              bed.kelas_perawatan === "VIP"
-                                ? "font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200"
-                                : "font-normal text-slate-600"
-                            }
-                          >
-                            {bed.kelas_perawatan} ({bed.tipe_bed})
-                          </span>
+                          {bed.kelas_perawatan === "VIP" ? (
+                            <Badge tone="amber">
+                              {bed.kelas_perawatan} ({bed.tipe_bed})
+                            </Badge>
+                          ) : (
+                            <span className="font-normal text-slate-600">
+                              {bed.kelas_perawatan} ({bed.tipe_bed})
+                            </span>
+                          )}
                         </div>
                         <div>Fasilitas: {bed.fasilitas}</div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-xs text-slate-500">
                           Terakhir diperbarui: {bed.updated_relative}
                         </div>
                       </div>
@@ -497,12 +496,7 @@ export default function AlokasiBedPage() {
             </div>
 
             {/* Error message */}
-            {errorMsg && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+            {errorMsg && <AlertBanner tone="error" message={errorMsg} />}
 
             {/* Select Patient */}
             <div className="space-y-1.5">
@@ -648,9 +642,13 @@ export default function AlokasiBedPage() {
       </div>
 
       {/* SUCCESS MODAL POPUP AFTER ALLOCATION */}
-      {successResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-5 text-center">
+      <Modal
+        isOpen={!!successResult}
+        onClose={() => setSuccessResult(null)}
+        maxWidthClass="max-w-md"
+      >
+        {successResult && (
+          <div className="space-y-5 text-center">
             <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
             </div>
@@ -665,46 +663,46 @@ export default function AlokasiBedPage() {
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span className="text-slate-500">Pasien:</span>
                 <span className="font-semibold text-slate-900">{successResult.patientName}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span className="text-slate-500">Kamar / Bed:</span>
-                <span className="font-mono font-bold text-slate-900">{successResult.bedNo}</span>
+                <span className="font-mono tabular-nums font-bold text-slate-900">{successResult.bedNo}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center gap-2">
                 <span className="text-slate-500">Status Baru:</span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                <Badge tone="rose" dot>
                   Terisi
-                </span>
+                </Badge>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span className="text-slate-500">Waktu Alokasi:</span>
                 <span className="font-medium text-slate-700">{successResult.time}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
                 onClick={() => setSuccessResult(null)}
-                className="flex-1 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium transition cursor-pointer"
               >
                 Alokasikan Lain
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
                 onClick={() => router.push("/bed-management")}
-                className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition shadow-xs cursor-pointer"
               >
                 Lihat Bed
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

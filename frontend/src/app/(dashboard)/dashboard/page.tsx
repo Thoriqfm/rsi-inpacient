@@ -9,7 +9,6 @@ import {
   ArrowRight,
   FileText,
   TrendingUp,
-  ChevronRight,
 } from "lucide-react";
 import {
   fetchBedsApi,
@@ -20,6 +19,7 @@ import {
 import { BedItem, QueueItem, HistoryRecapItem, BillingItem } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { RoleAccessDenied } from "@/components/layout/RoleAccessDenied";
+import { Card, PageHeader, StatCard } from "@/components/ui";
 
 export default function MainSimrsDashboardPage() {
   const { user } = useAuth();
@@ -66,7 +66,13 @@ export default function MainSimrsDashboardPage() {
       maximumFractionDigits: 0,
     }).format(val);
 
+  const totalBeds = beds.length;
   const bedTersedia = beds.filter((b) => b.status === "Tersedia").length;
+  const bedTerisi = beds.filter((b) => b.status === "Terisi").length;
+  const bedPembersihan = beds.filter((b) => b.status === "Pembersihan").length;
+  const bedPemeliharaan = beds.filter((b) => b.status === "Pemeliharaan").length;
+
+  const pct = (n: number) => (totalBeds > 0 ? Math.round((n / totalBeds) * 100) : 0);
 
   const waitingQueues = queues.filter((q) => q.status === "Menunggu");
   const emergencyQueues = waitingQueues.filter(
@@ -75,9 +81,8 @@ export default function MainSimrsDashboardPage() {
   const siapBillingCount = histories.filter(
     (h) => h.status === "Siap Billing"
   ).length;
-  const totalRevenue = billings
-    .filter((b) => b.status !== "Batal")
-    .reduce((acc, b) => acc + b.total_biaya_num, 0);
+  const activeBillings = billings.filter((b) => b.status !== "Batal");
+  const totalRevenue = activeBillings.reduce((acc, b) => acc + b.total_biaya_num, 0);
 
   if (user?.role === "PETUGAS_BED_MANAGEMENT") {
     return <RoleAccessDenied moduleName="Dashboard SIMRS" />;
@@ -85,163 +90,187 @@ export default function MainSimrsDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-800">
-      {/* Hero Welcome Banner */}
-      <div className="rounded-2xl bg-[#064e3b] text-white p-6 sm:p-8 shadow-sm relative overflow-hidden border border-[#022c22]">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-              PUSAT KENDALI OPERASIONAL SIMRS
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-              Selamat Datang, {user?.nama_petugas || "Petugas Medis & Administrasi"}
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
-              Monitoring ketersediaan tempat tidur rawat inap, antrean pasien FIFO, rekap RME bangsal, dan kasir billing secara terintegrasi real-time.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+      <PageHeader
+        eyebrow="Pusat Kendali Operasional SIMRS"
+        title={`Ringkasan Operasional, ${user?.nama_petugas || "Petugas"}`}
+        description="Pemantauan real-time kapasitas tempat tidur rawat inap, antrean FIFO, rekap tindakan RME, dan status penagihan kasir."
+        actions={
+          <>
             <Link
               href="/bed-management"
-              className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium text-xs flex items-center gap-2 transition"
+              className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs inline-flex items-center gap-1.5 transition"
             >
-              <Bed className="w-4 h-4 text-emerald-300" />
+              <Bed className="w-3.5 h-3.5 text-slate-500" />
               <span>Monitor Kamar</span>
             </Link>
             <Link
               href="/rekap-layanan"
-              className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium text-xs flex items-center gap-2 transition"
+              className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs inline-flex items-center gap-1.5 transition"
             >
-              <FileText className="w-4 h-4 text-emerald-300" />
+              <FileText className="w-3.5 h-3.5 text-slate-500" />
               <span>Rekap Layanan</span>
             </Link>
             <Link
               href="/pembayaran"
-              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition"
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs transition"
             >
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="w-3.5 h-3.5" />
               <span>Billing &amp; Kasir</span>
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* 4 Core KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* KPI 1: Bed Tersedia */}
-        <Link
+        <StatCard
           href="/bed-management"
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-500 hover:shadow-sm transition cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Bed className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Bed Tersedia</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                {loading ? "..." : `Total ${beds.length} Ranap`}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {loading ? "..." : bedTersedia}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </Link>
-
-        {/* KPI 2: Antrean Menunggu */}
-        <Link
+          label="Bed Tersedia"
+          subtitle={loading ? "Memuat..." : `Dari ${totalBeds} total kapasitas`}
+          value={loading ? "—" : bedTersedia}
+          icon={<Bed className="w-5 h-5 stroke-[1.8]" />}
+          tone="emerald"
+        />
+        <StatCard
           href="/sistem-antrian/daftar-tunggu"
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-amber-400 hover:shadow-sm transition cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Antrean Menunggu</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                {emergencyQueues.length > 0 ? `${emergencyQueues.length} Darurat` : "FIFO Terkendali"}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {loading ? "..." : waitingQueues.length}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </Link>
-
-        {/* KPI 3: Rekap Siap Billing */}
-        <Link
+          label="Antrean Menunggu"
+          subtitle={
+            emergencyQueues.length > 0
+              ? `${emergencyQueues.length} Darurat`
+              : "FIFO terkendali"
+          }
+          value={loading ? "—" : waitingQueues.length}
+          icon={<Users className="w-5 h-5 stroke-[1.8]" />}
+          tone="amber"
+        />
+        <StatCard
           href="/rekap-layanan"
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-500 hover:shadow-sm transition cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Siap Billing</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                {loading ? "..." : `${histories.length} Rekap RME`}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {loading ? "..." : siapBillingCount}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </Link>
-
-        {/* KPI 4: Akumulasi Tagihan */}
-        <Link
+          label="Siap Billing"
+          subtitle={loading ? "Memuat..." : `${histories.length} total rekap RME`}
+          value={loading ? "—" : siapBillingCount}
+          icon={<FileText className="w-5 h-5 stroke-[1.8]" />}
+          tone="emerald"
+        />
+        <StatCard
           href="/pembayaran"
-          className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-500 hover:shadow-sm transition cursor-pointer group min-w-0"
-        >
-          <div className="flex items-center gap-3.5 min-w-0 flex-1">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-800 truncate">Total Tagihan</div>
-              <div className="text-base sm:text-lg font-bold text-slate-900 font-mono tracking-tight mt-0.5 truncate tabular-nums">
-                {loading ? "..." : formatRupiah(totalRevenue).replace(",00", "")}
-              </div>
-              <div className="text-[11px] text-emerald-700 font-medium mt-0.5 truncate">
-                {billings.filter((b) => b.status !== "Batal").length} Invoice Aktif
-              </div>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition shrink-0 ml-1" />
-        </Link>
+          label="Total Tagihan Aktif"
+          subtitle={`${activeBillings.length} invoice tercatat`}
+          value={loading ? "—" : formatRupiah(totalRevenue)}
+          icon={<TrendingUp className="w-5 h-5 stroke-[1.8]" />}
+          tone="slate"
+        />
       </div>
+
+      {/* Live Bed Occupancy Telemetry Bar */}
+      <Card className="p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">
+              Distribusi Okupansi Tempat Tidur
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Tingkat keterisian bangsal aktif saat ini:{" "}
+              <strong className="font-mono text-slate-800 tabular-nums">
+                {loading ? "—" : `${pct(bedTerisi)}%`}
+              </strong>{" "}
+              ({bedTerisi} dari {totalBeds} bed terisi pasien)
+            </p>
+          </div>
+          <Link
+            href="/bed-management/alokasi"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1 self-start sm:self-auto"
+          >
+            <span>Buka Alokasi Kamar</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Stacked Progress Bar */}
+        <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex border border-slate-200">
+          {totalBeds > 0 && (
+            <>
+              <div
+                style={{ width: `${(bedTerisi / totalBeds) * 100}%` }}
+                className="bg-rose-500 h-full transition-all duration-300"
+                title={`Terisi: ${bedTerisi}`}
+              />
+              <div
+                style={{ width: `${(bedTersedia / totalBeds) * 100}%` }}
+                className="bg-emerald-500 h-full transition-all duration-300"
+                title={`Tersedia: ${bedTersedia}`}
+              />
+              <div
+                style={{ width: `${(bedPembersihan / totalBeds) * 100}%` }}
+                className="bg-amber-400 h-full transition-all duration-300"
+                title={`Pembersihan: ${bedPembersihan}`}
+              />
+              <div
+                style={{ width: `${(bedPemeliharaan / totalBeds) * 100}%` }}
+                className="bg-slate-400 h-full transition-all duration-300"
+                title={`Pemeliharaan: ${bedPemeliharaan}`}
+              />
+            </>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 text-xs">
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span className="inline-flex items-center gap-2 text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+              Terisi
+            </span>
+            <span className="font-mono font-bold text-slate-900 tabular-nums">
+              {bedTerisi}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span className="inline-flex items-center gap-2 text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              Tersedia
+            </span>
+            <span className="font-mono font-bold text-slate-900 tabular-nums">
+              {bedTersedia}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span className="inline-flex items-center gap-2 text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+              Pembersihan
+            </span>
+            <span className="font-mono font-bold text-slate-900 tabular-nums">
+              {bedPembersihan}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span className="inline-flex items-center gap-2 text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+              Pemeliharaan
+            </span>
+            <span className="font-mono font-bold text-slate-900 tabular-nums">
+              {bedPemeliharaan}
+            </span>
+          </div>
+        </div>
+      </Card>
 
       {/* Module Navigation Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Module 1 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+        <Card className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
           <div className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-              FASILITAS KAMAR &amp; TEMPAT TIDUR
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+              Fasilitas Kamar
             </div>
             <h2 className="text-base font-bold text-slate-900">
               Manajemen Bed &amp; Alokasi Kamar
             </h2>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Pantau ketersediaan ranjang bangsal secara real-time, perbarui status tempat tidur, serta lakukan alokasi kamar pasien baru.
+              Pantau ketersediaan tempat tidur bangsal secara real-time, selesaikan masa inap pasien, serta lakukan alokasi kamar baru.
             </p>
           </div>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
             <Link
               href="/bed-management"
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs inline-flex items-center gap-1.5 transition"
             >
               <span>Ketersediaan Bed</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -253,25 +282,24 @@ export default function MainSimrsDashboardPage() {
               Alokasi Kamar
             </Link>
           </div>
-        </div>
+        </Card>
 
-        {/* Module 2 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+        <Card className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
           <div className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-              LAYANAN ANTREAN &amp; RUJUKAN
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+              Antrean &amp; Rujukan
             </div>
             <h2 className="text-base font-bold text-slate-900">
               Antrean Rawat Inap &amp; Rujukan RS
             </h2>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Kelola antrean pasien stabil berdasarkan urutan pendaftaran (FIFO), dan pantau status rujukan fasilitas jejaring saat kapasitas penuh.
+              Kelola antrean pasien kondisi stabil berdasarkan urutan FIFO dan terbitkan surat rujukan SPGDT ke rumah sakit jejaring.
             </p>
           </div>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
             <Link
               href="/sistem-antrian/daftar-tunggu"
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs inline-flex items-center gap-1.5 transition"
             >
               <span>Daftar Tunggu</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -283,25 +311,24 @@ export default function MainSimrsDashboardPage() {
               Rujukan RS
             </Link>
           </div>
-        </div>
+        </Card>
 
-        {/* Module 3 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+        <Card className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
           <div className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-              KEUANGAN &amp; REKAM MEDIS
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+              RME &amp; Keuangan
             </div>
             <h2 className="text-base font-bold text-slate-900">
-              Rekap RME &amp; Manajemen Billing
+              Rekap Layanan &amp; Manajemen Billing
             </h2>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Verifikasi rekap riwayat tindakan medis dokter dan perawat, validasi kelengkapan berkas, kalkulasi tarif kamar/tindakan otomatis, dan penerbitan faktur tagihan resmi.
+              Verifikasi rekap tindakan medis RME, hitung otomatis tarif kamar dan tindakan, hingga penerbitan serta pelunasan invoice kasir.
             </p>
           </div>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
             <Link
               href="/rekap-layanan"
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs inline-flex items-center gap-1.5 transition"
             >
               <span>Rekap Tindakan</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -313,7 +340,7 @@ export default function MainSimrsDashboardPage() {
               Kelola Billing
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

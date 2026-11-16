@@ -9,8 +9,6 @@ import {
   Building2,
   Phone,
   MapPin,
-  CheckCircle2,
-  AlertTriangle,
   FileText,
   RefreshCw,
   HeartPulse,
@@ -19,6 +17,14 @@ import {
   User,
   ShieldCheck,
 } from "lucide-react";
+import {
+  AlertBanner,
+  Badge,
+  Button,
+  PageHeader,
+  StatCard,
+  Toast,
+} from "@/components/ui";
 import {
   HospitalAvailability,
   PasienCandidate,
@@ -294,37 +300,23 @@ export default function RujukanPasienPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
 
-      {/* PAGE HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-            SISTEM ANTREAN & RUJUKAN
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Rujukan Pasien Darurat (SPGDT)
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-            Kelola alur rujukan darurat ke rumah sakit jejaring saat fasilitas atau ruang intensif di RSI penuh.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={loadData}
-          className="self-start sm:self-auto px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-2 transition cursor-pointer shrink-0 shadow-xs"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? "animate-spin" : ""}`} />
-          <span>Segarkan Status RS</span>
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Sistem Antrean & Rujukan"
+        title="Rujukan Pasien Darurat (SPGDT)"
+        description="Kelola alur rujukan darurat ke rumah sakit jejaring saat fasilitas atau ruang intensif di RSI penuh."
+        actions={
+          <Button variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-emerald-600 ${
+                loading ? "animate-spin" : ""
+              }`}
+            />
+            <span>Segarkan Status RS</span>
+          </Button>
+        }
+      />
 
       {/* SUB-NAVIGATION LINE TABS */}
       <AntrianTabs
@@ -335,57 +327,27 @@ export default function RujukanPasienPage() {
 
       {/* 3 STAT KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        {/* Card 1: Pasien Menunggu Rujukan */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <Ambulance className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">
-                Pasien Menunggu Rujukan
-              </div>
-              <div className="text-[11px] text-slate-500">Kondisi darurat</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {emergencyCandidates.length}
-          </span>
-        </div>
-
-        {/* Card 2: RS Tersedia */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">RS Tersedia</div>
-              <div className="text-[11px] text-slate-500">Siap menerima</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {availableHospitalsCount}
-          </span>
-        </div>
-
-        {/* Card 3: Rujukan Terbit */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">
-                Rujukan Terbit
-              </div>
-              <div className="text-[11px] text-slate-500">Surat resmi terbit</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {referrals.length}
-          </span>
-        </div>
+        <StatCard
+          label="Pasien Menunggu Rujukan"
+          subtitle="Kondisi darurat"
+          value={emergencyCandidates.length}
+          tone="rose"
+          icon={<Ambulance className="w-5 h-5" />}
+        />
+        <StatCard
+          label="RS Tersedia"
+          subtitle="Siap menerima"
+          value={availableHospitalsCount}
+          tone="emerald"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Rujukan Terbit"
+          subtitle="Surat resmi terbit"
+          value={referrals.length}
+          tone="slate"
+          icon={<FileText className="w-5 h-5" />}
+        />
       </div>
 
       {/* MIDDLE 2-COLUMN BALANCED LAYOUT */}
@@ -419,7 +381,7 @@ export default function RujukanPasienPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="py-2.5 px-3 w-10 text-center">NO.</th>
                   <th className="py-2.5 px-3">NAMA PASIEN</th>
                   <th className="py-2.5 px-3">NO. RM</th>
@@ -593,20 +555,9 @@ export default function RujukanPasienPage() {
                             <span className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                               {rs.nama_rs}
                             </span>
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                                isAvail
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-rose-50 text-rose-700 border-rose-200"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  isAvail ? "bg-emerald-600" : "bg-rose-600"
-                                }`}
-                              />
+                            <Badge tone={isAvail ? "emerald" : "rose"} dot>
                               {rs.status_ketersediaan}
-                            </span>
+                            </Badge>
                           </div>
 
                           <div className="text-xs text-slate-500 mt-0.5 truncate">
@@ -790,12 +741,7 @@ export default function RujukanPasienPage() {
 
         {/* Textareas & Form Actions */}
         <form onSubmit={handleCreateReferral} className="space-y-4">
-          {errorMsg && (
-            <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
+          {errorMsg && <AlertBanner tone="error" message={errorMsg} />}
 
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1.5">
@@ -868,7 +814,7 @@ export default function RujukanPasienPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-5">NO. SURAT RUJUKAN</th>
                 <th className="py-3 px-4">PASIEN DARURAT</th>
                 <th className="py-3 px-4">RUMAH SAKIT TUJUAN</th>
@@ -892,8 +838,11 @@ export default function RujukanPasienPage() {
                     <div className="font-semibold text-slate-900">
                       {r.nama_pasien}
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      {r.no_rm} • {r.jenis_kelamin_usia}
+                    <div className="text-xs text-slate-500 font-mono tabular-nums">
+                      {r.no_rm}
+                      {r.jenis_kelamin_usia && r.jenis_kelamin_usia !== "-" && r.jenis_kelamin_usia !== "L/P"
+                        ? ` • ${r.jenis_kelamin_usia}`
+                        : ""}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
@@ -911,30 +860,20 @@ export default function RujukanPasienPage() {
                     </div>
                   </td>
                   <td className="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
+                    <Badge
+                      tone={
                         r.status === "Diterima"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          ? "emerald"
                           : r.status === "Dikirim"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          ? "sky"
                           : r.status === "Batal"
-                          ? "bg-rose-50 text-rose-700 border-rose-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}
+                          ? "rose"
+                          : "amber"
+                      }
+                      dot
                     >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          r.status === "Diterima"
-                            ? "bg-emerald-600"
-                            : r.status === "Dikirim"
-                            ? "bg-blue-600"
-                            : r.status === "Batal"
-                            ? "bg-rose-600"
-                            : "bg-amber-500"
-                        }`}
-                      />
                       {r.status}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="py-3.5 px-5 text-right whitespace-nowrap">
                     <button

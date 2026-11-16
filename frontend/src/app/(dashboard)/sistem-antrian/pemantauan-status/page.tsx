@@ -21,6 +21,14 @@ import {
 } from "@/lib/api-client";
 import { AntrianTabs } from "@/components/sistem-antrian/AntrianTabs";
 import { DetailPenangananModal } from "@/components/sistem-antrian/DetailPenangananModal";
+import {
+  AlertBanner,
+  Badge,
+  Button,
+  PageHeader,
+  StatCard,
+  Toast,
+} from "@/components/ui";
 
 export default function PemantauanStatusPage() {
   const { user } = useAuth();
@@ -133,53 +141,36 @@ export default function PemantauanStatusPage() {
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-            SISTEM ANTREAN & RUJUKAN
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Pemantauan Status Penanganan Pasien
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl leading-relaxed">
-            Lacak progres terintegrasi pasien rawat inap baik di jalur antrean FIFO maupun rujukan SPGDT ke rumah sakit jejaring.
-          </p>
-        </div>
-
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={loadData}
-            className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-2 transition cursor-pointer shadow-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? "animate-spin" : ""}`} />
+      <PageHeader
+        eyebrow="Sistem Antrean & Rujukan"
+        title="Pemantauan Status Penanganan Pasien"
+        description="Lacak progres terintegrasi pasien rawat inap baik di jalur antrean FIFO maupun rujukan SPGDT ke rumah sakit jejaring."
+        actions={
+          <Button variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-emerald-600 ${
+                loading ? "animate-spin" : ""
+              }`}
+            />
             <span>Segarkan Status</span>
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
 
-      {/* Sub-navigation Tabs */}
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
-          <span>{errorMsg}</span>
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
-          >
-            Muat Ulang
-          </button>
-        </div>
+        <AlertBanner
+          tone="error"
+          message={errorMsg}
+          action={
+            <Button size="sm" variant="danger" onClick={() => void loadData()}>
+              Muat Ulang
+            </Button>
+          }
+        />
       )}
+
       <AntrianTabs
         waitingCount={waitingQueueCount}
         referralCount={referralTotalCount}
@@ -188,69 +179,34 @@ export default function PemantauanStatusPage() {
 
       {/* 4 KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Card 1 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Activity className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Total Dipantau</div>
-              <div className="text-[11px] text-slate-500">Antrean & rujukan</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {items.length}
-          </span>
-        </div>
-
-        {/* Card 2 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Antrean Menunggu</div>
-              <div className="text-[11px] text-slate-500">Kondisi stabil</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {waitingQueueCount}
-          </span>
-        </div>
-
-        {/* Card 3 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <Ambulance className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Rujukan Eksternal</div>
-              <div className="text-[11px] text-slate-500">Jejaring SPGDT</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {referralTotalCount}
-          </span>
-        </div>
-
-        {/* Card 4 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Selesai Tertangani</div>
-              <div className="text-[11px] text-slate-500">Dialokasi / diterima</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {completedCount}
-          </span>
-        </div>
+        <StatCard
+          label="Total Dipantau"
+          subtitle="Antrean & rujukan"
+          value={items.length}
+          tone="emerald"
+          icon={<Activity className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Antrean Menunggu"
+          subtitle="Kondisi stabil"
+          value={waitingQueueCount}
+          tone="amber"
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Rujukan Eksternal"
+          subtitle="Jejaring SPGDT"
+          value={referralTotalCount}
+          tone="rose"
+          icon={<Ambulance className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Selesai Tertangani"
+          subtitle="Dialokasi / diterima"
+          value={completedCount}
+          tone="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
       </div>
 
       {/* Filter & Search Bar */}
@@ -318,16 +274,16 @@ export default function PemantauanStatusPage() {
               Menampilkan {filteredItems.length} dari {items.length} pasien dalam pantauan
             </p>
           </div>
-          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+          <Badge tone="emerald" dot>
             Sinkron Real-time
-          </span>
+          </Badge>
         </div>
 
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">PASIEN & NO. RM</th>
                 <th className="py-3 px-4">KONDISI & DIAGNOSA</th>
                 <th className="py-3 px-3">JALUR</th>
@@ -362,8 +318,11 @@ export default function PemantauanStatusPage() {
                         <div className="font-semibold text-slate-900">
                           {item.nama_pasien}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          {item.no_rm} • {item.jenis_kelamin_usia}
+                        <div className="text-xs text-slate-500 font-mono tabular-nums mt-0.5">
+                          {item.no_rm}
+                          {item.jenis_kelamin_usia && item.jenis_kelamin_usia !== "-" && item.jenis_kelamin_usia !== "L/P"
+                            ? ` • ${item.jenis_kelamin_usia}`
+                            : ""}
                         </div>
                       </td>
 
@@ -562,8 +521,11 @@ export default function PemantauanStatusPage() {
                     <div className="font-semibold text-slate-900 text-xs sm:text-sm">
                       {item.nama_pasien}
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      {item.no_rm} • {item.jenis_kelamin_usia}
+                    <div className="text-xs text-slate-500 font-mono tabular-nums">
+                      {item.no_rm}
+                      {item.jenis_kelamin_usia && item.jenis_kelamin_usia !== "-" && item.jenis_kelamin_usia !== "L/P"
+                        ? ` • ${item.jenis_kelamin_usia}`
+                        : ""}
                     </div>
                   </div>
 

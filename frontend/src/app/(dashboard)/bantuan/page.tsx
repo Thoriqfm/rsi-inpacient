@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, BookOpen } from "lucide-react";
+import { Badge, PageHeader } from "@/components/ui";
 
 interface GuideItem {
   code: string;
@@ -91,17 +92,11 @@ const getActorBadge = (actor: string) => {
 export default function BantuanPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 text-slate-800">
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-          DOKUMENTASI OPERASIONAL &amp; PANDUAN SOP
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-          Panduan Alur Kerja SIMRS Rawat Inap
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-          Standar Operasional Prosedur (SOP) integrasi alur pasien dari registrasi, perawatan bangsal, hingga kepulangan.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Dokumentasi Operasional & Panduan SOP"
+        title="Panduan Alur Kerja SIMRS Rawat Inap"
+        description="Standar Operasional Prosedur (SOP) integrasi alur pasien dari registrasi, perawatan bangsal, hingga kepulangan."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {USE_CASE_GUIDES.map((uc) => (
@@ -111,11 +106,11 @@ export default function BantuanPage() {
           >
             <div className="space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-[#064e3b] text-emerald-300">
+                <span className="font-mono tabular-nums text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                   {uc.code}
                 </span>
                 <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getActorBadge(
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getActorBadge(
                     uc.actor
                   )}`}
                 >
@@ -144,16 +139,19 @@ export default function BantuanPage() {
         ))}
       </div>
 
-      <div className="bg-[#064e3b] text-white rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[#022c22] shadow-sm">
+      <div className="bg-emerald-950 text-white rounded-xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-900 shadow-xs">
         <div className="space-y-1.5">
-          <div className="font-bold text-sm flex items-center gap-2 text-emerald-400">
+          <div className="font-bold text-sm flex items-center gap-2 text-emerald-300">
             <CheckCircle2 className="w-4 h-4" />
             <span>Alur Terintegrasi Akhir-ke-Akhir (End-to-End Workflow)</span>
           </div>
-          <p className="text-xs text-emerald-100/80 leading-relaxed max-w-3xl">
+          <p className="text-xs text-emerald-100/85 leading-relaxed max-w-3xl">
             1. Pendaftaran &amp; Alokasi Kamar &rarr; 2. Manajemen Okupansi Bed &rarr; 3. Perawatan &amp; Pemantauan Pasien &rarr; 4. Rekap Tindakan Medis RME &rarr; 5. Perhitungan Biaya &amp; Pelunasan Invoice Kasir.
           </p>
         </div>
+        <Badge tone="emerald" className="shrink-0">
+          SOP Terstandarisasi
+        </Badge>
       </div>
     </div>
   );

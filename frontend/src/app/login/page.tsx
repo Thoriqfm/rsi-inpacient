@@ -72,80 +72,75 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 lg:bg-[#064e3b]">
-      {/* Panel Kiri (Branding & Info) - Sembunyikan di HP, tampilkan di Desktop */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-[#064e3b] via-[#053b2d] to-[#022c22] text-white relative overflow-hidden border-r border-[#022c22]">
-        {/* Glow ambient background circles */}
-        <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-80px] right-[-80px] w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white">
+      {/* Panel Kiri (Identitas Klinis Rumah Sakit) - Tetap menggunakan hijau brand #064e3b tanpa efek glow blur generik */}
+      <div className="hidden lg:flex lg:w-[48%] flex-col justify-between p-12 bg-[#064e3b] text-white border-r border-[#022c22]">
         {/* Top Header: Brand & Identity */}
-        <div className="relative z-10">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500 text-white font-bold flex items-center justify-center text-2xl shadow-lg shadow-emerald-950/40">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white font-bold flex items-center justify-center text-xl">
               +
             </div>
             <div>
-              <div className="text-white font-bold text-xl tracking-tight leading-none">
+              <div className="text-white font-bold text-lg tracking-tight leading-none">
                 Inpatient Care
               </div>
-              <p className="text-xs text-emerald-300/80 font-medium tracking-wide mt-1">
+              <p className="text-xs text-emerald-200/80 font-medium mt-1">
                 Sistem Informasi Rawat Inap RSI
               </p>
             </div>
           </div>
         </div>
 
-        {/* Middle Content */}
-        <div className="relative z-10 my-auto py-8 space-y-6 max-w-xl">
-          <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+        {/* Middle Content: Structured Swiss Grid */}
+        <div className="my-auto py-8 space-y-7 max-w-lg">
+          <div className="space-y-2.5">
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
               HOSPITAL OPERATIONS PLATFORM
             </div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Selamat Datang di SIMRS Rawat Inap
+            <h1 className="text-3xl font-bold text-white tracking-tight leading-snug">
+              Kendali Terintegrasi Operasional Rawat Inap
             </h1>
-            <p className="text-sm text-emerald-100/80 leading-relaxed">
-              Platform terintegrasi untuk pemantauan ketersediaan tempat tidur, antrean darurat IGD, rekam medis elektronik, dan kasir billing.
+            <p className="text-sm text-emerald-100/85 leading-relaxed">
+              Satu sistem operasional terstruktur untuk pemantauan ketersediaan bed bangsal, antrean FIFO, rujukan SPGDT, rekap tindakan RME, dan kasir billing rumah sakit.
             </p>
           </div>
 
-          {/* 3 Value Pillars */}
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="p-4 rounded-xl bg-[#053f30] border border-emerald-700/60">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2.5">
                 <Bed className="w-4 h-4" />
               </div>
-              <div className="text-xs font-bold text-white">Bed Management</div>
-              <div className="text-[11px] text-emerald-200/70 mt-0.5">Real-time status ranap</div>
+              <div className="text-xs font-semibold text-white">Inventaris Bed</div>
+              <div className="text-xs text-emerald-200/75 mt-0.5">Kontrol status bangsal</div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
+            <div className="p-4 rounded-xl bg-[#053f30] border border-emerald-700/60">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2.5">
                 <Activity className="w-4 h-4" />
               </div>
-              <div className="text-xs font-bold text-white">Antrean &amp; SPGDT</div>
-              <div className="text-[11px] text-emerald-200/70 mt-0.5">FIFO &amp; RS jejaring</div>
+              <div className="text-xs font-semibold text-white">FIFO &amp; Rujukan</div>
+              <div className="text-xs text-emerald-200/75 mt-0.5">Antrean &amp; SPGDT IGD</div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2">
+            <div className="p-4 rounded-xl bg-[#053f30] border border-emerald-700/60">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-2.5">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <div className="text-xs font-bold text-white">RME &amp; Billing</div>
-              <div className="text-[11px] text-emerald-200/70 mt-0.5">Invoice resmi kasir</div>
+              <div className="text-xs font-semibold text-white">RME &amp; Billing</div>
+              <div className="text-xs text-emerald-200/75 mt-0.5">Tagihan resmi kasir</div>
             </div>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-[11px] text-emerald-300/60">
-          &copy; 2026 RSI Inpatient Care Platform. Terstandarisasi Kemenkes RI.
+        <div className="text-xs text-emerald-200/70 border-t border-emerald-800/70 pt-5">
+          &copy; 2026 RSI Inpatient Care Platform • Akses Terbatas Petugas Terdaftar
         </div>
       </div>
 
-      {/* Panel Form Login: Full-width di HP, 50% di Desktop, dengan pb-20 agar tidak overlap */}
-      <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-10 pb-20 bg-slate-50 lg:bg-white">
+      {/* Panel Form Login: Latar putih bersih */}
+      <div className="w-full lg:w-[52%] min-h-screen flex items-center justify-center p-6 sm:p-10 pb-20 bg-white">
         <div className="max-w-sm w-full mx-auto space-y-6">
           {/* Header khusus mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-2">

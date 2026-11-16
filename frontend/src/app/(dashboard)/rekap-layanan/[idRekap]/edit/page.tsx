@@ -14,10 +14,10 @@ import {
   Activity,
   ChevronDown,
   AlertTriangle,
-  Lock,
 } from "lucide-react";
 import { HistoryRecapItem, HistoryStatus } from "@/types";
 import { fetchHistoryByIdApi, updateHistoryApi } from "@/lib/api-client";
+import { AlertBanner, Badge, Button, PageHeader } from "@/components/ui";
 
 function EditRekapContent() {
   const { user } = useAuth();
@@ -123,104 +123,88 @@ function EditRekapContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-16 text-slate-800">
-      {/* Breadcrumb & Header */}
-      <div className="space-y-1">
-        <p className="font-semibold text-emerald-700 text-xs tracking-wider uppercase">
-          PERBARUI REKAP
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-          Edit Rekap Riwayat Layanan &amp; Tindakan
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-          Data pasien dan riwayat RME bersifat read-only. Lengkapi informasi administratif rekap.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Perbarui Rekap"
+        title="Edit Rekap Riwayat Layanan & Tindakan"
+        description="Data pasien dan riwayat RME bersifat read-only. Lengkapi informasi administratif rekap."
+      />
 
       {isLocked && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-3">
-          <Lock className="w-5 h-5 text-amber-600 shrink-0" />
-          <span>
-            Dokumen rekap <strong>{rekap.kode_rekap}</strong> sudah berstatus{" "}
-            <strong>Siap Billing</strong> dan terkunci secara administratif.
-            Data tidak dapat diubah kembali.
-          </span>
-        </div>
+        <AlertBanner
+          tone="warning"
+          message={`Dokumen rekap ${rekap.kode_rekap} sudah berstatus Siap Billing dan terkunci secara administratif. Data tidak dapat diubah kembali.`}
+        />
       )}
 
-      {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
+      {errorMsg && <AlertBanner tone="error" message={errorMsg} />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (8 cols) */}
           <div className="lg:col-span-8 space-y-6">
             {/* Card 1: Ringkasan Pasien & Rekam Medis */}
-            <div className="bg-white border border-[#e9ebf0] rounded-[12px] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.05)] space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
                 <div>
-                  <h2 className="text-[15px] font-semibold text-[#1e1e1e]">
+                  <h2 className="text-base font-semibold text-slate-900">
                     Ringkasan Pasien &amp; Rekam Medis
                   </h2>
-                  <p className="text-[11px] text-[#667085] mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Informasi berikut diambil langsung dari RME
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium">
+                <Badge tone="slate">
                   <Info className="w-3.5 h-3.5" />
                   <span>Tidak dapat diubah</span>
-                </span>
+                </Badge>
               </div>
 
-              {/* 6 Patient Details Grid */}
+              {/* Patient Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">Nama Pasien</span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
+                  <span className="text-xs text-slate-500 block">Nama Pasien</span>
+                  <span className="text-sm font-medium text-slate-900 mt-0.5 block">
                     {rekap.nama_pasien}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">
+                  <span className="text-xs text-slate-500 block">
                     Nomor Rekam Medis
                   </span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
+                  <span className="text-sm font-mono tabular-nums font-medium text-slate-900 mt-0.5 block">
                     {rekap.no_rm}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">Jenis Kelamin</span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-                    {rekap.jenis_kelamin_usia.startsWith("L")
-                      ? "Laki-laki"
-                      : "Perempuan"}
+                  <span className="text-xs text-slate-500 block">
+                    Jenis Kelamin &amp; Usia
+                  </span>
+                  <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+                    {rekap.jenis_kelamin_usia || "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">
-                    Tanggal Lahir / Usia
+                  <span className="text-xs text-slate-500 block">
+                    Dokter DPJP
                   </span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-                    12 Mei 1994 ({rekap.jenis_kelamin_usia})
+                  <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+                    {rekap.dokter_dpjp || "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">
+                  <span className="text-xs text-slate-500 block">
                     Periode Perawatan
                   </span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-                    {rekap.periode_perawatan || "18–22 Februari 2026"}
+                  <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+                    {rekap.periode_perawatan || "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-[#98a2b3] block">
+                  <span className="text-xs text-slate-500 block">
                     Ruang Perawatan
                   </span>
-                  <span className="text-[13px] font-medium text-[#1e1e1e] mt-0.5 block">
-                    {rekap.kelas_perawatan} • {rekap.nama_kamar || "Kamar 204"}
+                  <span className="text-sm font-medium text-slate-900 mt-0.5 block">
+                    {rekap.kelas_perawatan} • {rekap.nama_kamar || "Kamar Rawat Inap"}
                   </span>
                 </div>
               </div>
@@ -228,41 +212,41 @@ function EditRekapContent() {
               {/* Pratinjau Riwayat RME */}
               <div className="pt-2 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[13px] font-semibold text-[#1e1e1e]">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                     Pratinjau Riwayat RME
                   </h3>
                   <button
                     type="button"
                     onClick={() => setShowAllRme(!showAllRme)}
-                    className="text-[11px] font-medium text-[#0b796b] hover:text-[#07594f] cursor-pointer"
+                    className="text-xs font-medium text-emerald-700 hover:text-emerald-800 cursor-pointer"
                   >
                     {showAllRme ? "Tampilkan Lebih Sedikit" : "Lihat Seluruh Riwayat >"}
                   </button>
                 </div>
 
-                <div className="border border-[#e9ebf0] rounded-[9px] overflow-hidden">
-                  <table className="w-full text-left border-collapse text-[11px]">
+                <div className="border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf9] border-b border-[#e9ebf0] text-[9px] font-medium text-[#667085] uppercase tracking-[0.225px]">
-                        <th className="py-2.5 pl-4 pr-2 w-[40px]">No.</th>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <th className="py-2.5 pl-4 pr-2 w-10">No.</th>
                         <th className="py-2.5 px-3">Jenis Layanan / Tindakan</th>
                         <th className="py-2.5 px-3">Tanggal &amp; Waktu</th>
                         <th className="py-2.5 pl-3 pr-4">Tenaga Kesehatan</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf0f1]">
+                    <tbody className="divide-y divide-slate-100">
                       {displayedItems.map((r, idx) => (
-                        <tr key={r.id_detail_rekap}>
-                          <td className="py-2.5 pl-4 pr-2 text-[#475467]">
+                        <tr key={r.id_detail_rekap} className="hover:bg-slate-50/60">
+                          <td className="py-2.5 pl-4 pr-2 text-slate-500 font-mono tabular-nums">
                             {idx + 1}
                           </td>
-                          <td className="py-2.5 px-3 font-medium text-[#1e1e1e]">
+                          <td className="py-2.5 px-3 font-medium text-slate-900">
                             {r.nama_tindakan}
                           </td>
-                          <td className="py-2.5 px-3 text-[#475467]">
-                            {r.tanggal_tindakan_formatted || "18 Feb 2026, 10.15"}
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {r.tanggal_tindakan_formatted || "-"}
                           </td>
-                          <td className="py-2.5 pl-3 pr-4 text-[#475467]">
+                          <td className="py-2.5 pl-3 pr-4 text-slate-600">
                             {r.dokter_pelaksana || rekap.dokter_dpjp}
                           </td>
                         </tr>
@@ -274,19 +258,19 @@ function EditRekapContent() {
             </div>
 
             {/* Card 2: Informasi Administratif Rekap */}
-            <div className="bg-white border border-[#e9ebf0] rounded-[12px] p-6 shadow-[0px_4px_8px_rgba(26,39,50,0.05)] space-y-5">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-[15px] font-semibold text-[#1e1e1e]">
+                <h2 className="text-base font-semibold text-slate-900">
                   Informasi Administratif Rekap
                 </h2>
-                <p className="text-[11px] text-[#667085] mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Perubahan tersimpan setelah Anda menekan Simpan Perubahan
                 </p>
               </div>
 
               {/* Status Rekap */}
               <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-[#344054] block">
+                <label className="text-xs font-semibold text-slate-700 block">
                   Status Rekap <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -294,7 +278,7 @@ function EditRekapContent() {
                     disabled={isLocked}
                     value={status}
                     onChange={(e) => setStatus(e.target.value as HistoryStatus)}
-                    className="w-full bg-[#fbfcfc] border border-[#d7dce4] rounded-[9px] px-3.5 py-2.5 text-[12px] text-[#1e1e1e] appearance-none focus:outline-none focus:ring-1 focus:ring-[#0fa18f] disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="Draft">Draft</option>
                     <option value="Proses Verifikasi">Proses Verifikasi</option>
@@ -302,7 +286,7 @@ function EditRekapContent() {
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
                 </div>
-                <p className="text-[11px] text-[#98a2b3]">
+                <p className="text-xs text-slate-500">
                   {status === "Draft"
                     ? "Rekap masih dapat dilengkapi dan belum masuk proses pemeriksaan."
                     : status === "Proses Verifikasi"
@@ -314,11 +298,11 @@ function EditRekapContent() {
               {/* Catatan Administrasi */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[12px] font-medium text-[#344054]">
+                  <label className="text-xs font-semibold text-slate-700">
                     Catatan Administrasi{" "}
-                    <span className="text-[#98a2b3] font-normal">Opsional</span>
+                    <span className="text-slate-400 font-normal">Opsional</span>
                   </label>
-                  <span className="text-[10px] text-[#98a2b3]">
+                  <span className="text-xs font-mono tabular-nums text-slate-400">
                     {catatan.length}/500
                   </span>
                 </div>
@@ -329,15 +313,15 @@ function EditRekapContent() {
                   value={catatan}
                   onChange={(e) => setCatatan(e.target.value)}
                   placeholder="Tambahkan catatan administratif untuk rekap ini..."
-                  className="w-full bg-[#fbfcfc] border border-[#d7dce4] rounded-[9px] p-3 text-[12px] text-[#1e1e1e] placeholder-[#a6acb5] focus:outline-none focus:ring-1 focus:ring-[#0fa18f] disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg p-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
 
               {/* Keterangan */}
               <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-[#344054] block">
+                <label className="text-xs font-semibold text-slate-700 block">
                   Keterangan{" "}
-                  <span className="text-[#98a2b3] font-normal">Opsional</span>
+                  <span className="text-slate-400 font-normal">Opsional</span>
                 </label>
                 <textarea
                   rows={2}
@@ -345,7 +329,7 @@ function EditRekapContent() {
                   value={keterangan}
                   onChange={(e) => setKeterangan(e.target.value)}
                   placeholder="Tambahkan keterangan jika diperlukan..."
-                  className="w-full bg-[#fbfcfc] border border-[#d7dce4] rounded-[9px] p-3 text-[12px] text-[#1e1e1e] placeholder-[#a6acb5] focus:outline-none focus:ring-1 focus:ring-[#0fa18f] disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg p-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
             </div>
@@ -353,48 +337,49 @@ function EditRekapContent() {
 
           {/* Right Column (Sidebar, 4 cols) */}
           <div className="lg:col-span-4 space-y-4 sticky top-24">
-            {/* Card 1: Ringkasan Rekap */}
-            <div className="bg-white border border-[#e9ebf0] rounded-[12px] p-5 shadow-[0px_4px_8px_rgba(26,39,50,0.05)] space-y-4">
-              <h3 className="text-[11px] font-semibold text-[#667085] tracking-wider uppercase border-b border-slate-100 pb-3">
-                RINGKASAN REKAP
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <h3 className="text-xs font-semibold text-slate-500 tracking-wider uppercase border-b border-slate-100 pb-3">
+                Ringkasan Rekap
               </h3>
 
               <div className="space-y-3.5 text-xs">
                 <div className="flex items-start gap-3">
-                  <User className="w-4 h-4 text-[#0fa18f] shrink-0 mt-0.5" />
+                  <User className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-[#98a2b3] block">Pasien</span>
-                    <span className="font-medium text-[#1e1e1e]">
+                    <span className="text-xs text-slate-500 block">Pasien</span>
+                    <span className="font-semibold text-slate-900">
                       {rekap.nama_pasien}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <FileText className="w-4 h-4 text-[#0fa18f] shrink-0 mt-0.5" />
+                  <FileText className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-[#98a2b3] block">Nomor RM</span>
-                    <span className="font-medium text-[#1e1e1e]">{rekap.no_rm}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-[#0fa18f] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-[10px] text-[#98a2b3] block">Periode</span>
-                    <span className="font-medium text-[#1e1e1e]">
-                      {rekap.periode_perawatan || "18–22 Februari 2026"}
+                    <span className="text-xs text-slate-500 block">Nomor RM</span>
+                    <span className="font-mono tabular-nums font-semibold text-slate-900">
+                      {rekap.no_rm}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Activity className="w-4 h-4 text-[#0fa18f] shrink-0 mt-0.5" />
+                  <Calendar className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-[#98a2b3] block">
+                    <span className="text-xs text-slate-500 block">Periode</span>
+                    <span className="font-semibold text-slate-900">
+                      {rekap.periode_perawatan || "-"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Activity className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs text-slate-500 block">
                       Layanan &amp; Tindakan
                     </span>
-                    <span className="font-medium text-[#1e1e1e]">
+                    <span className="font-mono tabular-nums font-semibold text-slate-900">
                       {rekap.jumlah_tindakan} item
                     </span>
                   </div>
@@ -402,17 +387,10 @@ function EditRekapContent() {
               </div>
             </div>
 
-            {/* Card 2: Blue Notice Box */}
-            <div className="rounded-[12px] bg-[#eff8ff] border border-[#b2ddff] p-4 flex items-start gap-3 text-xs text-[#175cd3]">
-              <Info className="w-4 h-4 text-[#2e90fa] shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <p className="font-semibold text-[11px]">Pemisahan data</p>
-                <p className="text-[11px] text-[#175cd3]/90 leading-relaxed">
-                  Hanya status, catatan administrasi, dan keterangan yang dapat
-                  diubah di halaman ini.
-                </p>
-              </div>
-            </div>
+            <AlertBanner
+              tone="info"
+              message="Pemisahan data: hanya status, catatan administrasi, dan keterangan yang dapat diubah di halaman ini."
+            />
           </div>
         </div>
 
@@ -425,17 +403,18 @@ function EditRekapContent() {
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <Link
               href={`/rekap-layanan/${idRekap}`}
-              className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
+              className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition"
             >
               Batal
             </Link>
-            <button
+            <Button
               type="submit"
+              size="sm"
+              loading={saving}
               disabled={saving || isLocked}
-              className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? "Menyimpan..." : "Simpan Perubahan"}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

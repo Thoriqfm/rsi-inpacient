@@ -15,6 +15,15 @@ import { UbahStatusModal } from "@/components/bed-management/UbahStatusModal";
 import { KonfirmasiHapusModal } from "@/components/bed-management/KonfirmasiHapusModal";
 import { PenolakanHapusModal } from "@/components/bed-management/PenolakanHapusModal";
 import {
+  AlertBanner,
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+  StatCard,
+  Toast,
+} from "@/components/ui";
+import {
   Bed,
   Plus,
   Users,
@@ -22,14 +31,12 @@ import {
   Building2,
   Star,
   ChevronDown,
-  ChevronRight,
   Trash2,
   CheckCircle2,
   AlertCircle,
   Wrench,
   Sparkles,
   ArrowRight,
-  ShieldAlert,
   Lock,
 } from "lucide-react";
 
@@ -230,208 +237,116 @@ export default function BedManagementPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
 
-      {/* Backend Connection Error Banner */}
       {loadError && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{loadError}</span>
-          </div>
-          <button
-            type="button"
-            onClick={loadData}
-            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition shrink-0 cursor-pointer"
-          >
-            Coba Lagi
-          </button>
-        </div>
+        <AlertBanner
+          tone="warning"
+          message={loadError}
+          action={
+            <Button size="sm" variant="warning" onClick={loadData}>
+              Coba Lagi
+            </Button>
+          }
+        />
       )}
 
-      {/* PAGE HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-            MANAJEMEN INVENTARIS KAMAR
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Pemantauan & Ketersediaan Bed
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-            Kelola inventaris kamar rawat inap dan pantau status ketersediaan tempat tidur secara real-time.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Manajemen Inventaris Kamar"
+        title="Pemantauan & Ketersediaan Bed"
+        description="Kelola inventaris kamar rawat inap dan pantau status ketersediaan tempat tidur secara real-time."
+        actions={
+          <>
+            {canAllocateBed && (
+              <Link
+                href="/bed-management/alokasi"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium shadow-xs transition-colors"
+              >
+                <Bed className="w-4 h-4 text-slate-500" />
+                <span>Alokasi Kamar</span>
+              </Link>
+            )}
 
-        {/* Action Buttons with RBAC */}
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          {canAllocateBed && (
+            {canManageMasterBed && (
+              <Button onClick={() => setIsTambahOpen(true)}>
+                <Plus className="w-4 h-4 stroke-[2.25]" />
+                <span>Tambah Bed Baru</span>
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      {isSuperAdmin ? (
+        <AlertBanner
+          tone="info"
+          message="Super Admin (Akses Penuh): Anda memiliki wewenang mengelola master bed serta melakukan alokasi kamar pasien."
+          action={
             <Link
               href="/bed-management/alokasi"
-              className="px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium flex items-center gap-2 shadow-xs transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors"
             >
-              <Bed className="w-4 h-4 text-slate-500" />
-              <span>Alokasi Kamar</span>
+              <span>Form Alokasi</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          )}
-
-          {canManageMasterBed && (
-            <button
-              type="button"
-              onClick={() => setIsTambahOpen(true)}
-              className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium shadow-xs flex items-center gap-2 transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Tambah Bed Baru</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* RBAC Notice Banner */}
-      {isSuperAdmin ? (
-        <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-purple-600 shrink-0" />
-            <span>
-              <strong>Super Admin (Akses Penuh)</strong> — Anda memiliki wewenang mengelola master bed serta melakukan alokasi kamar pasien.
-            </span>
-          </div>
-          <Link
-            href="/bed-management/alokasi"
-            className="px-3.5 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-medium shrink-0 transition"
-          >
-            Form Alokasi &rarr;
-          </Link>
-        </div>
-      ) : !canManageMasterBed && (
-        <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>
-              <strong>Peran: Petugas Administrasi</strong> — Anda dapat memantau ketersediaan dan melakukan <em>Alokasi Kamar Pasien</em>. Pengelolaan master bed adalah wewenang <em>Petugas Bed Management</em>.
-            </span>
-          </div>
-          <Link
-            href="/bed-management/alokasi"
-            className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shrink-0 transition"
-          >
-            Form Alokasi &rarr;
-          </Link>
-        </div>
+          }
+        />
+      ) : (
+        !canManageMasterBed && (
+          <AlertBanner
+            tone="success"
+            message="Peran Petugas Administrasi: Anda dapat memantau ketersediaan dan melakukan Alokasi Kamar Pasien. Pengelolaan master bed dikelola Petugas Bed Management."
+            action={
+              <Link
+                href="/bed-management/alokasi"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium transition-colors"
+              >
+                <span>Form Alokasi</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            }
+          />
+        )
       )}
 
       {/* 4 SUMMARY METRIC CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Card 1: Tersedia */}
-        <div
+        <StatCard
+          label="Tersedia"
+          subtitle="Siap ditempati"
+          value={metrics.tersedia}
+          tone="emerald"
+          active={statusTab === "Tersedia"}
           onClick={() => setStatusTab("Tersedia")}
-          className={`bg-white rounded-xl border p-4 sm:p-4.5 flex items-center justify-between shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer group ${
-            statusTab === "Tersedia"
-              ? "border-emerald-600 ring-2 ring-emerald-500/30"
-              : "border-slate-200/90 hover:border-emerald-400"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Bed className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Tersedia</div>
-              <div className="text-[11px] text-slate-500">Siap ditempati</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {metrics.tersedia}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </div>
-
-        {/* Card 2: Terisi */}
-        <div
+          icon={<Bed className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Terisi"
+          subtitle="Digunakan pasien"
+          value={metrics.terisi}
+          tone="rose"
+          active={statusTab === "Terisi"}
           onClick={() => setStatusTab("Terisi")}
-          className={`bg-white rounded-xl border p-4 sm:p-4.5 flex items-center justify-between shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer group ${
-            statusTab === "Terisi"
-              ? "border-rose-500 ring-2 ring-rose-500/30"
-              : "border-slate-200/90 hover:border-rose-300"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Terisi</div>
-              <div className="text-[11px] text-slate-500">Digunakan pasien</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {metrics.terisi}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </div>
-
-        {/* Card 3: Pembersihan */}
-        <div
+          icon={<Users className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Pembersihan"
+          subtitle="Proses sterilisasi"
+          value={metrics.pembersihan}
+          tone="amber"
+          active={statusTab === "Pembersihan"}
           onClick={() => setStatusTab("Pembersihan")}
-          className={`bg-white rounded-xl border p-4 sm:p-4.5 flex items-center justify-between shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer group ${
-            statusTab === "Pembersihan"
-              ? "border-amber-500 ring-2 ring-amber-500/30"
-              : "border-slate-200/90 hover:border-amber-300"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Pembersihan</div>
-              <div className="text-[11px] text-slate-500">Proses sterilisasi</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {metrics.pembersihan}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </div>
-
-        {/* Card 4: Pemeliharaan */}
-        <div
+          icon={<Sparkles className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Pemeliharaan"
+          subtitle="Perbaikan fasilitas"
+          value={metrics.pemeliharaan}
+          tone="slate"
+          active={statusTab === "Pemeliharaan"}
           onClick={() => setStatusTab("Pemeliharaan")}
-          className={`bg-white rounded-xl border p-4 sm:p-4.5 flex items-center justify-between shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer group ${
-            statusTab === "Pemeliharaan"
-              ? "border-slate-500 ring-2 ring-slate-400/30"
-              : "border-slate-200/90 hover:border-slate-400"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-              <Wrench className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Pemeliharaan</div>
-              <div className="text-[11px] text-slate-500">Perbaikan fasilitas</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {metrics.pemeliharaan}
-            </span>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
-          </div>
-        </div>
+          icon={<Wrench className="w-5 h-5" />}
+        />
       </div>
 
       {/* MAIN DATA PANEL: DUAL-MODE TABLE & FILTER */}
@@ -574,7 +489,7 @@ export default function BedManagementPage() {
                       </td>
 
                       {/* ID Bed */}
-                      <td className="py-3.5 px-4 font-bold text-xs text-slate-900">
+                      <td className="py-3.5 px-4 font-mono tabular-nums font-semibold text-xs text-slate-900">
                         {bed.no_bed}
                       </td>
 
@@ -586,9 +501,7 @@ export default function BedManagementPage() {
                       {/* Kelas Perawatan */}
                       <td className="py-3.5 px-4">
                         {bed.kelas_perawatan === "VIP" ? (
-                          <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                            VIP
-                          </span>
+                          <Badge tone="amber">VIP</Badge>
                         ) : (
                           <span className="text-xs text-slate-600 font-medium">
                             {bed.kelas_perawatan}
@@ -600,21 +513,19 @@ export default function BedManagementPage() {
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex flex-col items-center gap-1">
                           {bed.status === "Tersedia" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                            <Badge tone="emerald" dot>
                               Tersedia
-                            </span>
+                            </Badge>
                           )}
                           {bed.status === "Terisi" && (
                             <>
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                              <Badge tone="rose" dot>
                                 Terisi
-                              </span>
+                              </Badge>
                               {bed.occupant && (
-                                <span className="text-[11px] font-medium text-slate-600">
+                                <span className="text-xs font-medium text-slate-700">
                                   {bed.occupant.nama_pasien}{" "}
-                                  <span className="font-mono text-[10px] text-slate-400">
+                                  <span className="font-mono tabular-nums text-xs text-slate-500">
                                     ({bed.occupant.no_rm})
                                   </span>
                                 </span>
@@ -622,16 +533,14 @@ export default function BedManagementPage() {
                             </>
                           )}
                           {bed.status === "Pembersihan" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <Badge tone="amber" dot>
                               Pembersihan
-                            </span>
+                            </Badge>
                           )}
                           {bed.status === "Pemeliharaan" && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                            <Badge tone="slate" dot>
                               Pemeliharaan
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       </td>
@@ -723,45 +632,37 @@ export default function BedManagementPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-900">
+                      <span className="font-mono tabular-nums font-bold text-sm text-slate-900">
                         {bed.no_bed}
                       </span>
                       {bed.kelas_perawatan === "VIP" ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                          VIP
-                        </span>
+                        <Badge tone="amber">VIP</Badge>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
-                          {bed.kelas_perawatan}
-                        </span>
+                        <Badge tone="slate">{bed.kelas_perawatan}</Badge>
                       )}
                     </div>
 
                     {/* Status Pill */}
                     <div>
                       {bed.status === "Tersedia" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        <Badge tone="emerald" dot>
                           Tersedia
-                        </span>
+                        </Badge>
                       )}
                       {bed.status === "Terisi" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                        <Badge tone="rose" dot>
                           Terisi
-                        </span>
+                        </Badge>
                       )}
                       {bed.status === "Pembersihan" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <Badge tone="amber" dot>
                           Pembersihan
-                        </span>
+                        </Badge>
                       )}
                       {bed.status === "Pemeliharaan" && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        <Badge tone="slate" dot>
                           Pemeliharaan
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -927,151 +828,155 @@ export default function BedManagementPage() {
       />
 
       {/* MODAL 5: KONFIRMASI SELESAIKAN ALOKASI (DISCHARGE) */}
-      {selectedCloseAlloc && (() => {
-        const { bed, alloc } = selectedCloseAlloc;
-        const { has_rme, has_recap, has_ready_recap, latest_recap_status, can_complete_allocation } =
-          alloc.readiness;
-        return (
-          <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {can_complete_allocation
-                    ? "Selesaikan Alokasi Kamar?"
-                    : "Alokasi Belum Siap Diselesaikan"}
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Pasien{" "}
-                  <strong>
-                    {bed.occupant?.nama_pasien || "Rawat Inap"}
-                  </strong>{" "}
-                  pada bed{" "}
-                  <strong className="font-mono">{bed.no_bed}</strong>.
-                  {can_complete_allocation
-                    ? " Status bed akan kembali menjadi Tersedia dan biaya kamar final siap ditagihkan pada modul Billing."
-                    : " Selesaikan pencatatan RME dan verifikasi Rekap Layanan terlebih dahulu agar periode layanan dan biaya kamar tidak error saat pembuatan tagihan."}
-                </p>
-              </div>
-
-              {/* Checklist Syarat Penyelesaian Alokasi */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5 text-xs">
-                <div className="flex items-start gap-2.5">
-                  {has_rme ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <div className="font-semibold text-slate-800">
-                      1. Tindakan Medis (RME) Tercatat
+      <Modal
+        isOpen={!!selectedCloseAlloc}
+        onClose={() => !closingAlloc && setSelectedCloseAlloc(null)}
+        title={
+          selectedCloseAlloc?.alloc.readiness.can_complete_allocation
+            ? "Selesaikan Alokasi Kamar?"
+            : "Alokasi Belum Siap Diselesaikan"
+        }
+        description={
+          selectedCloseAlloc
+            ? `Pasien ${
+                selectedCloseAlloc.bed.occupant?.nama_pasien || "Rawat Inap"
+              } pada bed ${selectedCloseAlloc.bed.no_bed}. ${
+                selectedCloseAlloc.alloc.readiness.can_complete_allocation
+                  ? "Status bed akan kembali menjadi Tersedia dan biaya kamar final siap ditagihkan pada modul Billing."
+                  : "Selesaikan pencatatan RME dan verifikasi Rekap Layanan terlebih dahulu agar periode layanan dan biaya kamar akurat saat pembuatan tagihan."
+              }`
+            : undefined
+        }
+        maxWidthClass="max-w-md"
+      >
+        {selectedCloseAlloc &&
+          (() => {
+            const { bed, alloc } = selectedCloseAlloc;
+            const {
+              has_rme,
+              has_recap,
+              has_ready_recap,
+              latest_recap_status,
+              can_complete_allocation,
+            } = alloc.readiness;
+            return (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5 text-xs">
+                  <div className="flex items-start gap-2.5">
+                    {has_rme ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <div className="font-semibold text-slate-800">
+                        1. Tindakan Medis (RME) Tercatat
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {has_rme
+                          ? "Minimal 1 tindakan RME selama perawatan sudah tersedia."
+                          : "Belum ada tindakan RME — Super Admin wajib input RME dahulu selama pasien masih di kamar."}
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      {has_rme
-                        ? "Minimal 1 tindakan RME selama perawatan sudah tersedia."
-                        : "Belum ada tindakan RME — Super Admin wajib input RME dahulu selama pasien masih di kamar."}
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    {has_ready_recap ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <div className="font-semibold text-slate-800">
+                        2. Rekap Layanan Berstatus Siap Billing
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {has_ready_recap
+                          ? "Rekap tindakan sudah tervalidasi (Siap Billing)."
+                          : has_recap
+                          ? `Rekap saat ini masih berstatus "${latest_recap_status}" — lanjutkan verifikasi hingga Siap Billing.`
+                          : "Belum ada dokumen Rekap Layanan untuk alokasi kamar ini."}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5">
-                  {has_ready_recap ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <div className="font-semibold text-slate-800">
-                      2. Rekap Layanan Berstatus Siap Billing
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {has_ready_recap
-                        ? "Rekap tindakan sudah tervalidasi (Siap Billing)."
-                        : has_recap
-                        ? `Rekap saat ini masih berstatus "${latest_recap_status}" — lanjutkan verifikasi hingga Siap Billing.`
-                        : "Belum ada dokumen Rekap Layanan untuk alokasi kamar ini."}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {!can_complete_allocation && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-800">
-                  {canAllocateBed ? (
-                    <span>
-                      Silakan lengkapi RME &amp; finalisasi Rekap pasien terlebih dahulu di modul Rekap Layanan.
-                    </span>
-                  ) : (
-                    <span>
-                      Hubungi <strong>Petugas Administrasi</strong> atau <strong>Super Admin</strong> untuk menyelesaikan RME &amp; Rekap Layanan hingga <strong>Siap Billing</strong> sebelum melepas bed.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 flex-wrap">
-                <button
-                  type="button"
-                  disabled={closingAlloc}
-                  onClick={() => setSelectedCloseAlloc(null)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
-                >
-                  {can_complete_allocation ? "Batal" : "Tutup"}
-                </button>
-                {!can_complete_allocation && canAllocateBed && (
-                  <Link
-                    href={`/rekap-layanan/pasien/${alloc.id_pasien}`}
-                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition"
-                  >
-                    <span>Buka RME &amp; Rekap Pasien</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  disabled={closingAlloc || !can_complete_allocation}
-                  onClick={async () => {
-                    if (!can_complete_allocation) return;
-                    setClosingAlloc(true);
-                    try {
-                      await closeAllocationApi(alloc.id_alokasi, "Selesai");
-                      const bedNo = bed.no_bed;
-                      const bedId = bed.id_bed;
-                      setBeds((prev) =>
-                        prev.map((b) =>
-                          b.id_bed === bedId
-                            ? { ...b, status: "Tersedia", occupant: null }
-                            : b
-                        )
-                      );
-                      setActiveAllocMap((prev) => {
-                        const next = { ...prev };
-                        delete next[bedId];
-                        return next;
-                      });
-                      setSelectedCloseAlloc(null);
-                      showToast(
-                        `Alokasi bed ${bedNo} telah diselesaikan (status kembali Tersedia).`
-                      );
-                    } catch (err) {
-                      setLoadError(
-                        err instanceof Error
-                          ? err.message
-                          : "Gagal menyelesaikan alokasi kamar."
-                      );
-                      setSelectedCloseAlloc(null);
-                    } finally {
-                      setClosingAlloc(false);
+                {!can_complete_allocation && (
+                  <AlertBanner
+                    tone="warning"
+                    message={
+                      canAllocateBed
+                        ? "Lengkapi RME & finalisasi Rekap pasien terlebih dahulu di modul Rekap Layanan."
+                        : "Hubungi Petugas Administrasi atau Super Admin untuk menyelesaikan RME & Rekap Layanan hingga Siap Billing sebelum melepas bed."
                     }
-                  }}
-                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-semibold cursor-pointer transition"
-                >
-                  {closingAlloc ? "Menyelesaikan..." : "Ya, Selesaikan Alokasi"}
-                </button>
+                  />
+                )}
+
+                <div className="flex items-center justify-end gap-2.5 pt-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={closingAlloc}
+                    onClick={() => setSelectedCloseAlloc(null)}
+                  >
+                    {can_complete_allocation ? "Batal" : "Tutup"}
+                  </Button>
+                  {!can_complete_allocation && canAllocateBed && (
+                    <Link
+                      href={`/rekap-layanan/pasien/${alloc.id_pasien}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors"
+                    >
+                      <span>Buka RME &amp; Rekap Pasien</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    loading={closingAlloc}
+                    disabled={closingAlloc || !can_complete_allocation}
+                    onClick={async () => {
+                      if (!can_complete_allocation) return;
+                      setClosingAlloc(true);
+                      try {
+                        await closeAllocationApi(alloc.id_alokasi, "Selesai");
+                        const bedNo = bed.no_bed;
+                        const bedId = bed.id_bed;
+                        setBeds((prev) =>
+                          prev.map((b) =>
+                            b.id_bed === bedId
+                              ? { ...b, status: "Tersedia", occupant: null }
+                              : b
+                          )
+                        );
+                        setActiveAllocMap((prev) => {
+                          const next = { ...prev };
+                          delete next[bedId];
+                          return next;
+                        });
+                        setSelectedCloseAlloc(null);
+                        showToast(
+                          `Alokasi bed ${bedNo} telah diselesaikan (status kembali Tersedia).`
+                        );
+                      } catch (err) {
+                        setLoadError(
+                          err instanceof Error
+                            ? err.message
+                            : "Gagal menyelesaikan alokasi kamar."
+                        );
+                        setSelectedCloseAlloc(null);
+                      } finally {
+                        setClosingAlloc(false);
+                      }
+                    }}
+                  >
+                    {closingAlloc ? "Menyelesaikan..." : "Ya, Selesaikan Alokasi"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      })()}
+            );
+          })()}
+      </Modal>
     </div>
   );
 }

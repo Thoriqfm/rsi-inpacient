@@ -1,52 +1,128 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   3-LAYER DESIGN SYSTEM TOKENS (Primitive -> Semantic -> Component)
+   Retains Brand Green Sidebar (#064e3b) & Crisp White Canvas (#ffffff)
+   ========================================================================== */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Layer 1: Primitive Tokens */
+  --primitive-white: #ffffff;
+  --primitive-slate-50: #f8fafc;
+  --primitive-slate-100: #f1f5f9;
+  --primitive-slate-200: #e2e8f0;
+  --primitive-slate-300: #cbd5e1;
+  --primitive-slate-500: #64748b;
+  --primitive-slate-600: #475569;
+  --primitive-slate-700: #334155;
+  --primitive-slate-900: #0f172a;
+  --primitive-emerald-50: #ecfdf5;
+  --primitive-emerald-200: #a7f3d0;
+  --primitive-emerald-600: #059669;
+  --primitive-emerald-700: #047857;
+  --primitive-emerald-800: #065f46;
+  --primitive-emerald-900: #064e3b;
+  --primitive-emerald-950: #022c22;
 
-  /* Canonical Design System Tokens */
-  --color-primary-green: #059669;
-  --color-primary-hover: #047857;
-  --color-sidebar-bg: #064e3b;
-  --color-sidebar-border: #022c22;
-  --color-canvas-bg: #f8fafc;
-  --color-surface-card: #ffffff;
-  --color-border-subtle: #e2e8f0;
-  --color-mint-tint: #ecfdf5;
-  --color-mint-text: #065f46;
+  /* Layer 2: Semantic Tokens */
+  --background: var(--primitive-white);
+  --foreground: var(--primitive-slate-900);
+  --surface-card: var(--primitive-white);
+  --surface-subtle: var(--primitive-slate-50);
+  --border-subtle: var(--primitive-slate-200);
+  --border-strong: var(--primitive-slate-300);
+  --color-primary-green: var(--primitive-emerald-600);
+  --color-primary-hover: var(--primitive-emerald-700);
+  --color-sidebar-bg: var(--primitive-emerald-900);
+  --color-sidebar-border: var(--primitive-emerald-950);
+  --color-canvas-bg: var(--primitive-white);
+  --color-mint-tint: var(--primitive-emerald-50);
+  --color-mint-text: var(--primitive-emerald-800);
+
+  /* Layer 3: Component Tokens */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-modal: 0 20px 35px -10px rgb(15 23 42 / 0.22);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary-green: #059669;
-  --color-primary-hover: #047857;
-  --color-sidebar-bg: #064e3b;
-  --color-sidebar-border: #022c22;
-  --color-canvas-bg: #f8fafc;
-  --color-surface-card: #ffffff;
-  --color-border-subtle: #e2e8f0;
-  --color-mint-tint: #ecfdf5;
-  --color-mint-text: #065f46;
-  --font-sans: var(--font-plus-jakarta), var(--font-inter), system-ui, -apple-system, sans-serif;
+  --color-primary-green: var(--color-primary-green);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-sidebar-bg: var(--color-sidebar-bg);
+  --color-sidebar-border: var(--color-sidebar-border);
+  --color-canvas-bg: var(--color-canvas-bg);
+  --color-surface-card: var(--surface-card);
+  --color-border-subtle: var(--border-subtle);
+  --color-mint-tint: var(--color-mint-tint);
+  --color-mint-text: var(--color-mint-text);
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-plus-jakarta), var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
   background-color: var(--color-canvas-bg);
   color: var(--color-foreground);
-  font-family: var(--font-plus-jakarta), var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth Scrollbars */
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+}
+
+/* Smooth Motion Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -58,11 +134,23 @@ body {
   background: #94a3b8;
 }
 
-/* Utility classes for no-scrollbar horizontal touch scrolling */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Print Stylesheet for Official Invoice & Referral Letters */
+@media print {
+  aside,
+  header,
+  .print-hidden {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
 }

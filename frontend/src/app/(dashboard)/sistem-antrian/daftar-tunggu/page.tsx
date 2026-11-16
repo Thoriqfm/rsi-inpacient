@@ -28,6 +28,15 @@ import {
 import { AntrianTabs } from "@/components/sistem-antrian/AntrianTabs";
 import { TambahAntreanModal } from "@/components/sistem-antrian/TambahAntreanModal";
 import { DetailAntreanModal } from "@/components/sistem-antrian/DetailAntreanModal";
+import {
+  AlertBanner,
+  Badge,
+  Button,
+  ConfirmDialog,
+  PageHeader,
+  StatCard,
+  Toast,
+} from "@/components/ui";
 
 export default function DaftarTungguPage() {
   const { user } = useAuth();
@@ -47,6 +56,7 @@ export default function DaftarTungguPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<QueueItem | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<QueueItem | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -122,19 +132,19 @@ export default function DaftarTungguPage() {
     });
   }, [queues, statusFilter, kelasFilter, searchQuery]);
 
-  const handleQuickCancel = async (item: QueueItem) => {
+  const handleQuickCancel = (item: QueueItem) => {
     if (cancellingId === item.id_antrean) return;
-    if (
-      !confirm(
-        `Batalkan antrean ${item.no_antrean_formatted} atas nama ${item.nama_pasien}?`
-      )
-    ) {
-      return;
-    }
+    setCancelTarget(item);
+  };
+
+  const confirmQuickCancel = async () => {
+    if (!cancelTarget) return;
+    const item = cancelTarget;
     setCancellingId(item.id_antrean);
     setErrorMsg(null);
     try {
       await cancelQueueApi(item.id_antrean);
+      setCancelTarget(null);
       showToast(
         `Antrean ${item.no_antrean_formatted} (${item.nama_pasien}) berhasil dibatalkan.`
       );
@@ -143,6 +153,7 @@ export default function DaftarTungguPage() {
       setErrorMsg(
         err instanceof Error ? err.message : "Gagal membatalkan antrean."
       );
+      setCancelTarget(null);
     } finally {
       setCancellingId(null);
     }
@@ -154,72 +165,50 @@ export default function DaftarTungguPage() {
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#064e3b] text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-medium">{toastMsg}</span>
-        </div>
-      )}
+      <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
 
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer shrink-0"
-          >
-            Muat Ulang
-          </button>
-        </div>
+        <AlertBanner
+          tone="error"
+          message={errorMsg}
+          action={
+            <Button size="sm" variant="danger" onClick={() => void loadData()}>
+              Muat Ulang
+            </Button>
+          }
+        />
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">
-            SISTEM ANTREAN
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
-            Daftar Tunggu Rawat Inap (FIFO)
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-            Kelola antrean pasien kondisi stabil berbasis urutan kedatangan (First-In, First-Out) saat kapasitas kamar penuh.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Sistem Antrean"
+        title="Daftar Tunggu Rawat Inap (FIFO)"
+        description="Kelola antrean pasien kondisi stabil berbasis urutan kedatangan (First-In, First-Out) saat kapasitas kamar penuh."
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw
+                className={`w-3.5 h-3.5 text-emerald-600 ${
+                  loading ? "animate-spin" : ""
+                }`}
+              />
+              <span>Segarkan</span>
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          <button
-            type="button"
-            onClick={loadData}
-            className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-2 transition cursor-pointer shadow-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? "animate-spin" : ""}`} />
-            <span>Segarkan</span>
-          </button>
+            <Link
+              href="/sistem-antrian/rujukan-pasien"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100/70 text-rose-700 text-xs font-semibold transition"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+              <span>Pasien Darurat? Buat Rujukan</span>
+            </Link>
 
-          <Link
-            href="/sistem-antrian/rujukan-pasien"
-            className="px-3.5 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100/70 text-rose-700 text-xs font-medium flex items-center gap-1.5 transition"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Pasien Darurat? Buat Rujukan</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-xs transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Tambah Antrean</span>
-          </button>
-        </div>
-      </div>
+            <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="w-4 h-4 stroke-[2.25]" />
+              <span>Tambah Antrean</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Sub-navigation Tabs */}
       <AntrianTabs
@@ -230,71 +219,38 @@ export default function DaftarTungguPage() {
 
       {/* 4 KPI Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Card 1: Antrean Menunggu */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Menunggu (FIFO)</div>
-              <div className="text-[11px] text-slate-500">Kondisi stabil</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {waitingList.length}
-          </span>
-        </div>
-
-        {/* Card 2: Prioritas #1 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-slate-800 truncate">Prioritas #1</div>
-              <div className="text-[11px] text-slate-500 truncate">
-                {firstInLine ? `${firstInLine.nama_pasien} (${firstInLine.kelas_perawatan})` : "Antrean Kosong"}
-              </div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-emerald-700 shrink-0 ml-2">
-            {firstInLine ? firstInLine.no_antrean_formatted : "-"}
-          </span>
-        </div>
-
-        {/* Card 3: Dialokasikan */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Dialokasikan</div>
-              <div className="text-[11px] text-slate-500">Masuk kamar ranap</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {allocatedCount}
-          </span>
-        </div>
-
-        {/* Card 4: Bed Tersedia */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-              <Bed className="w-5 h-5 stroke-[1.8]" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-800">Bed Tersedia</div>
-              <div className="text-[11px] text-slate-500">Siap alokasi</div>
-            </div>
-          </div>
-          <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {availableBeds.length}
-          </span>
-        </div>
+        <StatCard
+          label="Menunggu (FIFO)"
+          subtitle="Kondisi stabil"
+          value={waitingList.length}
+          tone="amber"
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Prioritas #1"
+          subtitle={
+            firstInLine
+              ? `${firstInLine.nama_pasien} (${firstInLine.kelas_perawatan})`
+              : "Antrean kosong"
+          }
+          value={firstInLine ? firstInLine.no_antrean_formatted : "-"}
+          tone="emerald"
+          icon={<Users className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Dialokasikan"
+          subtitle="Masuk kamar ranap"
+          value={allocatedCount}
+          tone="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+        <StatCard
+          label="Bed Tersedia"
+          subtitle="Siap alokasi"
+          value={availableBeds.length}
+          tone="slate"
+          icon={<Bed className="w-5 h-5" />}
+        />
       </div>
 
       {/* Slim Clean FIFO Info Strip */}
@@ -398,7 +354,7 @@ export default function DaftarTungguPage() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4 w-28">NO. ANTREAN</th>
                 <th className="py-3 px-4">DATA PASIEN</th>
                 <th className="py-3 px-4">DIAGNOSA & DPJP</th>
@@ -464,8 +420,11 @@ export default function DaftarTungguPage() {
                         <div className="font-semibold text-slate-900">
                           {q.nama_pasien}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          {q.no_rm} • {q.jenis_kelamin_usia}
+                        <div className="text-xs text-slate-500 font-mono tabular-nums mt-0.5">
+                          {q.no_rm}
+                          {q.jenis_kelamin_usia && q.jenis_kelamin_usia !== "-" && q.jenis_kelamin_usia !== "L/P"
+                            ? ` • ${q.jenis_kelamin_usia}`
+                            : ""}
                         </div>
                       </td>
 
@@ -481,19 +440,19 @@ export default function DaftarTungguPage() {
 
                       {/* Kelas */}
                       <td className="py-3.5 px-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium border ${
+                        <Badge
+                          tone={
                             q.kelas_perawatan === "VIP"
-                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              ? "amber"
                               : q.kelas_perawatan === "Kelas 1"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              ? "emerald"
                               : q.kelas_perawatan === "Kelas 2"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : "bg-slate-100 text-slate-700 border-slate-200"
-                          }`}
+                              ? "sky"
+                              : "slate"
+                          }
                         >
                           {q.kelas_perawatan}
-                        </span>
+                        </Badge>
                       </td>
 
                       {/* Waktu Masuk */}
@@ -627,8 +586,12 @@ export default function DaftarTungguPage() {
                     <div className="font-semibold text-slate-900 text-xs sm:text-sm">
                       {q.nama_pasien}
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      {q.no_rm} • {q.jenis_kelamin_usia} • {q.kelas_perawatan}
+                    <div className="text-xs text-slate-500 font-mono tabular-nums">
+                      {q.no_rm}
+                      {q.jenis_kelamin_usia && q.jenis_kelamin_usia !== "-" && q.jenis_kelamin_usia !== "L/P"
+                        ? ` • ${q.jenis_kelamin_usia}`
+                        : ""}{" "}
+                      • {q.kelas_perawatan}
                     </div>
                   </div>
 
@@ -690,11 +653,30 @@ export default function DaftarTungguPage() {
         key={selectedQueue?.id_antrean ?? "closed"}
         item={selectedQueue}
         availableBeds={availableBeds}
+        isPriorityOne={Boolean(
+          firstInLine && selectedQueue && firstInLine.id_antrean === selectedQueue.id_antrean
+        )}
         onClose={() => setSelectedQueue(null)}
         onUpdated={() => {
           showToast("Status antrean berhasil diperbarui.");
           loadData();
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={!!cancelTarget}
+        onClose={() => !cancellingId && setCancelTarget(null)}
+        onConfirm={() => void confirmQuickCancel()}
+        tone="danger"
+        loading={!!cancellingId}
+        confirmLabel="Ya, Batalkan Antrean"
+        cancelLabel="Kembali"
+        title="Batalkan Antrean Daftar Tunggu?"
+        description={
+          cancelTarget
+            ? `Antrean ${cancelTarget.no_antrean_formatted} atas nama ${cancelTarget.nama_pasien} akan dibatalkan dari urutan FIFO.`
+            : ""
+        }
       />
     </div>
   );
