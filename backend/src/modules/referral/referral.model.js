@@ -80,6 +80,24 @@ export function findPasienForReferral(id_pasien, client = prisma) {
     });
 }
 
+export function lockPasienForReferral(client, id_pasien) {
+    return client.$queryRaw`SELECT id_pasien FROM pasien WHERE id_pasien = ${id_pasien} FOR UPDATE`;
+}
+
+export function findActiveAllocationForReferral(id_pasien, client = prisma) {
+    return client.rekamAlokasi.findFirst({
+        where: { id_pasien, status_alokasi: "Aktif" },
+        select: { id_alokasi: true },
+    });
+}
+
+export function findActiveReferralByPatient(id_pasien, client = prisma) {
+    return client.suratRujukan.findFirst({
+        where: { id_pasien, status: { not: "Batal" } },
+        select: { id_surat: true, no_rujukan: true, status: true },
+    });
+}
+
 export function updatePasienStatusForReferral(client, id_pasien, status_penanganan) {
     return client.pasien.update({
         where: { id_pasien },

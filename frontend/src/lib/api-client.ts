@@ -1302,6 +1302,46 @@ export async function fetchPatientRmeApi(id_pasien: number): Promise<{
   };
 }
 
+export async function createRmeApi(payload: {
+  id_pasien: number;
+  kode_tindakan: string;
+  nama_tindakan: string;
+  jumlah: number;
+  keterangan?: string;
+}): Promise<RmeRecordItem> {
+  const res = await apiFetch("/rme", {
+    method: "POST",
+    body: JSON.stringify({
+      id_pasien: payload.id_pasien,
+      kode_tindakan: payload.kode_tindakan,
+      nama_tindakan: payload.nama_tindakan,
+      jumlah: payload.jumlah,
+      ...(payload.keterangan?.trim()
+        ? { keterangan: payload.keterangan.trim() }
+        : {}),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await readErrorMessage(res, "Gagal mencatat tindakan medis RME")
+    );
+  }
+  const json = await res.json();
+  const r = (json.data || {}) as Record<string, unknown>;
+  return {
+    id_riwayat: Number(r.id_riwayat || 0),
+    id_pasien: Number(r.id_pasien || payload.id_pasien),
+    kode_tindakan: String(r.kode_tindakan || payload.kode_tindakan),
+    nama_tindakan: String(r.nama_tindakan || payload.nama_tindakan),
+    kategori: "Pelayanan Medis",
+    tanggal_tindakan: String(r.tanggal_tindakan || new Date().toISOString()),
+    tanggal_tindakan_formatted: formatBackendTimestamp(r.tanggal_tindakan)
+      .timestamp,
+    jumlah: Number(r.jumlah || payload.jumlah),
+    keterangan: r.keterangan ? String(r.keterangan) : null,
+  };
+}
+
 export async function createHistoryApi(
   payload: CreateHistoryPayload
 ): Promise<HistoryRecapItem> {
@@ -1716,8 +1756,13 @@ export async function createRoomTariffApi(payload: {
   return (await res.json()).data;
 }
 
-export async function fetchActiveAllocatedPatientIdsApi(): Promise<number[]> {
-  const ids = new Set<number>();
+export async function fetchActiveAllocationsMapApi(): Promise<
+  Record<number, { id_alokasi: number; id_pasien: number; waktu_alokasi: string }>
+> {
+  const map: Record<
+    number,
+    { id_alokasi: number; id_pasien: number; waktu_alokasi: string }
+  > = {};
   let page = 1;
   let totalPages = 1;
   do {
@@ -1732,13 +1777,43 @@ export async function fetchActiveAllocatedPatientIdsApi(): Promise<number[]> {
     const json = await res.json();
     const items = (json.data?.items || []) as Record<string, unknown>[];
     for (const item of items) {
-      const id = Number(item.id_pasien);
-      if (Number.isFinite(id) && id > 0) ids.add(id);
+      const idBed = Number(item.id_bed);
+      const idAlokasi = Number(item.id_alokasi);
+      const idPasien = Number(item.id_pasien);
+      if (idBed > 0 && idAlokasi > 0) {
+        map[idBed] = {
+          id_alokasi: idAlokasi,
+          id_pasien: idPasien,
+          waktu_alokasi: String(item.waktu_alokasi || ""),
+        };
+      }
     }
     totalPages = Number(json.meta?.total_pages || 1);
     page++;
   } while (page <= totalPages);
-  return Array.from(ids);
+  return map;
+}
+
+export async function fetchActiveAllocatedPatientIdsApi(): Promise<number[]> {
+  const map = await fetchActiveAllocationsMapApi();
+  return Array.from(new Set(Object.values(map).map((v) => v.id_pasien).filter((id) => id > 0)));
+}
+
+export async function closeAllocationApi(
+  id_alokasi: number,
+  status_alokasi: "Selesai" | "Batal" = "Selesai"
+): Promise<RoomAllocation> {
+  const res = await apiFetch(`/allocations/${id_alokasi}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status_alokasi }),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await readErrorMessage(res, "Gagal menyelesaikan alokasi kamar")
+    );
+  }
+  const json = await res.json();
+  return json.data as RoomAllocation;
 }
 
 export async function fetchRoomAllocationsApi(id_pasien: number): Promise<RoomAllocation[]> {

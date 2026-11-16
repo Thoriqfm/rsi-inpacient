@@ -13,11 +13,14 @@ import {
     countReferrals,
     createReferral,
     createRiwayatStatusForReferral,
+    findActiveAllocationForReferral,
+    findActiveReferralByPatient,
     findNextReferralNumber,
     findPasienForReferral,
     findReferralById,
     findReferralHistory,
     findReferrals,
+    lockPasienForReferral,
     updatePasienStatusForReferral,
     updateReferralStatus,
 } from "./referral.model.js";
@@ -97,6 +100,29 @@ export async function registerReferral({ id_pasien, id_rs, alasan_rujukan }, id_
     for (let attempt = 1; attempt <= MAX_REFERRAL_NUMBER_ATTEMPTS; attempt += 1) {
         try {
             return await prisma.$transaction(async (tx) => {
+                await lockPasienForReferral(tx, id_pasien);
+                const freshPasien = await findPasienForReferral(id_pasien, tx);
+
+                if (
+                    freshPasien?.status_penanganan === "Rawat Inap" ||
+                    (await findActiveAllocationForReferral(id_pasien, tx))
+                ) {
+                    throw new HttpError(
+                        409,
+                        "REFERRAL_PATIENT_INPATIENT",
+                        "Pasien sedang dirawat inap aktif dan tidak dapat dibuatkan rujukan baru.",
+                    );
+                }
+
+                const existingReferral = await findActiveReferralByPatient(id_pasien, tx);
+                if (existingReferral) {
+                    throw new HttpError(
+                        409,
+                        "REFERRAL_ALREADY_ACTIVE",
+                        `Pasien sudah memiliki surat rujukan aktif (${existingReferral.no_rujukan}).`,
+                    );
+                }
+
                 // UC-05 Alt Flow 2: Pastikan ketersediaan RS masih Tersedia saat transaksi dieksekusi.
                 const freshHospital = await findHospitalById(id_rs, tx);
                 if (!freshHospital || freshHospital.status_ketersediaan !== "Tersedia") {

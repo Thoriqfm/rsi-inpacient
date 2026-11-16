@@ -31,6 +31,7 @@ import {
 } from "@/types";
 import {
   createReferralApi,
+  fetchActiveAllocatedPatientIdsApi,
   fetchQueuesApi,
   fetchReferralHospitalsApi,
   fetchReferralsApi,
@@ -84,11 +85,12 @@ export default function RujukanPasienPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [hRes, rRes, qRes, pRes] = await Promise.all([
+      const [hRes, rRes, qRes, pRes, activeAllocIds] = await Promise.all([
         fetchReferralHospitalsApi(),
         fetchReferralsApi(),
         fetchQueuesApi(),
         searchHistoryPatientsApi("").catch(() => []),
+        fetchActiveAllocatedPatientIdsApi().catch(() => [] as number[]),
       ]);
       setHospitals(hRes.items);
       setReferrals(rRes.items);
@@ -96,9 +98,23 @@ export default function RujukanPasienPage() {
         qRes.items.filter((q) => q.status === "Menunggu").length
       );
 
+      const activeAllocatedSet = new Set(activeAllocIds);
+      const activeReferredPatientIds = new Set(
+        rRes.items
+          .filter((r) => r.status !== "Batal")
+          .map((r) => r.id_pasien)
+      );
+
       if (pRes.length > 0) {
         const dbEmergency: PasienCandidate[] = pRes
-          .filter((p) => p.kondisi_pasien === "Darurat")
+          .filter(
+            (p) =>
+              p.kondisi_pasien === "Darurat" &&
+              p.status_penanganan !== "Rawat Inap" &&
+              p.status_penanganan !== "Dirujuk" &&
+              !activeAllocatedSet.has(p.id_pasien) &&
+              !activeReferredPatientIds.has(p.id_pasien)
+          )
           .map((p) => ({
             id_pasien: p.id_pasien,
             no_rm: p.no_rm,
@@ -243,6 +259,13 @@ export default function RujukanPasienPage() {
         catatan_medis: catatanMedis.trim(),
       });
       setReferrals((prev) => [created, ...prev]);
+      setEmergencyCandidates((prev) => {
+        const remaining = prev.filter(
+          (p) => p.id_pasien !== selectedPasien.id_pasien
+        );
+        setSelectedPasien(remaining[0] || null);
+        return remaining;
+      });
       setActiveSuratModal(created);
       showToast(
         `Surat Rujukan ${created.no_rujukan} untuk ${created.nama_pasien} berhasil diterbitkan!`

@@ -370,9 +370,9 @@ export default function RekapLayananPage() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        {p.has_recap ? (
+                        {(p.jumlah_rekap ?? 0) > 0 || p.has_recap ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            Sudah ada rekap
+                            Sudah ada rekap ({p.jumlah_rekap ?? 1})
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">

@@ -40,7 +40,7 @@ export default function AlokasiBedPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedKelas, setSelectedKelas] = useState<string>("Kelas 1"); // Default Kelas 1 as in Figma 193:9909
+  const [selectedKelas, setSelectedKelas] = useState<string>("Semua Kelas");
 
   // Selected Bed for allocation
   const [selectedBedId, setSelectedBedId] = useState<number | null>(null);
